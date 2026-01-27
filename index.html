@@ -183,185 +183,234 @@ void loop() {
     const documentation = {
       basics: {
         title: 'Arduino Temelleri',
-        icon: '📘',
+        icon: '',
         color: 'from-blue-500 to-blue-700',
         topics: [
           {
             title: 'setup() ve loop() Fonksiyonları',
             description: 'Her Arduino programının temel yapı taşları',
             content: `
-              <p class="mb-4">Arduino programları iki ana fonksiyondan oluşur:</p>
+              <p class="mb-4">Arduino programları iki ana fonksiyondan oluşur. Bu fonksiyonlar programın iskeletini oluşturur ve biri olmadan diğeri çalışamaz.</p>
               
               <h4 class="font-bold text-lg mb-2 text-blue-400">setup() Fonksiyonu</h4>
-              <p class="mb-3">Program başladığında sadece bir kez çalışır.</p>
+              <p class="mb-3">Bu fonksiyon, Arduino'ya güç verildiğinde veya resetlendiğinde <b>sadece bir kez</b> çalışır. Genellikle pin modlarını ayarlamak, seri haberleşmeyi başlatmak veya kütüphaneleri ilklendirmek için kullanılır.</p>
               
               <div class="doc-code-block mb-4">
 <span class="keyword">void</span> <span class="function">setup</span>() {
-  <span class="comment">// Bu kod sadece bir kez çalışır</span>
-  <span class="function">pinMode</span>(<span class="number">13</span>, OUTPUT);
+  <span class="function">pinMode</span>(<span class="number">13</span>, OUTPUT);    <span class="comment">// 13. pini çıkış yap</span>
+  <span class="keyword">Serial</span>.<span class="function">begin</span>(<span class="number">9600</span>);   <span class="comment">// Haberleşmeyi başlat</span>
 }</div>
 
               <h4 class="font-bold text-lg mb-2 text-blue-400">loop() Fonksiyonu</h4>
-              <p class="mb-3">setup() bittikten sonra sürekli tekrar eder.</p>
+              <p class="mb-3">setup() fonksiyonu tamamlandıktan hemen sonra çalışmaya başlar ve Arduino açık olduğu sürece <b>sonsuz bir döngü</b> içinde tekrar eder. Ana program mantığı burada yer alır.</p>
               
               <div class="doc-code-block mb-4">
 <span class="keyword">void</span> <span class="function">loop</span>() {
-  <span class="comment">// Bu kod sürekli tekrar eder</span>
-  <span class="function">digitalWrite</span>(<span class="number">13</span>, HIGH);
-  <span class="function">delay</span>(<span class="number">1000</span>);
+  <span class="function">digitalWrite</span>(<span class="number">13</span>, HIGH); <span class="comment">// LED'i yak</span>
+  <span class="function">delay</span>(<span class="number">1000</span>);          <span class="comment">// 1 saniye bekle</span>
+  <span class="function">digitalWrite</span>(<span class="number">13</span>, LOW);  <span class="comment">// LED'i söndür</span>
+  <span class="function">delay</span>(<span class="number">1000</span>);          <span class="comment">// 1 saniye bekle</span>
 }</div>`
+          },
+          {
+            title: 'Değişkenler ve Veri Tipleri',
+            description: 'Verileri saklama ve yönetme',
+            content: `
+              <p class="mb-4">Program içerisinde sayıları, metinleri veya durumları saklamak için değişkenler kullanılır.</p>
+              <ul class="list-disc ml-6 mb-4 space-y-2">
+                <li><b>int:</b> Tam sayılar için kullanılır (-32,768 ile 32,767 arası).</li>
+                <li><b>float:</b> Ondalıklı sayılar için kullanılır (Örn: 23.45).</li>
+                <li><b>bool:</b> Sadece true (doğru) veya false (yanlış) değerini alır.</li>
+                <li><b>char:</b> Tek bir karakter saklar (Örn: 'A').</li>
+                <li><b>String:</b> Metin dizileri için kullanılır (Örn: "ArduMind").</li>
+              </ul>
+              <div class="doc-code-block mb-4">
+<span class="keyword">int</span> ledPin = <span class="number">13</span>;
+<span class="keyword">float</span> sicaklik = <span class="number">25.5</span>;
+<span class="keyword">bool</span> butonBasili = <span class="keyword">false</span>;</div>`
           }
         ]
       },
       digital: {
         title: 'Dijital Pin Kontrol',
-        icon: '⚡',
+        icon: '',
         color: 'from-yellow-500 to-orange-600',
         topics: [
           {
-            title: 'pinMode() - Pin Modu Ayarlama',
+            title: 'pinMode() - Yapılandırma',
             description: 'Pinleri giriş veya çıkış olarak ayarlama',
             content: `
-              <p class="mb-4">pinMode() fonksiyonu, bir pini INPUT veya OUTPUT olarak yapılandırır.</p>
+              <p class="mb-4">Her dijital pin, kullanım amacına göre <b>INPUT</b> (Giriş) veya <b>OUTPUT</b> (Çıkış) olarak ayarlanmalıdır.</p>
               
-              <h4 class="font-bold text-lg mb-2 text-yellow-400">Sözdizimi</h4>
-              <div class="doc-code-block mb-4">
-<span class="function">pinMode</span>(pin, mod);</div>
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">OUTPUT Modu</h4>
+              <p class="mb-3">Arduino'dan dışarıya akım göndermek için kullanılır (LED yakmak, motor çalıştırmak vb.).</p>
+              
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">INPUT Modu</h4>
+              <p class="mb-3">Dışarıdan gelen voltajı okumak için kullanılır (Buton okumak, sensör verisi almak vb.).</p>
 
-              <h4 class="font-bold text-lg mb-2 text-yellow-400">OUTPUT - Çıkış Modu</h4>
-              <p class="mb-3">LED, motor gibi cihazları kontrol etmek için kullanılır.</p>
-              <div class="doc-code-block mb-4">
-<span class="keyword">void</span> <span class="function">setup</span>() {
-  <span class="function">pinMode</span>(<span class="number">13</span>, OUTPUT);
-}</div>`
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">INPUT_PULLUP Modu</h4>
+              <p class="mb-3">Dahili direnci aktif ederek butonu harici dirençsiz kullanmanızı sağlar. Buton basıldığında 0 (LOW) döner.</p>`
+          },
+          {
+            title: 'digitalWrite() ve digitalRead()',
+            description: 'Pinlere yazma ve pinlerden okuma',
+            content: `
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalWrite(pin, deger)</h4>
+              <p class="mb-3">Bir pine 5V (HIGH) veya 0V (LOW) gönderir.</p>
+              <div class="doc-code-block mb-4">digitalWrite(13, HIGH); <span class="comment">// 5V ver</span></div>
+
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalRead(pin)</h4>
+              <p class="mb-3">Bir pindeki voltajın HIGH (5V) mı yoksa LOW (0V) mu olduğunu okur.</p>
+              <div class="doc-code-block mb-4">int durum = digitalRead(2); <span class="comment">// Pin 2'yi oku</span></div>`
           }
         ]
       },
       analog: {
         title: 'Analog İşlemler',
-        icon: '🎚️',
+        icon: '',
         color: 'from-green-500 to-emerald-600',
         topics: [
           {
-            title: 'analogRead() ve Ölçekleme',
-            description: '0–1023 aralığında sensör okuma',
+            title: 'analogRead() ve ADC Mantığı',
+            description: 'Değişken voltajları dijital veriye dönüştürme',
             content: `
-              <p class="mb-4">A0–A5 pinlerinden 10-bit ADC değerleri okunur.</p>
-              <div class="doc-code-block mb-4">int deger = analogRead(A0);</div>
-              <p class="text-slate-300">map(), constrain() ile değer aralığı dönüştürülebilir.</p>`
+              <p class="mb-4">Arduino Uno'da bulunan Analog-Dijital Dönüştürücü (ADC), 0V ile 5V arasındaki voltajı <b>0 ile 1023</b> arasında bir sayıya dönüştürür.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">int</span> sensorDegeri = <span class="function">analogRead</span>(A0);</div>
+              <p class="mt-4 text-slate-300">Örneğin: 2.5V okunursa, fonksiyon yaklaşık 512 değerini döndürür.</p>`
           },
           {
-            title: 'analogWrite() (PWM)',
-            description: 'LED parlaklığı / motor hızı kontrolü',
+            title: 'PWM (analogWrite) ve Dimming',
+            description: 'Sinyal genişlik modülasyonu ile güç kontrolü',
             content: `
-              <p class="mb-4">PWM 0–255 aralığında darbe genişliği ayarıdır.</p>
-              <div class="doc-code-block mb-4">analogWrite(9, 128);</div>
-              <p class="text-slate-300">PWM yalnızca belirli dijital pinlerde vardır.</p>`
+              <p class="mb-4">Arduino tam bir analog çıkış veremez, ancak <b>PWM (Pulse Width Modulation)</b> tekniği ile bunu taklit eder. Sinyali çok hızlı açıp kapatarak ortalama voltajı değiştirir.</p>
+              <ul class="list-disc ml-6 mb-4 space-y-2">
+                <li><b>0:</b> Her zaman KAPALI (0V)</li>
+                <li><b>127:</b> %50 AÇIK - %50 KAPALI (Ortalama 2.5V)</li>
+                <li><b>255:</b> Her zaman AÇIK (5V)</li>
+              </ul>
+              <div class="doc-code-block mb-4">
+<span class="function">analogWrite</span>(<span class="number">9</span>, <span class="number">128</span>); <span class="comment">// LED'i %50 parlaklıkta yak</span></div>`
+          },
+          {
+            title: 'map() Fonksiyonu',
+            description: 'Değer aralıklarını dönüştürme',
+            content: `
+              <p class="mb-4">Bir aralıktaki değeri başka bir aralığa oranlamak için kullanılır. En yaygın kullanımı 0-1023 (analog giriş) değerini 0-255 (PWM çıkış) aralığına çekmektir.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">int</span> parlaklik = <span class="function">map</span>(sensorDegeri, <span class="number">0</span>, <span class="number">1023</span>, <span class="number">0</span>, <span class="number">255</span>);</div>`
           }
         ]
       },
       serial: {
         title: 'Seri Haberleşme',
-        icon: '🔌',
+        icon: '',
         color: 'from-purple-500 to-pink-600',
         topics: [
           {
             title: 'Serial.begin ve println',
             description: 'PC ile veri alışverişi',
             content: `
-              <p class="mb-4">Debug ve telemetri için seri haberleşme kullanılır.</p>
-              <div class="doc-code-block mb-4">Serial.begin(9600);<br>Serial.println("Merhaba");</div>
-              <p class="text-slate-300">Baud hızını Seri Monitör ile eşleştirin.</p>`
+              <p class="mb-4">Debug ve telemetri için seri haberleşme kullanılır. Arduino, USB kablosu üzerinden bilgisayarınıza metin gönderebilir.</p>
+              <div class="doc-code-block mb-4">Serial.begin(9600);<br>Serial.println("Hata Ayıklama Başladı...");</div>
+              <p class="text-slate-300"><b>Önemli:</b> Baud hızını (9600) Seri Monitör ekranı ile aynı yapmalısınız.</p>`
           },
           {
-            title: 'Protokol Tasarımı',
-            description: 'Satır sonu ve ayırıcılar',
+            title: 'Serial.available() ve Read()',
+            description: 'Bilgisayardan veri alma',
             content: `
-              <p class="mb-4">Veriyi güvenli ayrıştırmak için tutarlı bir format kullanın.</p>
-              <div class="doc-code-block mb-4">Örnek: S:512,T:23.4\\n</div>`
+              <p class="mb-4">Bilgisayardan Arduino'ya komut göndermek için kullanılır.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">if</span> (<span class="keyword">Serial</span>.<span class="function">available</span>() > <span class="number">0</span>) {
+  <span class="keyword">char</span> gelenVeri = <span class="keyword">Serial</span>.<span class="function">read</span>();
+}</div>`
           }
         ]
       },
       interrupts: {
         title: 'Kesme (Interrupt)',
-        icon: '⏱️',
+        icon: '',
         color: 'from-red-500 to-orange-600',
         topics: [
           {
             title: 'attachInterrupt Temelleri',
             description: 'Dış tetikleyiciye hızlı tepki',
             content: `
-              <p class="mb-4">RISING/FALLING/CHANGE modları ile pin olayları yakalanır.</p>
-              <div class="doc-code-block mb-4">attachInterrupt(digitalPinToInterrupt(2), isr, RISING);</div>`
-          },
-          {
-            title: 'Debounce ve Güvenlik',
-            description: 'Zıplama etkisini azaltma',
-            content: `
-              <p class="mb-4">Kesmede kısa işlem yapın, bayrak kurup loop içinde işleyin.</p>
-              <div class="doc-code-block mb-4">volatile bool tetik = false;</div>`
+              <p class="mb-4">Interrupt'lar (Kesmeler), ana program ne yaparsa yapsın, önemli bir olay olduğunda (bir butona basılması gibi) programı durdurup özel bir fonksiyonu çalıştırır.</p>
+              <div class="doc-code-block mb-4">attachInterrupt(digitalPinToInterrupt(2), isr, RISING);</div>
+              <p class="text-slate-300"><b>RISING:</b> Voltaj 0'dan 5V'a çıktığında tetiklenir.</p>`
           }
         ]
       },
       timing: {
         title: 'Zamanlama',
-        icon: '⏲️',
+        icon: '',
         color: 'from-slate-500 to-slate-700',
         topics: [
           {
             title: 'delay vs millis',
-            description: 'Engelleyici ve engelleyici olmayan yaklaşım',
+            description: 'Engelleyici olmayan yaklaşım',
             content: `
-              <p class="mb-4">delay() akışı durdurur; millis() ile işlerin aynı anda sürdürülmesi sağlanır.</p>
-              <div class="doc-code-block mb-4">unsigned long t=0; if(millis()-t>1000){ t=millis(); }</div>`
-          },
-          {
-            title: 'Basit Görev Zamanlayıcı',
-            description: 'Çoklu işlerin planlanması',
-            content: `
-              <p class="mb-4">millis() ile LED yanıp sönme ve sensör okuma birlikte yönetilir.</p>`
+              <p class="mb-4"><b>delay():</b> Arduino'yu tamamen durdurur. Bu sırada hiçbir sensör okunamaz.</p>
+              <p class="mb-4"><b>millis():</b> Arduino açıldığından beri geçen milisaniyeyi döndürür. Zamanlayıcılar oluşturmak için idealdir.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">unsigned long</span> suAnkiZaman = <span class="function">millis</span>();</div>`
           }
         ]
       },
       libraries: {
-        title: 'Kütüphaneler',
-        icon: '📦',
+        title: 'Kütüphaneler ve Protokoller',
+        icon: '',
         color: 'from-indigo-500 to-indigo-700',
         topics: [
           {
-            title: 'Servo',
+            title: 'Servo Kütüphanesi',
             description: 'Açı kontrolü',
             content: `
-              <p class="mb-4">Servo.h ile 0–180° arası konumlandırma.</p>
-              <div class="doc-code-block mb-4">#include &lt;Servo.h&gt; • servo.attach(9) • servo.write(90)</div>`
+              <p class="mb-4">Servo motorları kolayca kontrol etmek için kullanılır. 0 ile 180 derece arası hassas kontrol sağlar.</p>
+              <div class="doc-code-block mb-4">
+<span class="directive">#include</span> &lt;<span class="string">Servo.h</span>&gt;
+<span class="keyword">Servo</span> motor;
+motor.<span class="function">attach</span>(<span class="number">9</span>);
+motor.<span class="function">write</span>(<span class="number">90</span>);</div>`
           },
           {
-            title: 'Wire (I2C)',
-            description: 'Sensörlerle iletişim',
+            title: 'I2C Protokolü (Wire)',
+            description: 'İki kablo ile haberleşme',
             content: `
-              <p class="mb-4">Adres ve register mantığı ile veri okuma/yazma.</p>
-              <div class="doc-code-block mb-4">SDA/SCL doğru bağlanmalı, gerekirse pull-up direnç.</div>`
+              <p class="mb-4">LCD ekranlar, ivmeölçerler ve birçok sensör I2C kullanır. Sadece <b>SDA</b> ve <b>SCL</b> pinleri üzerinden onlarca cihazla konuşabilirsiniz.</p>
+              <div class="doc-code-block mb-4">
+<span class="directive">#include</span> &lt;<span class="string">Wire.h</span>&gt;
+<span class="keyword">Wire</span>.<span class="function">begin</span>(); <span class="comment">// Master olarak başlat</span></div>`
+          },
+          {
+            title: 'SPI Protokolü',
+            description: 'Yüksek hızlı haberleşme',
+            content: `
+              <p class="mb-4">SD kart modülleri ve RFID okuyucular gibi yüksek hız gerektiren donanımlar için kullanılır.</p>
+              <ul class="list-disc ml-6 space-y-1">
+                <li><b>MOSI:</b> Veri çıkışı</li>
+                <li><b>MISO:</b> Veri girişi</li>
+                <li><b>SCK:</b> Saat sinyali</li>
+              </ul>`
           }
         ]
       },
       best: {
         title: 'İyi Uygulamalar',
-        icon: '✅',
+        icon: '',
         color: 'from-teal-500 to-teal-700',
         topics: [
           {
-            title: 'Kod Düzeni',
+            title: 'Temiz Kod Prensipleri',
             description: 'Okunabilirlik ve bakım',
             content: `
-              <p class="mb-4">Fonksiyonları küçük tutun; sabitleri const ile belirtin.</p>
-              <div class="doc-code-block mb-4">const int LED_PIN = 13;</div>`
-          },
-          {
-            title: 'Güç ve Güvenlik',
-            description: 'Donanım koruma',
-            content: `
-              <p class="mb-4">LED için akım sınırlama direnci; motorlar için ayrı besleme ve sürücü.</p>
-              <div class="doc-code-block mb-4">LED ile 220Ω, motor için L298N vb.</div>`
+              <p class="mb-4">Kodunuzun başkaları tarafından anlaşılması için şu kurallara uyun:</p>
+              <ul class="list-disc ml-6 space-y-2">
+                <li>Anlamlı değişken isimleri seçin (Örn: <code>int x</code> yerine <code>int sensorDegeri</code>).</li>
+                <li>Bol bol yorum satırı ekleyin.</li>
+                <li>Sık kullanılan işlemleri fonksiyonlara bölün.</li>
+              </ul>`
           }
         ]
       }
@@ -372,7 +421,7 @@ void loop() {
         id: 'arduino-basics',
         title: 'Arduino Temelleri',
         description: 'Digital Pin Kullanımı',
-        icon: '⚡',
+        icon: '',
         color: 'from-blue-500 to-purple-600',
         xpReward: 100,
         lessons: [
@@ -385,7 +434,7 @@ void loop() {
         id: 'led-projects',
         title: 'LED Kontrol Projeleri',
         description: 'Yanıp Sönen LED',
-        icon: '💡',
+        icon: '',
         color: 'from-green-500 to-emerald-600',
         xpReward: 150,
         lessons: [
@@ -397,7 +446,7 @@ void loop() {
         id: 'button-control',
         title: 'Buton ve Sensörler',
         description: 'Dijital Giriş İşlemleri',
-        icon: '🎮',
+        icon: '',
         color: 'from-orange-500 to-red-600',
         xpReward: 120,
         lessons: [
@@ -417,11 +466,86 @@ void loop() {
     ];
 
     const learningPath = [
-      { id: 'step-1', title: 'Kurulum ve Blink', docKey: 'basics', videoId: 'getting-started' },
-      { id: 'step-2', title: 'Dijital Çıkış: LED', docKey: 'digital', videoId: 'digital-write' },
-      { id: 'step-3', title: 'Dijital Giriş: Buton', docKey: 'digital', videoId: 'button' },
-      { id: 'step-4', title: 'Analog Giriş: Potansiyometre', docKey: 'basics', videoId: 'analog' },
-      { id: 'step-5', title: 'Servo ve Basit Proje', docKey: 'basics', videoId: 'servo' }
+      { 
+        id: 'step-1', 
+        title: 'Kurulum ve Blink', 
+        description: 'Arduino dünyasına ilk adım! Yazılımı kuracağız ve dahili LED\'i yakıp söndüreceğiz.',
+        docKey: 'basics', 
+        videoId: 'getting-started',
+        quizId: 'basics',
+        algorithm: 'BAŞLA -> Pin 13 Çıkış Yap -> DÖNGÜ: LED Yak -> 1sn Bekle -> LED Söndür -> 1sn Bekle -> DÖNGÜ BAŞI',
+        circuit: 'Arduino Uno -> USB Kablosu -> Dahili LED (Pin 13)'
+      },
+      { 
+        id: 'step-2', 
+        title: 'Dijital Çıkış: LED', 
+        description: 'Harici bir LED bağlayarak direnç kullanımını ve dijital sinyalleri öğreneceğiz.',
+        docKey: 'digital', 
+        videoId: 'digital-write',
+        quizId: 'digital',
+        algorithm: 'BAŞLA -> Pin 9 Çıkış Yap -> DÖNGÜ: Pin 9 HIGH -> Bekle -> Pin 9 LOW -> Bekle -> DÖNGÜ BAŞI',
+        circuit: 'Arduino Pin 9 -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND'
+      },
+      { 
+        id: 'step-3', 
+        title: 'Dijital Giriş: Buton', 
+        description: 'Butonlar ile dış dünyadan veri almayı ve karar yapılarını (if-else) keşfedeceğiz.',
+        docKey: 'digital', 
+        videoId: 'button',
+        quizId: 'digital',
+        algorithm: 'BAŞLA -> Pin 2 Giriş, Pin 13 Çıkış -> DÖNGÜ: Pin 2 OKU -> EĞER Basılıysa LED Yak DEĞİLSE Söndür -> DÖNGÜ BAŞI',
+        circuit: '5V -> Buton -> Pin 2 (10k Pull-down direnç ile GND\'ye bağlı)'
+      },
+      { 
+        id: 'step-4', 
+        title: 'Analog Giriş: Potansiyometre', 
+        description: 'Sıfır ve birin ötesine geçiyoruz! Değişken voltaj değerlerini okuyacağız.',
+        docKey: 'basics', 
+        videoId: 'analog',
+        quizId: 'analog',
+        algorithm: 'BAŞLA -> Pin A0 Analog Giriş -> DÖNGÜ: A0 OKU -> Değeri Seri Porta Yaz -> Bekle -> DÖNGÜ BAŞI',
+        circuit: 'Potansiyometre: Sol Pin (GND), Orta Pin (A0), Sağ Pin (5V)'
+      },
+      { 
+        id: 'step-5', 
+        title: 'Servo ve Hareket', 
+        description: 'Harekete geçme vakti! Servo motoru istediğimiz açıya döndüreceğiz.',
+        docKey: 'basics', 
+        videoId: 'servo',
+        quizId: 'servo',
+        algorithm: 'BAŞLA -> Servo Kütüphanesi Ekle -> Pin 9 Servo Seç -> DÖNGÜ: 0 Dereceye Git -> Bekle -> 180 Dereceye Git -> Bekle',
+        circuit: 'Servo: Kahverengi (GND), Kırmızı (5V), Turuncu (Pin 9)'
+      },
+      { 
+        id: 'step-6', 
+        title: 'PWM ve LED Parlaklığı', 
+        description: 'LED\'lerin parlaklığını kademeli olarak değiştirmeyi (Dimming) öğreneceğiz.',
+        docKey: 'analog', 
+        videoId: 'motor',
+        quizId: 'analog',
+        algorithm: 'BAŞLA -> Pin 9 (PWM) Çıkış -> DÖNGÜ: 0\'dan 255\'e kadar PARLAKLIK ARTTIR -> Bekle -> 255\'ten 0\'a PARLAKLIK AZALT',
+        circuit: 'Arduino Pin 9 (PWM) -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND'
+      },
+      { 
+        id: 'step-7', 
+        title: 'Seri Haberleşme', 
+        description: 'Arduino ile bilgisayar arasında veri alışverişi yaparak sensör değerlerini ekranda göreceğiz.',
+        docKey: 'basics', 
+        videoId: 'getting-started',
+        quizId: 'serial',
+        algorithm: 'BAŞLA -> Seri Haberleşme Başlat (9600 baud) -> DÖNGÜ: "Merhaba Dünya" Yaz -> 1sn Bekle',
+        circuit: 'Arduino -> USB Kablosu -> Bilgisayar (Seri Port Ekranı)'
+      },
+      { 
+        id: 'step-8', 
+        title: 'Mesafe Sensörü (HC-SR04)', 
+        description: 'Ses dalgalarıyla engel tespiti yapmayı öğreneceğiz.',
+        docKey: 'basics', 
+        videoId: 'ultrasonic',
+        quizId: 'sensors',
+        algorithm: 'BAŞLA -> Trig Pin Çıkış, Echo Pin Giriş -> DÖNGÜ: Sinyal Gönder -> Süre Ölç -> Mesafeye Çevir -> Seri Porta Yaz',
+        circuit: 'Trig: Pin 12, Echo: Pin 11, VCC: 5V, GND: GND'
+      }
     ];
 
     const codeExamples = {
@@ -449,7 +573,7 @@ void loop() {
         title: 'Arduino Temelleri',
         description: 'setup(), loop() ve temel kavramlar',
         difficulty: 'Kolay',
-        icon: '📘',
+        icon: '',
         color: 'from-blue-500 to-blue-700',
         xpReward: 50,
         questions: [
@@ -481,7 +605,7 @@ void loop() {
         title: 'Dijital Pin Kontrolü',
         description: 'digitalWrite, digitalRead kullanımı',
         difficulty: 'Kolay',
-        icon: '⚡',
+        icon: '',
         color: 'from-yellow-500 to-orange-600',
         xpReward: 75,
         questions: [
@@ -516,86 +640,116 @@ void loop() {
         ]
       },
       {
-        id: 'led-projects',
-        title: 'LED Projeleri',
-        description: 'LED kontrolü ve uygulamaları',
+        id: 'analog',
+        title: 'Analog Dünyası',
+        description: 'analogRead, analogWrite ve Sensörler',
         difficulty: 'Orta',
-        icon: '💡',
+        icon: '',
         color: 'from-green-500 to-emerald-600',
         xpReward: 100,
         questions: [
           {
             id: 1,
-            question: 'LED\'in uzun bacağı hangi kutuptur?',
-            options: ['Negatif (-)', 'Pozitif (+)', 'Fark etmez', 'Toprak'],
-            correct: 1,
-            explanation: 'LED\'in uzun bacağı anot (+) pozitif kutuptur. LED\'ler polarize elemanlardır ve yönü önemlidir.'
+            question: 'analogRead() fonksiyonu hangi değer aralığında sonuç döndürür?',
+            options: ['0 - 1', '0 - 255', '0 - 1023', '0 - 5000'],
+            correct: 2,
+            explanation: 'Arduino\'nun 10-bit ADC\'si sayesinde analogRead() 0 ile 1023 arasında bir değer döndürür.'
           },
           {
             id: 2,
-            question: 'LED ile mutlaka ne kullanılmalıdır?',
-            options: ['Motor', 'Direnç', 'Buton', 'Sensör'],
-            correct: 1,
-            explanation: 'LED\'ler akım sınırlama direnci olmadan kullanılırsa yanarlar. Genellikle 220Ω veya 330Ω direnç kullanılır.'
+            question: 'PWM sinyali oluşturmak için hangi fonksiyon kullanılır?',
+            options: ['analogRead()', 'digitalWrite()', 'analogWrite()', 'pwmWrite()'],
+            correct: 2,
+            explanation: 'analogWrite() fonksiyonu PWM destekleyen pinlerde analog benzeri bir çıkış (0-255) oluşturmak için kullanılır.'
           },
           {
             id: 3,
-            question: 'Yanıp sönen LED için hangi kod yapısı doğrudur?',
-            options: [
-              'HIGH-delay-LOW',
-              'HIGH-delay-LOW-delay',
-              'delay-HIGH-LOW',
-              'LOW-HIGH-delay'
-            ],
+            question: 'Potansiyometre Arduino\'nun hangi pinlerine bağlanmalıdır?',
+            options: ['Dijital Pinler', 'Analog Pinler (A0-A5)', 'Sadece GND ve 5V', 'Seri Port Pinleri'],
             correct: 1,
-            explanation: 'Yanıp sönen LED için: HIGH yap, bekle, LOW yap, bekle şeklinde döngü oluşturulur.'
+            explanation: 'Potansiyometre gibi değişken voltaj üreten elemanlar analog giriş (A0-A5) pinlerine bağlanır.'
           }
         ]
       },
       {
-        id: 'code-reading',
-        title: 'Kod Okuma',
-        description: 'Arduino kodlarını anlama ve yorumlama',
+        id: 'servo',
+        title: 'Hareket ve Servolar',
+        description: 'Servo kütüphanesi ve açı kontrolü',
         difficulty: 'Orta',
-        icon: '🔍',
-        color: 'from-purple-500 to-pink-600',
-        xpReward: 125,
+        icon: '',
+        color: 'from-purple-500 to-indigo-600',
+        xpReward: 120,
         questions: [
           {
             id: 1,
-            question: 'Aşağıdaki kod ne yapar?\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(500);\n  digitalWrite(13, LOW);\n  delay(500);\n}',
-            options: [
-              'LED sürekli yanar',
-              'LED 0.5 saniyede bir yanıp söner',
-              'LED 5 saniyede bir yanıp söner',
-              'LED hiç yanmaz'
-            ],
+            question: 'Servo motoru kontrol etmek için hangi kütüphane eklenmelidir?',
+            options: ['#include <Motor.h>', '#include <Servo.h>', '#include <Wire.h>', '#include <SPI.h>'],
             correct: 1,
-            explanation: 'LED 500ms (0.5 saniye) yanıp, 500ms sönecek şekilde yanıp söner.'
+            explanation: 'Arduino\'da standart servo motorları kontrol etmek için Servo.h kütüphanesi kullanılır.'
           },
           {
             id: 2,
-            question: 'if (buttonState == HIGH) koşulu ne zaman doğru olur?',
-            options: [
-              'Buton basılı değilse',
-              'Buton basılıysa',
-              'Her zaman',
-              'Hiçbir zaman'
-            ],
+            question: 'servo.write(90) komutu ne yapar?',
+            options: ['Motoru 90 hızında döndürür', 'Motoru 90 derece açısına getirir', 'Motoru 90 saniye çalıştırır', '90 numaralı pini açar'],
             correct: 1,
-            explanation: 'buttonState değişkeni HIGH ise (5V), bu genellikle butonun basılı olduğu anlamına gelir.'
+            explanation: 'write() fonksiyonu servo motoru belirtilen dereceye (0-180 arası) konumlandırır.'
           },
           {
             id: 3,
-            question: 'pinMode(2, INPUT) komutu ne işe yarar?',
-            options: [
-              '2 numaralı pini çıkış yapar',
-              '2 numaralı pini giriş yapar',
-              '2 numaralı pini siler',
-              'Pin 2\'yi okur'
-            ],
+            question: 'Servo motorun turuncu kablosu genellikle nereye bağlanır?',
+            options: ['GND', '5V', 'Sinyal (PWM) Pini', 'Vin'],
+            correct: 2,
+            explanation: 'Servolarda genellikle Kahverengi/Siyah: GND, Kırmızı: 5V, Turuncu/Sarı: Sinyal pinidir.'
+          }
+        ]
+      },
+      {
+        id: 'serial',
+        title: 'Seri Haberleşme',
+        description: 'Bilgisayar ile veri alışverişi',
+        difficulty: 'Kolay',
+        icon: '',
+        color: 'from-orange-500 to-red-600',
+        xpReward: 80,
+        questions: [
+          {
+            id: 1,
+            question: 'Seri haberleşmeyi başlatmak için setup() içinde hangi komut kullanılır?',
+            options: ['Serial.begin(9600)', 'Serial.start()', 'Serial.open()', 'Serial.init()'],
+            correct: 0,
+            explanation: 'Serial.begin(baudrate) komutu seri haberleşmeyi belirtilen hızda başlatır.'
+          },
+          {
+            id: 2,
+            question: 'Ekrana bir satır yazı yazıp alt satıra geçmek için hangi komut kullanılır?',
+            options: ['Serial.print()', 'Serial.write()', 'Serial.println()', 'Serial.send()'],
+            correct: 2,
+            explanation: 'println() komutu veriyi yazar ve ardından yeni bir satıra geçer.'
+          }
+        ]
+      },
+      {
+        id: 'sensors',
+        title: 'Sensör Teknolojileri',
+        description: 'Mesafe, sıcaklık ve ışık sensörleri',
+        difficulty: 'Zor',
+        icon: '',
+        color: 'from-pink-500 to-rose-600',
+        xpReward: 150,
+        questions: [
+          {
+            id: 1,
+            question: 'HC-SR04 mesafe sensörü hangi prensiple çalışır?',
+            options: ['Lazer', 'Kızılötesi', 'Ultrasonik (Ses)', 'Radyo Dalgaları'],
+            correct: 2,
+            explanation: 'HC-SR04 ses dalgaları gönderip yankısını alarak mesafe ölçer (Ultrasonik).'
+          },
+          {
+            id: 2,
+            question: 'LDR (Işığa Bağımlı Direnç) karanlıkta nasıl bir direnç gösterir?',
+            options: ['Düşük Direnç', 'Yüksek Direnç', 'Direnç Göstermez', 'Sabit Direnç'],
             correct: 1,
-            explanation: 'pinMode(pin, INPUT) komutu pini giriş olarak ayarlar, böylece sensör veya buton gibi cihazlardan veri okunabilir.'
+            explanation: 'LDR\'nin direnci üzerindeki ışık miktarı azaldıkça (karanlıkta) artar.'
           }
         ]
       }
@@ -673,7 +827,7 @@ void loop() {
       appState.currentUser.dailyXP[today] = (appState.currentUser.dailyXP[today] || 0) + amount;
       
       addActivity(`${amount} XP kazandın! ${reason}`, '⭐', 'blue');
-      showToast(`🎉 +${amount} XP kazandın!`, 'success');
+      showToast(`+${amount} XP kazandın!`, 'success');
     }
 
     function getWeeklyProgress() {
@@ -708,7 +862,7 @@ void loop() {
         appState.showAuthModal = false;
         appState.currentPage = 'dashboard';
         renderApp();
-        showToast('Başarıyla giriş yaptınız! 🎉', 'success');
+        showToast('Başarıyla giriş yaptınız!', 'success');
       } else {
         showToast('E-posta veya şifre hatalı!', 'error');
       }
@@ -740,7 +894,7 @@ void loop() {
       appState.showAuthModal = false;
       appState.currentPage = 'dashboard';
       renderApp();
-      showToast('Hoş geldin! Arduino serüvenine başlayalım 🚀', 'success');
+      showToast('Hoş geldin! Arduino serüvenine başlayalım', 'success');
     }
 
     function logout() {
@@ -782,7 +936,7 @@ void loop() {
         if (percentage >= 70) {
           const xpEarned = Math.floor(quiz.xpReward * (percentage / 100));
           addXP(xpEarned, `"${quiz.title}" testi tamamlandı`);
-          addActivity(`"${quiz.title}" testini tamamladın! %${percentage.toFixed(0)} başarı`, '🎯', 'green');
+          addActivity(`"${quiz.title}" testini tamamladın! %${percentage.toFixed(0)} başarı`, '', 'green');
         }
       }
       
@@ -817,7 +971,7 @@ void loop() {
       });
       
       addXP(module.xpReward, `"${module.title}" tamamlandı`);
-      addActivity(`"${module.title}" modülünü tamamladın!`, '✅', 'green');
+      addActivity(`"${module.title}" modülünü tamamladın!`, '', 'green');
       
       appState.currentModuleView = null;
       renderApp();
@@ -833,7 +987,7 @@ void loop() {
     function saveEditorCode() {
       try {
         localStorage.setItem('ardumind_code', appState.editorCode);
-        showToast('Kod kaydedildi 📝', 'success');
+        showToast('Kod kaydedildi', 'success');
       } catch (e) {
         showToast('Kaydetme başarısız!', 'error');
       }
@@ -845,7 +999,7 @@ void loop() {
         appState.editorCode = saved;
         stopSimulation();
         renderApp();
-        showToast('Kayıtlı kod yüklendi 📂', 'info');
+        showToast('Kayıtlı kod yüklendi', 'info');
       } else {
         showToast('Kayıtlı kod bulunamadı', 'error');
       }
@@ -854,7 +1008,7 @@ void loop() {
     function copyEditorCode() {
       if (navigator.clipboard && window.isSecureContext !== false) {
         navigator.clipboard.writeText(appState.editorCode)
-          .then(() => showToast('Kod panoya kopyalandı 📋', 'success'))
+          .then(() => showToast('Kod panoya kopyalandı', 'success'))
           .catch(() => showToast('Kopyalama başarısız!', 'error'));
       } else {
         showToast('Kopyalama desteklenmiyor', 'error');
@@ -1203,7 +1357,7 @@ void loop() {
       } else if (message.toLowerCase().includes('servo')) {
         response = 'Servo motor kontrolü için:\n\n• servo.attach(9) ile servoyı pine bağlayın\n• servo.write(açı) ile 0-180 derece arası açı verin\n• delay() ile açılar arası bekleme yapın\n\nServo motor örneğini yükleyebilirsiniz!';
       } else {
-        response = 'Size nasıl yardımcı olabilirim?\n\n• Kod hatalarını açıklayabilirim\n• Arduino komutlarını anlatabilirim\n• Örnek kodlar önerebilirim\n\nSorunuzu detaylı sorarsanız daha iyi yardımcı olabilirim! 😊';
+        response = 'Size nasıl yardımcı olabilirim?\n\n• Kod hatalarını açıklayabilirim\n• Arduino komutlarını anlatabilirim\n• Örnek kodlar önerebilirim\n\nSorunuzu detaylı sorarsanız daha iyi yardımcı olabilirim!';
       }
       
       appState.aiChatMessages.push({ role: 'ai', text: response });
@@ -1222,37 +1376,46 @@ void loop() {
     function renderNavbar() {
       return `
         <nav class="sticky top-0 z-50 backdrop-blur-sm bg-slate-800 bg-opacity-90 border-b border-slate-700">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-              <div class="flex items-center space-x-2 cursor-pointer" onclick="navigateTo('home')">
+              <!-- Sol: Logo ve İsim -->
+              <div class="flex items-center space-x-2 cursor-pointer flex-shrink-0" onclick="navigateTo('home')">
                 <img src="images/logo.png" alt="ArduMind" class="w-9 h-9 rounded-xl object-contain shadow-md" />
                 <span class="text-xl font-bold tracking-tight">ArduMind</span>
               </div>
-              <div class="hidden md:flex items-center space-x-8">
-                <a href="#" onclick="navigateTo('home')" class="text-slate-200 hover:text-white transition-colors">Keşfet</a>
-                <a href="#" onclick="navigateTo('components')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'components' ? 'text-blue-400' : ''}">Elemanlar</a>
-                <a href="#" onclick="navigateTo('docs')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
-                <a href="#" onclick="navigateTo('videos')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
-                <a href="#" onclick="navigateTo('path')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
-                <a href="#" onclick="navigateTo('quiz')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
-                <a href="#" onclick="navigateTo('about')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'about' ? 'text-blue-400' : ''}">Proje Hakkında</a>
+
+              <!-- Orta: Navigasyon Sekmeleri -->
+              <div class="hidden xl:flex flex-1 justify-center items-center px-4">
+                <div class="flex items-center space-x-5 text-sm font-medium">
+                  <a href="#" onclick="navigateTo('home')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'home' ? 'text-blue-400' : ''}">Keşfet</a>
+                  <a href="#" onclick="navigateTo('components')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'components' ? 'text-blue-400' : ''}">Elemanlar</a>
+                  <a href="#" onclick="navigateTo('docs')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
+                  <a href="#" onclick="navigateTo('videos')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
+                  <a href="#" onclick="navigateTo('path')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
+                  <a href="#" onclick="navigateTo('quiz')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
+                  <a href="#" onclick="navigateTo('about')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'about' ? 'text-blue-400' : ''}">Hakkında</a>
+                  ${appState.currentUser ? `
+                    <a href="#" onclick="navigateTo('dashboard')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'dashboard' ? 'text-blue-400' : ''}">Eğitimim</a>
+                    <a href="#" onclick="navigateTo('editor')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'editor' ? 'text-blue-400' : ''}">Editör</a>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- Sağ: Profil ve Çıkış -->
+              <div class="flex items-center space-x-4 flex-shrink-0">
                 ${appState.currentUser ? `
-                  <a href="#" onclick="navigateTo('dashboard')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'dashboard' ? 'text-blue-400' : ''}">Öğrenme Yolum</a>
-                  <a href="#" onclick="navigateTo('editor')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'editor' ? 'text-blue-400' : ''}">Kod Editörü</a>
-                  <div class="flex items-center space-x-4">
-                    <button onclick="navigateTo('profile')" class="flex items-center space-x-2 text-slate-200 hover:text-white transition-colors">
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold">
-                        ${appState.currentUser.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span>${appState.currentUser.name.split(' ')[0]}</span>
-                    </button>
-                    <button onclick="logout()" class="px-4 py-2 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">
-                      Çıkış
-                    </button>
-                  </div>
+                  <button onclick="navigateTo('profile')" class="flex items-center space-x-2 text-slate-200 hover:text-white transition-colors">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg">
+                      ${appState.currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span class="text-sm font-semibold hidden sm:inline">${appState.currentUser.name.split(' ')[0]}</span>
+                  </button>
+                  <button onclick="logout()" class="px-4 py-1.5 rounded-lg font-bold bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all text-xs">
+                    Çıkış
+                  </button>
                 ` : `
-                  <button onclick="appState.showAuthModal = true; appState.authMode = 'login'; renderApp();" class="px-6 py-2 rounded-full font-medium bg-blue-500 text-white hover:bg-blue-600 hover:scale-105 hover:shadow-lg transition-all">
-                    Giriş / Kayıt
+                  <button onclick="appState.showAuthModal = true; appState.authMode = 'login'; renderApp();" class="px-5 py-2 rounded-full font-bold bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 hover:shadow-xl transition-all text-sm">
+                    Giriş Yap
                   </button>
                 `}
               </div>
@@ -1291,7 +1454,7 @@ void loop() {
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Videolu Eğitim 🎬</h1>
+            <h1 class="text-4xl font-bold mb-2">Videolu Eğitim</h1>
             <p class="text-slate-400">Konulara göre seçilmiş video dersler</p>
           </div>
           
@@ -1331,28 +1494,119 @@ void loop() {
       return `
         ${renderNavbar()}
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Öğrenme Yolu 🧭</h1>
-            <p class="text-slate-400">Adım adım ilerle ve her adımda doküman ile videoya git</p>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div class="text-center mb-16">
+            <h1 class="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              Öğrenme Yolculuğu
+            </h1>
+            <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+              Sıfırdan başlayarak uzmanlığa giden yolda adım adım ilerle. Her adımda teori, uygulama ve görsel destek seni bekliyor.
+            </p>
           </div>
           
-          <div class="space-y-6">
-            ${learningPath.map((step, index) => {
-              const v = videoLessons.find(v => v.id === step.videoId);
-              return `
-                <div class="bg-slate-800 rounded-2xl p-6">
-                  <div class="flex items-center space-x-4 mb-4">
-                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold">${index + 1}</div>
-                    <h3 class="text-xl font-bold">${step.title}</h3>
+          <div class="relative">
+            <!-- Central Line -->
+            <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-blue-500 rounded-full opacity-20 hidden md:block"></div>
+            
+            <div class="space-y-12 md:space-y-24">
+              ${learningPath.map((step, index) => {
+                const isEven = index % 2 === 0;
+                const v = videoLessons.find(v => v.id === step.videoId);
+                
+                return `
+                  <div class="relative flex flex-col md:flex-row items-center ${isEven ? 'md:flex-row-reverse' : ''}">
+                    <!-- Step Indicator -->
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-12 h-12 rounded-full bg-slate-900 border-4 border-blue-500 flex items-center justify-center font-bold text-xl z-10 shadow-[0_0_20px_rgba(59,130,246,0.5)] hidden md:flex">
+                      ${index + 1}
+                    </div>
+                    
+                    <!-- Content Card -->
+                    <div class="w-full md:w-5/12 group">
+                      <div class="bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700 hover:border-blue-500/50 transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex items-center space-x-4 mb-4">
+                          <div class="md:hidden w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-lg">
+                            ${index + 1}
+                          </div>
+                          <h3 class="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">${step.title}</h3>
+                        </div>
+                        
+                        <p class="text-slate-400 mb-6 leading-relaxed">
+                          ${step.description}
+                        </p>
+                        
+                        <div class="grid grid-cols-1 gap-4 mb-8">
+                          <!-- Algorithm Box -->
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-blue-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Algoritma Mantığı</span>
+                            </div>
+                            <div class="text-sm text-slate-300 font-mono bg-slate-950 p-3 rounded-xl border border-slate-800">
+                              ${step.algorithm}
+                            </div>
+                          </div>
+                          
+                          <!-- Circuit Box -->
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-purple-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Devre Şeması (Proteus)</span>
+                            </div>
+                            <div class="text-sm text-slate-300 italic">
+                              ${step.circuit}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-3">
+                          <button onclick="appState.currentDocSection='${step.docKey}'; navigateTo('docs');" 
+                            class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2">
+                            <span>Ders Notları</span>
+                          </button>
+                          ${v ? `
+                            <a href="${v.url}" target="_blank" rel="noopener" 
+                              class="flex-1 px-4 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2">
+                              <span>Video İzle</span>
+                            </a>
+                          ` : ''}
+                          ${step.quizId ? `
+                            <button onclick="appState.currentQuizId='${step.quizId}'; navigateTo('quiz');" 
+                              class="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/20">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                              </svg>
+                              <span>Bilgi Testini Çöz</span>
+                            </button>
+                          ` : ''}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Spacer for Desktop -->
+                    <div class="hidden md:block md:w-2/12"></div>
+                    <div class="hidden md:block md:w-5/12"></div>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <button onclick="appState.currentDocSection='${step.docKey}'; navigateTo('docs');" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium">Dokümantasyon</button>
-                    ${v ? `<a href="${v.url}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Video</a>` : ''}
-                  </div>
-                </div>
-              `;
-            }).join('')}
+                `;
+              }).join('')}
+            </div>
+          </div>
+          
+          <!-- Final Step -->
+          <div class="mt-24 text-center">
+            <div class="inline-block p-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6">
+              <div class="px-8 py-3 rounded-full bg-slate-900 text-xl font-bold">
+                Tebrikler!
+              </div>
+            </div>
+            <h2 class="text-3xl font-bold mb-4">Temel Seviyeyi Tamamladın</h2>
+            <p class="text-slate-400 mb-8">Artık kendi projelerini üretmeye hazırsın. Editöre gidip hayallerini kodla!</p>
+            <button onclick="navigateTo('editor')" class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition-all hover:scale-105">
+              Kod Editörüne Git
+            </button>
           </div>
         </div>
       `;
@@ -1457,7 +1711,7 @@ void loop() {
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
           <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Hoş geldin, ${appState.currentUser.name.split(' ')[0]}! 👋</h1>
+            <h1 class="text-4xl font-bold mb-2">Hoş geldin, ${appState.currentUser.name.split(' ')[0]}!</h1>
             <p class="text-slate-400">Arduino yolculuğuna devam etmeye hazır mısın?</p>
           </div>
 
@@ -1590,7 +1844,7 @@ void loop() {
               </button>
             ` : `
               <div class="bg-green-500 bg-opacity-20 border-2 border-green-500 rounded-xl p-6 text-center">
-                <h3 class="text-xl font-bold mb-2">Tebrikler! 🎉</h3>
+                <h3 class="text-xl font-bold mb-2">Tebrikler!</h3>
                 <p class="text-slate-300">Bu modülü tamamladın!</p>
               </div>
             `}
@@ -1652,10 +1906,10 @@ void loop() {
 
             <div class="h-64 border-t border-slate-700 bg-slate-800 flex flex-col">
               <div class="px-4 py-2 border-b border-slate-700">
-                <span class="font-bold text-sm">🤖 AI Yardımcı</span>
+                <span class="font-bold text-sm">AI Yardımcı</span>
               </div>
               <div id="aiChatContainer" class="flex-1 overflow-auto p-4 space-y-3">
-                ${appState.aiChatMessages.length === 0 ? `<div class="text-slate-400 text-sm text-center py-4">Merhaba! Arduino kodunla ilgili sorularını sorabilirsin 😊</div>` : appState.aiChatMessages.map(msg => `<div class="${msg.role === 'user' ? 'text-right' : 'text-left'}"><div class="inline-block ${msg.role === 'user' ? 'bg-blue-600' : 'bg-slate-700'} rounded-lg px-3 py-2 text-sm max-w-md">${msg.text.replace(/\n/g, '<br>')}</div></div>`).join('')}
+                ${appState.aiChatMessages.length === 0 ? `<div class="text-slate-400 text-sm text-center py-4">Merhaba! Arduino kodunla ilgili sorularını sorabilirsin</div>` : appState.aiChatMessages.map(msg => `<div class="${msg.role === 'user' ? 'text-right' : 'text-left'}"><div class="inline-block ${msg.role === 'user' ? 'bg-blue-600' : 'bg-slate-700'} rounded-lg px-3 py-2 text-sm max-w-md">${msg.text.replace(/\n/g, '<br>')}</div></div>`).join('')}
               </div>
               <div class="p-3 border-t border-slate-700">
                 <form onsubmit="event.preventDefault(); sendAIMessage(this.querySelector('input').value); this.reset();" class="flex space-x-2">
@@ -1739,7 +1993,7 @@ void loop() {
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Arduino Dokümantasyon 📚</h1>
+            <h1 class="text-4xl font-bold mb-2">Arduino Dokümantasyon</h1>
             <p class="text-slate-400">Arduino yazılım dilini örneklerle öğrenin</p>
           </div>
 
@@ -1827,7 +2081,7 @@ void loop() {
         {
           id: 'breadboard',
           name: 'Breadboard',
-          icon: '🔲',
+          icon: '',
           color: 'from-gray-500 to-gray-700',
           description: 'Devre elemanlarını lehimsiz bağlamak için kullanılan devre tahtası',
           usage: 'Breadboard üzerindeki delikler içten iletken şeritlerle bağlıdır. Aynı satırdaki delikler birbirine bağlıdır.',
@@ -1840,7 +2094,7 @@ void loop() {
         {
           id: 'led',
           name: 'LED (Işık Yayan Diyot)',
-          icon: '💡',
+          icon: '',
           color: 'from-yellow-500 to-orange-600',
           description: 'Elektrik akımı geçtiğinde ışık yayan elektronik devre elemanı',
           usage: 'LED\'in uzun bacağı (+) anot, kısa bacağı (-) katottur. Mutlaka direnç ile kullanılmalıdır.',
@@ -1853,7 +2107,7 @@ void loop() {
         {
           id: 'resistor',
           name: 'Direnç',
-          icon: '⚡',
+          icon: '',
           color: 'from-blue-500 to-cyan-600',
           description: 'Devredeki akım miktarını sınırlamak için kullanılan eleman',
           usage: 'Renk kodları ile değeri belirlenir. LED ve sensör gibi elemanları korumak için kullanılır.',
@@ -1866,7 +2120,7 @@ void loop() {
         {
           id: 'button',
           name: 'Buton (Push Button)',
-          icon: '🔘',
+          icon: '',
           color: 'from-green-500 to-emerald-600',
           description: 'Basıldığında devreyi kapatan, bırakıldığında açan anahtar',
           usage: 'Dijital giriş olarak kullanılır. Pull-down veya pull-up direnç ile birlikte kullanılmalıdır.',
@@ -1879,7 +2133,7 @@ void loop() {
         {
           id: 'jumper',
           name: 'Jumper Kablo',
-          icon: '🔌',
+          icon: '',
           color: 'from-purple-500 to-pink-600',
           description: 'Devre elemanlarını birbirine bağlamak için kullanılan kablolar',
           usage: 'Erkek-erkek, erkek-dişi ve dişi-dişi olmak üzere 3 türü vardır.',
@@ -1892,14 +2146,14 @@ void loop() {
         {
           id: 'potentiometer',
           name: 'Potansiyometre',
-          icon: '🎚️',
+          icon: '',
           color: 'from-orange-500 to-red-600',
           description: 'Direnci elle ayarlanabilen değişken direnç',
           usage: 'Analog giriş olarak kullanılır. Ses seviyesi, parlaklık gibi ayarlar için idealdir.',
           tips: [
             '3 bacaklıdır: +5V, Analog Out (orta), GND',
             'analogRead() ile 0-1023 arası değer okunur',
-            'map() fonksiyonu ile değer aralığı değiştirilebilir'
+            'map() fonksiyonu ile deper aralığı değiştirilebilir'
           ]
         }
       ];
@@ -1909,7 +2163,7 @@ void loop() {
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Arduino Elemanları 🔧</h1>
+            <h1 class="text-4xl font-bold mb-2">Arduino Elemanları</h1>
             <p class="text-slate-400">Temel elektronik bileşenleri tanıyalım</p>
           </div>
 
@@ -1918,7 +2172,7 @@ void loop() {
               <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all fade-in">
                 <div class="bg-gradient-to-r ${component.color} p-6">
                   <div class="flex items-center space-x-4">
-                    <div class="text-6xl">${component.icon}</div>
+                    ${component.icon ? `<div class="text-6xl">${component.icon}</div>` : ''}
                     <div>
                       <h2 class="text-2xl font-bold text-white">${component.name}</h2>
                       <p class="text-white text-opacity-90 text-sm mt-1">${component.description}</p>
@@ -1928,12 +2182,12 @@ void loop() {
                 
                 <div class="p-6">
                   <div class="mb-4">
-                    <h3 class="font-bold text-lg mb-2 text-blue-400">📋 Kullanım</h3>
+                    <h3 class="font-bold text-lg mb-2 text-blue-400">Kullanım</h3>
                     <p class="text-slate-300 leading-relaxed">${component.usage}</p>
                   </div>
                   
                   <div>
-                    <h3 class="font-bold text-lg mb-3 text-green-400">💡 İpuçları</h3>
+                    <h3 class="font-bold text-lg mb-3 text-green-400">İpuçları</h3>
                     <ul class="space-y-2">
                       ${component.tips.map(tip => `
                         <li class="flex items-start space-x-2">
@@ -1986,7 +2240,6 @@ void loop() {
             
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div class="bg-slate-800 rounded-2xl p-8 text-center">
-                <div class="text-6xl mb-4">${passed ? '🎉' : '📚'}</div>
                 <h1 class="text-4xl font-bold mb-4">${passed ? 'Tebrikler!' : 'Daha İyisini Yapabilirsin!'}</h1>
                 <p class="text-xl text-slate-300 mb-6">${quiz.title} testini tamamladın</p>
                 
@@ -2010,17 +2263,27 @@ void loop() {
                     return `
                       <div class="bg-slate-700 rounded-xl p-4">
                         <div class="flex items-start space-x-3 mb-3">
-                          <div class="text-2xl">${isCorrect ? '✅' : '❌'}</div>
+                          <div class="flex-shrink-0 mt-1">
+                            ${isCorrect ? `
+                              <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                              </svg>
+                            ` : `
+                              <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                              </svg>
+                            `}
+                          </div>
                           <div class="flex-1">
                             <p class="font-medium mb-2">${question.question.replace(/\n/g, '<br>')}</p>
                             <div class="text-sm space-y-1">
-                              <div class="text-red-400">Senin cevabın: ${question.options[userAnswer]}</div>
+                              <div class="${isCorrect ? 'text-green-400' : 'text-red-400'}">Senin cevabın: ${question.options[userAnswer]}</div>
                               ${!isCorrect ? `<div class="text-green-400">Doğru cevap: ${question.options[question.correct]}</div>` : ''}
                             </div>
                           </div>
                         </div>
-                        <div class="bg-slate-600 rounded-lg p-3 text-sm text-slate-200">
-                          💡 ${question.explanation}
+                        <div class="bg-slate-600/50 border border-slate-500/20 rounded-lg p-3 text-sm text-slate-200">
+                          <span class="font-bold text-blue-400">Bilgi:</span> ${question.explanation}
                         </div>
                       </div>
                     `;
@@ -2055,9 +2318,6 @@ void loop() {
 
             <div class="bg-slate-800 rounded-2xl p-8">
               <div class="flex items-center space-x-4 mb-6">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${quiz.color} flex items-center justify-center text-3xl">
-                  ${quiz.icon}
-                </div>
                 <div class="flex-1">
                   <h1 class="text-3xl font-bold mb-2">${quiz.title}</h1>
                   <p class="text-slate-400">${quiz.description} • ${quiz.difficulty} • ${quiz.questions.length} Soru</p>
@@ -2112,22 +2372,21 @@ void loop() {
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Arduino Bilgi Testleri 🎯</h1>
+            <h1 class="text-4xl font-bold mb-2">Arduino Bilgi Testleri</h1>
             <p class="text-slate-400">Bilgini test et, XP kazan ve kendini geliştir!</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             ${quizzes.map(quiz => `
-              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all fade-in">
+              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all fade-in border border-slate-700">
                 <div class="bg-gradient-to-r ${quiz.color} p-6">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="text-5xl">${quiz.icon}</div>
-                    <div class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium text-white">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-wider">
                       ${quiz.difficulty}
                     </div>
                   </div>
                   <h2 class="text-2xl font-bold text-white mb-2">${quiz.title}</h2>
-                  <p class="text-white text-opacity-90">${quiz.description}</p>
+                  <p class="text-white text-opacity-90 text-sm">${quiz.description}</p>
                 </div>
                 
                 <div class="p-6">
@@ -2175,7 +2434,7 @@ void loop() {
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="text-center mb-12 fade-in">
             <div class="inline-block bg-gradient-to-r from-red-500 to-red-700 px-6 py-2 rounded-full text-sm font-bold mb-4">
-              🏆 TEKNOFEST 2024 Projesi
+              TEKNOFEST 2024 Projesi
             </div>
             <h1 class="text-5xl font-bold mb-4">ArduMind Hakkında</h1>
             <p class="text-xl text-slate-400">Arduino'yu ezberleyerek değil, anlayarak öğrenmenin yeni yolu</p>
@@ -2183,9 +2442,6 @@ void loop() {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             <div class="bg-slate-800 rounded-2xl p-8 hover:scale-105 transition-all fade-in">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl mb-4">
-                🎯
-              </div>
               <h2 class="text-2xl font-bold mb-3">Proje Vizyonu</h2>
               <p class="text-slate-300 leading-relaxed">
                 ArduMind, Arduino öğrenimini kişiselleştiren, yapay zeka destekli bir eğitim platformudur. 
@@ -2194,9 +2450,6 @@ void loop() {
             </div>
 
             <div class="bg-slate-800 rounded-2xl p-8 hover:scale-105 transition-all fade-in">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-3xl mb-4">
-                💡
-              </div>
               <h2 class="text-2xl font-bold mb-3">Neden ArduMind?</h2>
               <p class="text-slate-300 leading-relaxed">
                 Geleneksel Arduino eğitimleri ezber odaklıdır. ArduMind, kavramsal öğrenmeyi ön plana çıkarır, 
@@ -2206,22 +2459,19 @@ void loop() {
           </div>
 
           <div class="bg-gradient-to-r from-blue-900 to-purple-900 rounded-3xl p-8 mb-12">
-            <h2 class="text-3xl font-bold mb-6 text-center">🚀 Temel Özellikler</h2>
+            <h2 class="text-3xl font-bold mb-6 text-center">Temel Özellikler</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
-                <div class="text-4xl mb-3">🤖</div>
                 <h3 class="font-bold text-lg mb-2">Yapay Zeka Asistanı</h3>
                 <p class="text-sm text-slate-300">Kodlarınızı analiz eder, hataları açıklar ve anlık çözümler sunar</p>
               </div>
 
               <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
-                <div class="text-4xl mb-3">🎮</div>
                 <h3 class="font-bold text-lg mb-2">İnteraktif Simülasyon</h3>
                 <p class="text-sm text-slate-300">Kodunuzu gerçek zamanlı test edin, LED'leri yakıp söndürün</p>
               </div>
 
               <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
-                <div class="text-4xl mb-3">📊</div>
                 <h3 class="font-bold text-lg mb-2">Gamification Sistemi</h3>
                 <p class="text-sm text-slate-300">XP kazanın, seviye atlayın ve başarılarınızı takip edin</p>
               </div>
@@ -2229,7 +2479,7 @@ void loop() {
           </div>
 
           <div class="bg-slate-800 rounded-2xl p-8 mb-12">
-            <h2 class="text-3xl font-bold mb-6">📈 Proje Hedefleri</h2>
+            <h2 class="text-3xl font-bold mb-6">Proje Hedefleri</h2>
             <div class="space-y-4">
               <div class="flex items-start space-x-4">
                 <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
@@ -2270,29 +2520,25 @@ void loop() {
           </div>
 
           <div class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl p-8 mb-12">
-            <h2 class="text-3xl font-bold mb-6">🛠️ Kullanılan Teknolojiler</h2>
+            <h2 class="text-3xl font-bold mb-6">Kullanılan Teknolojiler</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <div class="text-3xl mb-2">⚛️</div>
                 <p class="font-medium">HTML/CSS/JS</p>
               </div>
               <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <div class="text-3xl mb-2">🎨</div>
                 <p class="font-medium">Tailwind CSS</p>
               </div>
               <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <div class="text-3xl mb-2">🤖</div>
                 <p class="font-medium">AI Integration</p>
               </div>
               <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <div class="text-3xl mb-2">🎮</div>
                 <p class="font-medium">Simülasyon</p>
               </div>
             </div>
           </div>
 
           <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl p-12 text-center">
-            <h2 class="text-4xl font-bold mb-4 text-white">Geleceği Birlikte İnşa Edelim! 🚀</h2>
+            <h2 class="text-4xl font-bold mb-4 text-white">Geleceği Birlikte İnşa Edelim!</h2>
             <p class="text-xl text-white text-opacity-90 mb-6">
               ArduMind ile Arduino öğrenmenin geleceğini şekillendiriyoruz
             </p>
