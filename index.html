@@ -57,6 +57,35 @@
       50% { transform: scale(1.05); }
     }
     
+    @keyframes introZoom {
+      0% { opacity: 0; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes introBackground {
+      0% { opacity: 0; transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes marvelIn {
+      0% { opacity: 0; transform: scale(0.96) translateY(20px); filter: blur(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+    }
+    
+    @keyframes marvelOut {
+      0% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+      100% { opacity: 0; transform: scale(1.04) translateY(-20px); filter: blur(10px); }
+    }
+    
+    ::view-transition-old(root) {
+      animation: marvelOut 0.4s ease-in forwards;
+    }
+    
+    ::view-transition-new(root) {
+      animation: marvelIn 0.5s ease-out forwards;
+    }
+    
     .float-animation {
       animation: float 3s ease-in-out infinite;
     }
@@ -121,6 +150,9 @@
       showAuthModal: false,
       authMode: 'login',
       currentPage: 'home',
+      currentVideoFilter: '',
+      editorWrap: false,
+      showIntro: true,
       currentModuleView: null,
       currentDocSection: 'basics',
       editorCode: `void setup() {
@@ -204,6 +236,134 @@ void loop() {
 }</div>`
           }
         ]
+      },
+      analog: {
+        title: 'Analog İşlemler',
+        icon: '🎚️',
+        color: 'from-green-500 to-emerald-600',
+        topics: [
+          {
+            title: 'analogRead() ve Ölçekleme',
+            description: '0–1023 aralığında sensör okuma',
+            content: `
+              <p class="mb-4">A0–A5 pinlerinden 10-bit ADC değerleri okunur.</p>
+              <div class="doc-code-block mb-4">int deger = analogRead(A0);</div>
+              <p class="text-slate-300">map(), constrain() ile değer aralığı dönüştürülebilir.</p>`
+          },
+          {
+            title: 'analogWrite() (PWM)',
+            description: 'LED parlaklığı / motor hızı kontrolü',
+            content: `
+              <p class="mb-4">PWM 0–255 aralığında darbe genişliği ayarıdır.</p>
+              <div class="doc-code-block mb-4">analogWrite(9, 128);</div>
+              <p class="text-slate-300">PWM yalnızca belirli dijital pinlerde vardır.</p>`
+          }
+        ]
+      },
+      serial: {
+        title: 'Seri Haberleşme',
+        icon: '🔌',
+        color: 'from-purple-500 to-pink-600',
+        topics: [
+          {
+            title: 'Serial.begin ve println',
+            description: 'PC ile veri alışverişi',
+            content: `
+              <p class="mb-4">Debug ve telemetri için seri haberleşme kullanılır.</p>
+              <div class="doc-code-block mb-4">Serial.begin(9600);<br>Serial.println("Merhaba");</div>
+              <p class="text-slate-300">Baud hızını Seri Monitör ile eşleştirin.</p>`
+          },
+          {
+            title: 'Protokol Tasarımı',
+            description: 'Satır sonu ve ayırıcılar',
+            content: `
+              <p class="mb-4">Veriyi güvenli ayrıştırmak için tutarlı bir format kullanın.</p>
+              <div class="doc-code-block mb-4">Örnek: S:512,T:23.4\\n</div>`
+          }
+        ]
+      },
+      interrupts: {
+        title: 'Kesme (Interrupt)',
+        icon: '⏱️',
+        color: 'from-red-500 to-orange-600',
+        topics: [
+          {
+            title: 'attachInterrupt Temelleri',
+            description: 'Dış tetikleyiciye hızlı tepki',
+            content: `
+              <p class="mb-4">RISING/FALLING/CHANGE modları ile pin olayları yakalanır.</p>
+              <div class="doc-code-block mb-4">attachInterrupt(digitalPinToInterrupt(2), isr, RISING);</div>`
+          },
+          {
+            title: 'Debounce ve Güvenlik',
+            description: 'Zıplama etkisini azaltma',
+            content: `
+              <p class="mb-4">Kesmede kısa işlem yapın, bayrak kurup loop içinde işleyin.</p>
+              <div class="doc-code-block mb-4">volatile bool tetik = false;</div>`
+          }
+        ]
+      },
+      timing: {
+        title: 'Zamanlama',
+        icon: '⏲️',
+        color: 'from-slate-500 to-slate-700',
+        topics: [
+          {
+            title: 'delay vs millis',
+            description: 'Engelleyici ve engelleyici olmayan yaklaşım',
+            content: `
+              <p class="mb-4">delay() akışı durdurur; millis() ile işlerin aynı anda sürdürülmesi sağlanır.</p>
+              <div class="doc-code-block mb-4">unsigned long t=0; if(millis()-t>1000){ t=millis(); }</div>`
+          },
+          {
+            title: 'Basit Görev Zamanlayıcı',
+            description: 'Çoklu işlerin planlanması',
+            content: `
+              <p class="mb-4">millis() ile LED yanıp sönme ve sensör okuma birlikte yönetilir.</p>`
+          }
+        ]
+      },
+      libraries: {
+        title: 'Kütüphaneler',
+        icon: '📦',
+        color: 'from-indigo-500 to-indigo-700',
+        topics: [
+          {
+            title: 'Servo',
+            description: 'Açı kontrolü',
+            content: `
+              <p class="mb-4">Servo.h ile 0–180° arası konumlandırma.</p>
+              <div class="doc-code-block mb-4">#include &lt;Servo.h&gt; • servo.attach(9) • servo.write(90)</div>`
+          },
+          {
+            title: 'Wire (I2C)',
+            description: 'Sensörlerle iletişim',
+            content: `
+              <p class="mb-4">Adres ve register mantığı ile veri okuma/yazma.</p>
+              <div class="doc-code-block mb-4">SDA/SCL doğru bağlanmalı, gerekirse pull-up direnç.</div>`
+          }
+        ]
+      },
+      best: {
+        title: 'İyi Uygulamalar',
+        icon: '✅',
+        color: 'from-teal-500 to-teal-700',
+        topics: [
+          {
+            title: 'Kod Düzeni',
+            description: 'Okunabilirlik ve bakım',
+            content: `
+              <p class="mb-4">Fonksiyonları küçük tutun; sabitleri const ile belirtin.</p>
+              <div class="doc-code-block mb-4">const int LED_PIN = 13;</div>`
+          },
+          {
+            title: 'Güç ve Güvenlik',
+            description: 'Donanım koruma',
+            content: `
+              <p class="mb-4">LED için akım sınırlama direnci; motorlar için ayrı besleme ve sürücü.</p>
+              <div class="doc-code-block mb-4">LED ile 220Ω, motor için L298N vb.</div>`
+          }
+        ]
       }
     };
     
@@ -245,6 +405,23 @@ void loop() {
           { id: 'button-led', title: 'Buton ile LED Kontrolü', duration: '15 dk' }
         ]
       }
+    ];
+
+    const videoLessons = [
+      { id: 'getting-started', title: 'Arduino Başlangıç: Kurulum ve Blink', duration: '12 dk', url: 'https://www.youtube.com/results?search_query=arduino+blink+turkce', topic: 'Temeller' },
+      { id: 'digital-write', title: 'digitalWrite ile LED Kontrol', duration: '10 dk', url: 'https://www.youtube.com/results?search_query=digitalWrite+arduino+turkce', topic: 'Dijital' },
+      { id: 'button', title: 'Buton Okuma ve Pull-down', duration: '14 dk', url: 'https://www.youtube.com/results?search_query=arduino+buton+pull+down+turkce', topic: 'Dijital' },
+      { id: 'analog', title: 'AnalogRead ve Potansiyometre', duration: '15 dk', url: 'https://www.youtube.com/results?search_query=arduino+analogRead+potansiyometre+turkce', topic: 'Analog' },
+      { id: 'servo', title: 'Servo Motor Kontrolü', duration: '13 dk', url: 'https://www.youtube.com/results?search_query=arduino+servo+turkce', topic: 'Servo' },
+      { id: 'motor', title: 'PWM ve DC Motor', duration: '16 dk', url: 'https://www.youtube.com/results?search_query=arduino+pwm+dc+motor+turkce', topic: 'PWM' }
+    ];
+
+    const learningPath = [
+      { id: 'step-1', title: 'Kurulum ve Blink', docKey: 'basics', videoId: 'getting-started' },
+      { id: 'step-2', title: 'Dijital Çıkış: LED', docKey: 'digital', videoId: 'digital-write' },
+      { id: 'step-3', title: 'Dijital Giriş: Buton', docKey: 'digital', videoId: 'button' },
+      { id: 'step-4', title: 'Analog Giriş: Potansiyometre', docKey: 'basics', videoId: 'analog' },
+      { id: 'step-5', title: 'Servo ve Basit Proje', docKey: 'basics', videoId: 'servo' }
     ];
 
     const codeExamples = {
@@ -457,11 +634,18 @@ void loop() {
     }
 
     function navigateTo(page) {
-      appState.currentPage = page;
-      if (page !== 'editor' && appState.simulationRunning) {
-        stopSimulation();
+      const change = () => {
+        appState.currentPage = page;
+        if (page !== 'editor' && appState.simulationRunning) {
+          stopSimulation();
+        }
+        renderApp();
+      };
+      if (document.startViewTransition) {
+        document.startViewTransition(change);
+      } else {
+        change();
       }
-      renderApp();
     }
 
     function addActivity(text, icon, color) {
@@ -645,6 +829,56 @@ void loop() {
       stopSimulation();
       renderApp();
     }
+    
+    function saveEditorCode() {
+      try {
+        localStorage.setItem('ardumind_code', appState.editorCode);
+        showToast('Kod kaydedildi 📝', 'success');
+      } catch (e) {
+        showToast('Kaydetme başarısız!', 'error');
+      }
+    }
+    
+    function loadSavedEditorCode() {
+      const saved = localStorage.getItem('ardumind_code');
+      if (saved !== null) {
+        appState.editorCode = saved;
+        stopSimulation();
+        renderApp();
+        showToast('Kayıtlı kod yüklendi 📂', 'info');
+      } else {
+        showToast('Kayıtlı kod bulunamadı', 'error');
+      }
+    }
+    
+    function copyEditorCode() {
+      if (navigator.clipboard && window.isSecureContext !== false) {
+        navigator.clipboard.writeText(appState.editorCode)
+          .then(() => showToast('Kod panoya kopyalandı 📋', 'success'))
+          .catch(() => showToast('Kopyalama başarısız!', 'error'));
+      } else {
+        showToast('Kopyalama desteklenmiyor', 'error');
+      }
+    }
+    
+    function toggleEditorWrap() {
+      appState.editorWrap = !appState.editorWrap;
+      renderApp();
+    }
+    
+    function handleEditorKeydown(e) {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const el = document.getElementById('codeEditor');
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const before = el.value.substring(0, start);
+        const after = el.value.substring(end);
+        el.value = before + '  ' + after;
+        el.selectionStart = el.selectionEnd = start + 2;
+        appState.editorCode = el.value;
+      }
+    }
 
     function parseArduinoCode(code) {
       const lines = code.split('\n');
@@ -677,8 +911,70 @@ void loop() {
         if (delayMatch) {
           commands.push({ type: 'delay', ms: parseInt(delayMatch[1]) });
         }
+        
+        const digitalReadAssign = line.match(/^int\s+(\w+)\s*=\s*digitalRead\s*\(\s*(\d+)\s*\)\s*;?/);
+        if (digitalReadAssign) {
+          commands.push({ type: 'digitalReadAssign', varName: digitalReadAssign[1], pin: parseInt(digitalReadAssign[2]) });
+        }
       }
       
+      return commands;
+    }
+    
+    function parseConditionalWrites(lines) {
+      const commands = [];
+      const varPinMap = {};
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const assignMatch = line.match(/^int\s+(\w+)\s*=\s*digitalRead\s*\(\s*(\d+)\s*\)\s*;?/);
+        if (assignMatch) {
+          varPinMap[assignMatch[1]] = parseInt(assignMatch[2]);
+          continue;
+        }
+        const ifMatch = line.match(/^if\s*\(\s*(\w+)\s*==\s*(HIGH|LOW)\s*\)\s*\{/);
+        if (ifMatch) {
+          const varName = ifMatch[1];
+          const trueWhenHigh = ifMatch[2] === 'HIGH';
+          let j = i + 1;
+          let braceDepth = 1;
+          let pinIf = null, valIf = null;
+          for (; j < lines.length; j++) {
+            const l = lines[j].trim();
+            if (l.includes('{')) braceDepth++;
+            if (l.includes('}')) {
+              braceDepth--;
+              if (braceDepth === 0) { j++; break; }
+            } else {
+              const dw = l.match(/digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
+              if (dw && pinIf === null) { pinIf = parseInt(dw[1]); valIf = dw[2]; }
+            }
+          }
+          let pinElse = null, valElse = null;
+          if (j < lines.length && lines[j] && lines[j].trim().startsWith('else')) {
+            let k = j + 1;
+            braceDepth = 0;
+            if (lines[k] && lines[k].includes('{')) { braceDepth = 1; k++; }
+            for (; k < lines.length; k++) {
+              const l = lines[k].trim();
+              if (l.includes('{')) braceDepth++;
+              if (l.includes('}')) {
+                braceDepth--;
+                if (braceDepth === 0) { break; }
+              } else {
+                const dw = l.match(/digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
+                if (dw && pinElse === null) { pinElse = parseInt(dw[1]); valElse = dw[2]; }
+              }
+            }
+          }
+          const targetPin = pinIf ?? pinElse;
+          const condPin = varPinMap[varName];
+          if (targetPin != null && condPin != null) {
+            const trueValue = trueWhenHigh ? valIf : valElse;
+            const falseValue = trueWhenHigh ? valElse : valIf;
+            commands.push({ type: 'conditionalWrite', conditionPin: condPin, targetPin, trueValue, falseValue });
+          }
+        }
+      }
       return commands;
     }
 
@@ -809,7 +1105,13 @@ void loop() {
         });
         
         let commandIndex = 0;
-        const loopParsed = parseArduinoCode(loopCommands.join('\n'));
+        const loopText = loopCommands.join('\n');
+        let loopParsed = parseArduinoCode(loopText);
+        const condWrites = parseConditionalWrites(loopCommands);
+        if (condWrites.length > 0) {
+          loopParsed = loopParsed.filter(c => c.type !== 'digitalWrite');
+          loopParsed = condWrites.concat(loopParsed);
+        }
         
         function executeNextCommand() {
           if (!appState.simulationRunning) return;
@@ -829,6 +1131,14 @@ void loop() {
           } else if (cmd.type === 'servoWrite') {
             appState.servoStates[9] = cmd.angle;
             appState.serialOutput.push({ type: 'info', text: `Servo Açı: ${cmd.angle}°` });
+          } else if (cmd.type === 'digitalReadAssign') {
+            const val = appState.buttonStates[cmd.pin] ? 'HIGH' : 'LOW';
+            appState.serialOutput.push({ type: 'info', text: `Read Pin ${cmd.pin}: ${val}` });
+          } else if (cmd.type === 'conditionalWrite') {
+            const pressed = !!appState.buttonStates[cmd.conditionPin];
+            const value = pressed ? cmd.trueValue : cmd.falseValue;
+            appState.ledStates[cmd.targetPin] = value;
+            appState.serialOutput.push({ type: 'info', text: `Buton ${cmd.conditionPin}: ${pressed ? 'HIGH' : 'LOW'} → Pin ${cmd.targetPin}: ${value}` });
           }
           
           updateSimulationDisplay();
@@ -836,7 +1146,7 @@ void loop() {
           commandIndex++;
           
           const nextCmd = loopParsed[commandIndex];
-          const delay = (nextCmd && nextCmd.type === 'delay') ? nextCmd.ms : 100;
+          const delay = (nextCmd && nextCmd.type === 'delay') ? nextCmd.ms : 150;
           
           if (nextCmd && nextCmd.type === 'delay') {
             commandIndex++;
@@ -915,17 +1225,15 @@ void loop() {
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
               <div class="flex items-center space-x-2 cursor-pointer" onclick="navigateTo('home')">
-                <svg class="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M12 1v6m0 6v10M1 12h6m6 0h10"/>
-                  <circle cx="12" cy="12" r="10"/>
-                </svg>
-                <span class="text-xl font-bold">ArduMind</span>
+                <img src="images/logo.png" alt="ArduMind" class="w-9 h-9 rounded-xl object-contain shadow-md" />
+                <span class="text-xl font-bold tracking-tight">ArduMind</span>
               </div>
               <div class="hidden md:flex items-center space-x-8">
                 <a href="#" onclick="navigateTo('home')" class="text-slate-200 hover:text-white transition-colors">Keşfet</a>
                 <a href="#" onclick="navigateTo('components')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'components' ? 'text-blue-400' : ''}">Elemanlar</a>
                 <a href="#" onclick="navigateTo('docs')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
+                <a href="#" onclick="navigateTo('videos')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
+                <a href="#" onclick="navigateTo('path')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
                 <a href="#" onclick="navigateTo('quiz')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
                 <a href="#" onclick="navigateTo('about')" class="text-slate-200 hover:text-white transition-colors ${appState.currentPage === 'about' ? 'text-blue-400' : ''}">Proje Hakkında</a>
                 ${appState.currentUser ? `
@@ -951,6 +1259,102 @@ void loop() {
             </div>
           </div>
         </nav>
+      `;
+    }
+
+    function renderIntro() {
+      return `
+        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-blue-900 overflow-hidden">
+          <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_#22d3ee_0,_transparent_55%),radial-gradient(circle_at_bottom,_#3b82f6_0,_transparent_55%)] animate-[introBackground_1.2s_ease-out_forwards]"></div>
+          <div class="relative z-10 text-center px-6 max-w-xl animate-[introZoom_0.9s_ease-out_forwards]">
+            <div class="inline-flex items-center justify-center mb-6">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 bg-opacity-70 flex items-center justify-center border border-blue-500 border-opacity-40 shadow-xl mr-3">
+                <img src="images/logo.png" alt="ArduMind" class="w-12 h-12 object-contain" />
+              </div>
+              <div class="text-left">
+                <div class="text-sm uppercase tracking-[0.35em] text-slate-400">Arduino Studio</div>
+                <div class="text-3xl font-extrabold tracking-tight">ArduMind</div>
+              </div>
+            </div>
+            <p class="text-slate-300 text-lg mb-6">Arduino kodunu sadece yazmak değil, hissetmek için sinematik bir öğrenme deneyimi.</p>
+            <button onclick="appState.showIntro = false; renderApp();" class="px-10 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-semibold tracking-wide shadow-2xl shadow-blue-500/40 transition transform hover:scale-105">Başla</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderVideos() {
+      const topics = Array.from(new Set(videoLessons.map(v => v.topic)));
+      const list = appState.currentVideoFilter ? videoLessons.filter(v => v.topic === appState.currentVideoFilter) : videoLessons;
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Videolu Eğitim 🎬</h1>
+            <p class="text-slate-400">Konulara göre seçilmiş video dersler</p>
+          </div>
+          
+          <div class="flex flex-wrap gap-2 mb-6">
+            <button onclick="appState.currentVideoFilter=''; renderApp();" class="px-4 py-2 rounded-full text-sm ${appState.currentVideoFilter === '' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}">Tümü</button>
+            ${topics.map(t => `
+              <button onclick="appState.currentVideoFilter='${t}'; renderApp();" class="px-4 py-2 rounded-full text-sm ${appState.currentVideoFilter === t ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}">${t}</button>
+            `).join('')}
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            ${list.map(v => `
+              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 h-32 flex items-center justify-center">
+                  <svg class="w-12 h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <div class="p-6">
+                  <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-bold">${v.title}</h3>
+                    <span class="text-xs bg-slate-700 px-2 py-1 rounded">${v.duration}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 text-sm">${v.topic}</span>
+                    <a href="${v.url}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">İzle</a>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLearningPath() {
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Öğrenme Yolu 🧭</h1>
+            <p class="text-slate-400">Adım adım ilerle ve her adımda doküman ile videoya git</p>
+          </div>
+          
+          <div class="space-y-6">
+            ${learningPath.map((step, index) => {
+              const v = videoLessons.find(v => v.id === step.videoId);
+              return `
+                <div class="bg-slate-800 rounded-2xl p-6">
+                  <div class="flex items-center space-x-4 mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold">${index + 1}</div>
+                    <h3 class="text-xl font-bold">${step.title}</h3>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <button onclick="appState.currentDocSection='${step.docKey}'; navigateTo('docs');" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium">Dokümantasyon</button>
+                    ${v ? `<a href="${v.url}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Video</a>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
       `;
     }
 
@@ -1211,10 +1615,14 @@ void loop() {
                 <button onclick="runSimulation()" class="px-4 py-1 rounded-lg font-medium ${appState.simulationRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-all text-sm">
                   ${appState.simulationRunning ? 'Durdur' : 'Çalıştır'}
                 </button>
+                <button onclick="saveEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Kaydet</button>
+                <button onclick="loadSavedEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Yükle</button>
+                <button onclick="copyEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Kopyala</button>
+                <button onclick="toggleEditorWrap()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">${appState.editorWrap ? 'Satır Kırmayı Kapat' : 'Satır Kırmayı Aç'}</button>
               </div>
             </div>
             <div class="flex-1 overflow-auto bg-slate-900 p-4">
-              <textarea id="codeEditor" class="code-input w-full h-full bg-transparent text-slate-100 resize-none focus:outline-none" oninput="appState.editorCode = this.value">${appState.editorCode}</textarea>
+              <textarea id="codeEditor" class="code-input w-full h-full bg-transparent text-slate-100 resize-none focus:outline-none ${appState.editorWrap ? 'whitespace-pre-wrap' : 'whitespace-pre'}" oninput="appState.editorCode = this.value" onkeydown="handleEditorKeydown(event)">${appState.editorCode}</textarea>
             </div>
           </div>
 
@@ -1992,6 +2400,12 @@ void loop() {
           case 'components':
             content = renderComponents();
             break;
+          case 'videos':
+            content = renderVideos();
+            break;
+          case 'path':
+            content = renderLearningPath();
+            break;
           case 'quiz':
             content = renderQuiz();
             break;
@@ -2006,7 +2420,7 @@ void loop() {
         }
       }
       
-      document.getElementById('app').innerHTML = content + (appState.showAuthModal ? renderAuthModal() : '');
+      document.getElementById('app').innerHTML = content + (appState.showAuthModal ? renderAuthModal() : '') + (appState.showIntro ? renderIntro() : '');
       
       if (appState.currentPage === 'editor') {
         setTimeout(() => {
@@ -2020,6 +2434,12 @@ void loop() {
 
     // ==================== INITIALIZATION ====================
     renderApp();
+    setTimeout(() => {
+      if (appState.showIntro) {
+        appState.showIntro = false;
+        renderApp();
+      }
+    }, 2800);
   </script>
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9af09f37e3c45267',t:'MTc2NTkxMzcwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
