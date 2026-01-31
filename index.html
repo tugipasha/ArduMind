@@ -1,0 +1,3093 @@
+<!doctype html>
+<html lang="tr" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArduMind - Arduino'yu Anlayarak Öğren</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- CodeMirror for Professional Editor -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js"></script>
+
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes clickEffect {
+      0% { transform: scale(1); opacity: 0.5; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    
+    /* CodeMirror Custom Styles */
+    .CodeMirror {
+      height: 100% !important;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 14px;
+      background: transparent !important;
+    }
+    .cm-s-dracula.CodeMirror {
+      background-color: transparent !important;
+    }
+    .CodeMirror-gutters {
+      background-color: #1e293b !important;
+      border-right: 1px solid #334155 !important;
+    }
+    .CodeMirror-linenumber {
+      color: #64748b !important;
+    }
+    .CodeMirror-activeline-background {
+      background: rgba(51, 65, 85, 0.3) !important;
+    }
+
+    textarea.code-input {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      tab-size: 2;
+      resize: none;
+    }
+    
+    .doc-code-block {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      border: 1px solid #334155;
+    }
+    
+    .keyword { color: #c792ea; font-weight: 500; }
+    .function { color: #82aaff; }
+    .number { color: #f78c6c; }
+    .string { color: #c3e88d; }
+    .comment { color: #546e7a; font-style: italic; }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-slate-900 text-slate-100">
+  <div id="app" class="h-full w-full overflow-auto"></div>
+  <script>
+    // ==================== STATE MANAGEMENT ====================
+    const savedUsers = JSON.parse(localStorage.getItem('ardumind_users') || '[]');
+    const savedCurrentUser = JSON.parse(localStorage.getItem('ardumind_current_user') || 'null');
+    const savedCode = localStorage.getItem('ardumind_editor_code');
+
+    let appState = {
+      currentUser: savedCurrentUser,
+      users: savedUsers,
+      showAuthModal: false,
+      authMode: 'login',
+      currentPage: savedCurrentUser ? 'dashboard' : 'home',
+      currentVideoFilter: '',
+      editorWrap: false,
+      editorInstance: null,
+      showIntro: false,
+      currentModuleView: null,
+      currentDocSection: 'basics',
+      editorCode: savedCode || `void setup() {
+  pinMode(13, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(13, HIGH);
+  delay(1000);
+  digitalWrite(13, LOW);
+  delay(1000);
+}`,
+      simulationRunning: false,
+      simulationInterval: null,
+      ledStates: {},
+      motorStates: {},
+      displayMotorStates: {}, // Görselleştirme için yumuşatılmış hız
+      motorAngles: {},        // Sürekli dönüş için açı takibi
+      lastUpdate: Date.now(),
+      servoStates: {},
+      potValue: 512, // 0-1023
+      hcsr04Distance: 100, // 0-400 cm
+      buttonStates: { 2: false },
+      serialInitialized: false,
+      serialOutput: [],
+      userSerialOutput: [], // Sadece kullanıcının Serial.print çıktıları
+      currentQuiz: null,
+      quizAnswers: {},
+      quizCompleted: false,
+      quizScore: 0
+    };
+
+    function updateAnimations() {
+      const now = Date.now();
+      const dt = (now - appState.lastUpdate) / 1000; // Saniye cinsinden fark
+      appState.lastUpdate = now;
+
+      let changed = false;
+
+      // DC Motor Yumuşatma ve Dönüş Takibi
+      Object.keys(appState.motorStates).forEach(pin => {
+        const targetSpeed = appState.motorStates[pin] || 0;
+        const currentSpeed = appState.displayMotorStates[pin] || 0;
+        
+        // Hız yumuşatma (Lerp)
+        if (Math.abs(targetSpeed - currentSpeed) > 0.1) {
+          appState.displayMotorStates[pin] = currentSpeed + (targetSpeed - currentSpeed) * 0.1;
+          changed = true;
+        } else {
+          appState.displayMotorStates[pin] = targetSpeed;
+        }
+
+        // Açı güncelleme (Dönüş)
+        const speedFactor = appState.displayMotorStates[pin] / 255;
+        if (speedFactor > 0) {
+          const rotationSpeed = 720 * speedFactor; // Saniyede derece (720 = 2 tur/sn max)
+          appState.motorAngles[pin] = ((appState.motorAngles[pin] || 0) + rotationSpeed * dt) % 360;
+          changed = true;
+        }
+      });
+
+      if (changed && appState.simulationRunning) {
+        updateSimulationDisplay();
+      }
+
+      requestAnimationFrame(updateAnimations);
+    }
+    updateAnimations();
+
+    function saveAppState() {
+      localStorage.setItem('ardumind_users', JSON.stringify(appState.users));
+      localStorage.setItem('ardumind_current_user', JSON.stringify(appState.currentUser));
+      localStorage.setItem('ardumind_editor_code', appState.editorCode);
+    }
+
+    // ==================== DATA STRUCTURES ====================
+    const documentation = {
+      basics: {
+        title: 'Arduino Temelleri',
+        icon: '',
+        color: 'from-blue-500 to-blue-700',
+        topics: [
+          {
+            title: 'setup() ve loop() Fonksiyonları',
+            description: 'Her Arduino programının temel yapı taşları',
+            content: `
+              <p class="mb-4">Arduino programları iki ana fonksiyondan oluşur. Bu fonksiyonlar programın iskeletini oluşturur ve biri olmadan diğeri çalışamaz.</p>
+              
+              <h4 class="font-bold text-lg mb-2 text-blue-400">setup() Fonksiyonu</h4>
+              <p class="mb-3">Bu fonksiyon, Arduino'ya güç verildiğinde veya resetlendiğinde <b>sadece bir kez</b> çalışır. Genellikle pin modlarını ayarlamak, seri haberleşmeyi başlatmak veya kütüphaneleri ilklendirmek için kullanılır.</p>
+              
+              <div class="doc-code-block mb-4">
+<span class="keyword">void</span> <span class="function">setup</span>() {
+  <span class="function">pinMode</span>(<span class="number">13</span>, OUTPUT);    <span class="comment">// 13. pini çıkış yap</span>
+  <span class="keyword">Serial</span>.<span class="function">begin</span>(<span class="number">9600</span>);   <span class="comment">// Haberleşmeyi başlat</span>
+}</div>
+
+              <h4 class="font-bold text-lg mb-2 text-blue-400">loop() Fonksiyonu</h4>
+              <p class="mb-3">setup() fonksiyonu tamamlandıktan hemen sonra çalışmaya başlar ve Arduino açık olduğu sürece <b>sonsuz bir döngü</b> içinde tekrar eder. Ana program mantığı burada yer alır.</p>
+              
+              <div class="doc-code-block mb-4">
+<span class="keyword">void</span> <span class="function">loop</span>() {
+  <span class="function">digitalWrite</span>(<span class="number">13</span>, HIGH); <span class="comment">// LED'i yak</span>
+  <span class="function">delay</span>(<span class="number">1000</span>);          <span class="comment">// 1 saniye bekle</span>
+  <span class="function">digitalWrite</span>(<span class="number">13</span>, LOW);  <span class="comment">// LED'i söndür</span>
+  <span class="function">delay</span>(<span class="number">1000</span>);          <span class="comment">// 1 saniye bekle</span>
+}</div>`
+          },
+          {
+            title: 'Değişkenler ve Veri Tipleri',
+            description: 'Verileri saklama ve yönetme',
+            content: `
+              <p class="mb-4">Program içerisinde sayıları, metinleri veya durumları saklamak için değişkenler kullanılır.</p>
+              <ul class="list-disc ml-6 mb-4 space-y-2">
+                <li><b>int:</b> Tam sayılar için kullanılır (-32,768 ile 32,767 arası).</li>
+                <li><b>float:</b> Ondalıklı sayılar için kullanılır (Örn: 23.45).</li>
+                <li><b>bool:</b> Sadece true (doğru) veya false (yanlış) değerini alır.</li>
+                <li><b>char:</b> Tek bir karakter saklar (Örn: 'A').</li>
+                <li><b>String:</b> Metin dizileri için kullanılır (Örn: "ArduMind").</li>
+              </ul>
+              <div class="doc-code-block mb-4">
+<span class="keyword">int</span> ledPin = <span class="number">13</span>;
+<span class="keyword">float</span> sicaklik = <span class="number">25.5</span>;
+<span class="keyword">bool</span> butonBasili = <span class="keyword">false</span>;</div>`
+          }
+        ]
+      },
+      digital: {
+        title: 'Dijital Pin Kontrol',
+        icon: '',
+        color: 'from-yellow-500 to-orange-600',
+        topics: [
+          {
+            title: 'pinMode() - Yapılandırma',
+            description: 'Pinleri giriş veya çıkış olarak ayarlama',
+            content: `
+              <p class="mb-4">Her dijital pin, kullanım amacına göre <b>INPUT</b> (Giriş) veya <b>OUTPUT</b> (Çıkış) olarak ayarlanmalıdır.</p>
+              
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">OUTPUT Modu</h4>
+              <p class="mb-3">Arduino'dan dışarıya akım göndermek için kullanılır (LED yakmak, motor çalıştırmak vb.).</p>
+              
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">INPUT Modu</h4>
+              <p class="mb-3">Dışarıdan gelen voltajı okumak için kullanılır (Buton okumak, sensör verisi almak vb.).</p>
+
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">INPUT_PULLUP Modu</h4>
+              <p class="mb-3">Dahili direnci aktif ederek butonu harici dirençsiz kullanmanızı sağlar. Buton basıldığında 0 (LOW) döner.</p>`
+          },
+          {
+            title: 'digitalWrite() ve digitalRead()',
+            description: 'Pinlere yazma ve pinlerden okuma',
+            content: `
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalWrite(pin, deger)</h4>
+              <p class="mb-3">Bir pine 5V (HIGH) veya 0V (LOW) gönderir.</p>
+              <div class="doc-code-block mb-4">digitalWrite(13, HIGH); <span class="comment">// 5V ver</span></div>
+
+              <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalRead(pin)</h4>
+              <p class="mb-3">Bir pindeki voltajın HIGH (5V) mı yoksa LOW (0V) mu olduğunu okur.</p>
+              <div class="doc-code-block mb-4">int durum = digitalRead(2); <span class="comment">// Pin 2'yi oku</span></div>`
+          }
+        ]
+      },
+      analog: {
+        title: 'Analog İşlemler',
+        icon: '',
+        color: 'from-green-500 to-emerald-600',
+        topics: [
+          {
+            title: 'analogRead() ve ADC Mantığı',
+            description: 'Değişken voltajları dijital veriye dönüştürme',
+            content: `
+              <p class="mb-4">Arduino Uno'da bulunan Analog-Dijital Dönüştürücü (ADC), 0V ile 5V arasındaki voltajı <b>0 ile 1023</b> arasında bir sayıya dönüştürür.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">int</span> sensorDegeri = <span class="function">analogRead</span>(A0);</div>
+              <p class="mt-4 text-slate-300">Örneğin: 2.5V okunursa, fonksiyon yaklaşık 512 değerini döndürür.</p>`
+          },
+          {
+            title: 'PWM (analogWrite) ve Dimming',
+            description: 'Sinyal genişlik modülasyonu ile güç kontrolü',
+            content: `
+              <p class="mb-4">Arduino tam bir analog çıkış veremez, ancak <b>PWM (Pulse Width Modulation)</b> tekniği ile bunu taklit eder. Sinyali çok hızlı açıp kapatarak ortalama voltajı değiştirir.</p>
+              <ul class="list-disc ml-6 mb-4 space-y-2">
+                <li><b>0:</b> Her zaman KAPALI (0V)</li>
+                <li><b>127:</b> %50 AÇIK - %50 KAPALI (Ortalama 2.5V)</li>
+                <li><b>255:</b> Her zaman AÇIK (5V)</li>
+              </ul>
+              <div class="doc-code-block mb-4">
+<span class="function">analogWrite</span>(<span class="number">9</span>, <span class="number">128</span>); <span class="comment">// LED'i %50 parlaklıkta yak</span></div>`
+          },
+          {
+            title: 'map() Fonksiyonu',
+            description: 'Değer aralıklarını dönüştürme',
+            content: `
+              <p class="mb-4">Bir aralıktaki değeri başka bir aralığa oranlamak için kullanılır. En yaygın kullanımı 0-1023 (analog giriş) değerini 0-255 (PWM çıkış) aralığına çekmektir.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">int</span> parlaklik = <span class="function">map</span>(sensorDegeri, <span class="number">0</span>, <span class="number">1023</span>, <span class="number">0</span>, <span class="number">255</span>);</div>`
+          }
+        ]
+      },
+      serial: {
+        title: 'Seri Haberleşme',
+        icon: '',
+        color: 'from-purple-500 to-pink-600',
+        topics: [
+          {
+            title: 'Serial.begin ve println',
+            description: 'PC ile veri alışverişi',
+            content: `
+              <p class="mb-4">Debug ve telemetri için seri haberleşme kullanılır. Arduino, USB kablosu üzerinden bilgisayarınıza metin gönderebilir.</p>
+              <div class="doc-code-block mb-4">Serial.begin(9600);<br>Serial.println("Hata Ayıklama Başladı...");</div>
+              <p class="text-slate-300"><b>Önemli:</b> Baud hızını (9600) Seri Monitör ekranı ile aynı yapmalısınız.</p>`
+          },
+          {
+            title: 'Serial.available() ve Read()',
+            description: 'Bilgisayardan veri alma',
+            content: `
+              <p class="mb-4">Bilgisayardan Arduino'ya komut göndermek için kullanılır.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">if</span> (<span class="keyword">Serial</span>.<span class="function">available</span>() > <span class="number">0</span>) {
+  <span class="keyword">char</span> gelenVeri = <span class="keyword">Serial</span>.<span class="function">read</span>();
+}</div>`
+          }
+        ]
+      },
+      interrupts: {
+        title: 'Kesme (Interrupt)',
+        icon: '',
+        color: 'from-red-500 to-orange-600',
+        topics: [
+          {
+            title: 'attachInterrupt Temelleri',
+            description: 'Dış tetikleyiciye hızlı tepki',
+            content: `
+              <p class="mb-4">Interrupt'lar (Kesmeler), ana program ne yaparsa yapsın, önemli bir olay olduğunda (bir butona basılması gibi) programı durdurup özel bir fonksiyonu çalıştırır.</p>
+              <div class="doc-code-block mb-4">attachInterrupt(digitalPinToInterrupt(2), isr, RISING);</div>
+              <p class="text-slate-300"><b>RISING:</b> Voltaj 0'dan 5V'a çıktığında tetiklenir.</p>`
+          }
+        ]
+      },
+      timing: {
+        title: 'Zamanlama',
+        icon: '',
+        color: 'from-slate-500 to-slate-700',
+        topics: [
+          {
+            title: 'delay vs millis',
+            description: 'Engelleyici olmayan yaklaşım',
+            content: `
+              <p class="mb-4"><b>delay():</b> Arduino'yu tamamen durdurur. Bu sırada hiçbir sensör okunamaz.</p>
+              <p class="mb-4"><b>millis():</b> Arduino açıldığından beri geçen milisaniyeyi döndürür. Zamanlayıcılar oluşturmak için idealdir.</p>
+              <div class="doc-code-block mb-4">
+<span class="keyword">unsigned long</span> suAnkiZaman = <span class="function">millis</span>();</div>`
+          }
+        ]
+      },
+      libraries: {
+        title: 'Kütüphaneler ve Protokoller',
+        icon: '',
+        color: 'from-indigo-500 to-indigo-700',
+        topics: [
+          {
+            title: 'Servo Kütüphanesi',
+            description: 'Açı kontrolü',
+            content: `
+              <p class="mb-4">Servo motorları kolayca kontrol etmek için kullanılır. 0 ile 180 derece arası hassas kontrol sağlar.</p>
+              <div class="doc-code-block mb-4">
+<span class="directive">#include</span> &lt;<span class="string">Servo.h</span>&gt;
+<span class="keyword">Servo</span> motor;
+motor.<span class="function">attach</span>(<span class="number">9</span>);
+motor.<span class="function">write</span>(<span class="number">90</span>);</div>`
+          },
+          {
+            title: 'I2C Protokolü (Wire)',
+            description: 'İki kablo ile haberleşme',
+            content: `
+              <p class="mb-4">LCD ekranlar, ivmeölçerler ve birçok sensör I2C kullanır. Sadece <b>SDA</b> ve <b>SCL</b> pinleri üzerinden onlarca cihazla konuşabilirsiniz.</p>
+              <div class="doc-code-block mb-4">
+<span class="directive">#include</span> &lt;<span class="string">Wire.h</span>&gt;
+<span class="keyword">Wire</span>.<span class="function">begin</span>(); <span class="comment">// Master olarak başlat</span></div>`
+          },
+          {
+            title: 'SPI Protokolü',
+            description: 'Yüksek hızlı haberleşme',
+            content: `
+              <p class="mb-4">SD kart modülleri ve RFID okuyucular gibi yüksek hız gerektiren donanımlar için kullanılır.</p>
+              <ul class="list-disc ml-6 space-y-1">
+                <li><b>MOSI:</b> Veri çıkışı</li>
+                <li><b>MISO:</b> Veri girişi</li>
+                <li><b>SCK:</b> Saat sinyali</li>
+              </ul>`
+          }
+        ]
+      },
+      best: {
+        title: 'İyi Uygulamalar',
+        icon: '',
+        color: 'from-teal-500 to-teal-700',
+        topics: [
+          {
+            title: 'Temiz Kod Prensipleri',
+            description: 'Okunabilirlik ve bakım',
+            content: `
+              <p class="mb-4">Kodunuzun başkaları tarafından anlaşılması için şu kurallara uyun:</p>
+              <ul class="list-disc ml-6 space-y-2">
+                <li>Anlamlı değişken isimleri seçin (Örn: <code>int x</code> yerine <code>int sensorDegeri</code>).</li>
+                <li>Bol bol yorum satırı ekleyin.</li>
+                <li>Sık kullanılan işlemleri fonksiyonlara bölün.</li>
+              </ul>`
+          }
+        ]
+      }
+    };
+    
+    const modules = [
+      {
+        id: 'arduino-basics',
+        title: 'Arduino Temelleri',
+        description: 'Digital Pin Kullanımı',
+        icon: '',
+        color: 'from-blue-500 to-purple-600',
+        xpReward: 100,
+        lessons: [
+          { id: 'setup-loop', title: 'setup() ve loop() Fonksiyonları', duration: '10 dk' },
+          { id: 'pinmode', title: 'pinMode() ile Pin Yapılandırma', duration: '15 dk' },
+          { id: 'digitalwrite', title: 'digitalWrite() Kullanımı', duration: '12 dk' }
+        ]
+      },
+      {
+        id: 'led-projects',
+        title: 'LED Kontrol Projeleri',
+        description: 'Yanıp Sönen LED',
+        icon: '',
+        color: 'from-green-500 to-emerald-600',
+        xpReward: 150,
+        lessons: [
+          { id: 'blink', title: 'LED Yakıp Söndürme', duration: '8 dk' },
+          { id: 'multiple-leds', title: 'Çoklu LED Kontrolü', duration: '15 dk' }
+        ]
+      },
+      {
+        id: 'button-control',
+        title: 'Buton ve Sensörler',
+        description: 'Dijital Giriş İşlemleri',
+        icon: '',
+        color: 'from-orange-500 to-red-600',
+        xpReward: 120,
+        lessons: [
+          { id: 'button-read', title: 'Buton Okuma Temelleri', duration: '12 dk' },
+          { id: 'button-led', title: 'Buton ile LED Kontrolü', duration: '15 dk' }
+        ]
+      }
+    ];
+
+    const videoLessons = [
+      { id: 'getting-started', title: 'Arduino Başlangıç: Kurulum ve Blink', duration: '12 dk', url: 'https://www.youtube.com/results?search_query=arduino+blink+turkce', topic: 'Temeller' },
+      { id: 'digital-write', title: 'digitalWrite ile LED Kontrol', duration: '10 dk', url: 'https://www.youtube.com/results?search_query=digitalWrite+arduino+turkce', topic: 'Dijital' },
+      { id: 'button', title: 'Buton Okuma ve Pull-down', duration: '14 dk', url: 'https://www.youtube.com/results?search_query=arduino+buton+pull+down+turkce', topic: 'Dijital' },
+      { id: 'analog', title: 'AnalogRead ve Potansiyometre', duration: '15 dk', url: 'https://www.youtube.com/results?search_query=arduino+analogRead+potansiyometre+turkce', topic: 'Analog' },
+      { id: 'servo', title: 'Servo Motor Kontrolü', duration: '13 dk', url: 'https://www.youtube.com/results?search_query=arduino+servo+turkce', topic: 'Servo' },
+      { id: 'motor', title: 'PWM ve DC Motor', duration: '16 dk', url: 'https://www.youtube.com/results?search_query=arduino+pwm+dc+motor+turkce', topic: 'PWM' }
+    ];
+
+    const learningPath = [
+      { 
+        id: 'step-1', 
+        title: 'Kurulum ve Blink', 
+        description: 'Arduino dünyasına ilk adım! Yazılımı kuracağız ve dahili LED\'i yakıp söndüreceğiz.',
+        docKey: 'basics', 
+        videoId: 'getting-started',
+        quizId: 'basics',
+        algorithm: 'BAŞLA -> Pin 13 Çıkış Yap -> DÖNGÜ: LED Yak -> 1sn Bekle -> LED Söndür -> 1sn Bekle -> DÖNGÜ BAŞI',
+        circuit: 'Arduino Uno -> USB Kablosu -> Dahili LED (Pin 13)'
+      },
+      { 
+        id: 'step-2', 
+        title: 'Dijital Çıkış: LED', 
+        description: 'Harici bir LED bağlayarak direnç kullanımını ve dijital sinyalleri öğreneceğiz.',
+        docKey: 'digital', 
+        videoId: 'digital-write',
+        quizId: 'digital',
+        algorithm: 'BAŞLA -> Pin 9 Çıkış Yap -> DÖNGÜ: Pin 9 HIGH -> Bekle -> Pin 9 LOW -> Bekle -> DÖNGÜ BAŞI',
+        circuit: 'Arduino Pin 9 -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND'
+      },
+      { 
+        id: 'step-3', 
+        title: 'Dijital Giriş: Buton', 
+        description: 'Butonlar ile dış dünyadan veri almayı ve karar yapılarını (if-else) keşfedeceğiz.',
+        docKey: 'digital', 
+        videoId: 'button',
+        quizId: 'digital',
+        algorithm: 'BAŞLA -> Pin 2 Giriş, Pin 13 Çıkış -> DÖNGÜ: Pin 2 OKU -> EĞER Basılıysa LED Yak DEĞİLSE Söndür -> DÖNGÜ BAŞI',
+        circuit: '5V -> Buton -> Pin 2 (10k Pull-down direnç ile GND\'ye bağlı)'
+      },
+      { 
+        id: 'step-4', 
+        title: 'Analog Giriş: Potansiyometre', 
+        description: 'Sıfır ve birin ötesine geçiyoruz! Değişken voltaj değerlerini okuyacağız.',
+        docKey: 'basics', 
+        videoId: 'analog',
+        quizId: 'analog',
+        algorithm: 'BAŞLA -> Pin A0 Analog Giriş -> DÖNGÜ: A0 OKU -> Değeri Seri Porta Yaz -> Bekle -> DÖNGÜ BAŞI',
+        circuit: 'Potansiyometre: Sol Pin (GND), Orta Pin (A0), Sağ Pin (5V)'
+      },
+      { 
+        id: 'step-5', 
+        title: 'Servo ve Hareket', 
+        description: 'Harekete geçme vakti! Servo motoru istediğimiz açıya döndüreceğiz.',
+        docKey: 'basics', 
+        videoId: 'servo',
+        quizId: 'servo',
+        algorithm: 'BAŞLA -> Servo Kütüphanesi Ekle -> Pin 9 Servo Seç -> DÖNGÜ: 0 Dereceye Git -> Bekle -> 180 Dereceye Git -> Bekle',
+        circuit: 'Servo: Kahverengi (GND), Kırmızı (5V), Turuncu (Pin 9)'
+      },
+      { 
+        id: 'step-6', 
+        title: 'PWM ve LED Parlaklığı', 
+        description: 'LED\'lerin parlaklığını kademeli olarak değiştirmeyi (Dimming) öğreneceğiz.',
+        docKey: 'analog', 
+        videoId: 'motor',
+        quizId: 'analog',
+        algorithm: 'BAŞLA -> Pin 9 (PWM) Çıkış -> DÖNGÜ: 0\'dan 255\'e kadar PARLAKLIK ARTTIR -> Bekle -> 255\'ten 0\'a PARLAKLIK AZALT',
+        circuit: 'Arduino Pin 9 (PWM) -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND'
+      },
+      { 
+        id: 'step-7', 
+        title: 'Seri Haberleşme', 
+        description: 'Arduino ile bilgisayar arasında veri alışverişi yaparak sensör değerlerini ekranda göreceğiz.',
+        docKey: 'basics', 
+        videoId: 'getting-started',
+        quizId: 'serial',
+        algorithm: 'BAŞLA -> Seri Haberleşme Başlat (9600 baud) -> DÖNGÜ: "Merhaba Dünya" Yaz -> 1sn Bekle',
+        circuit: 'Arduino -> USB Kablosu -> Bilgisayar (Seri Port Ekranı)'
+      },
+      { 
+        id: 'step-8', 
+        title: 'Mesafe Sensörü (HC-SR04)', 
+        description: 'Ses dalgalarıyla engel tespiti yapmayı öğreneceğiz.',
+        docKey: 'basics', 
+        videoId: 'ultrasonic',
+        quizId: 'sensors',
+        algorithm: 'BAŞLA -> Trig Pin Çıkış, Echo Pin Giriş -> DÖNGÜ: Sinyal Gönder -> Süre Ölç -> Mesafeye Çevir -> Seri Porta Yaz',
+        circuit: 'Trig: Pin 12, Echo: Pin 11, VCC: 5V, GND: GND'
+      }
+    ];
+
+    const codeExamples = {
+      blink: {
+        name: "Yanıp Sönen LED",
+        code: `void setup() {\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(1000);\n  digitalWrite(13, LOW);\n  delay(1000);\n}`
+      },
+      button: {
+        name: "Buton Kontrolü",
+        code: `void setup() {\n  pinMode(13, OUTPUT);\n  pinMode(2, INPUT);\n}\n\nvoid loop() {\n  int buttonState = digitalRead(2);\n  if (buttonState == HIGH) {\n    digitalWrite(13, HIGH);\n  } else {\n    digitalWrite(13, LOW);\n  }\n}`
+      },
+      motor: {
+        name: "Motor Kontrolü",
+        code: `void setup() {\n  pinMode(9, OUTPUT);\n  pinMode(8, OUTPUT);\n  pinMode(7, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(8, HIGH);\n  digitalWrite(7, LOW);\n  analogWrite(9, 191);\n  delay(2000);\n  analogWrite(9, 0);\n  delay(1000);\n}`
+      },
+      servo: {
+        name: "Servo Motor",
+        code: `#include <Servo.h>\nServo servo;\n\nvoid setup() {\n  servo.attach(9);\n}\n\nvoid loop() {\n  servo.write(0);\n  delay(1000);\n  servo.write(90);\n  delay(1000);\n  servo.write(180);\n  delay(1000);\n}`
+      },
+      potentiometer: {
+        name: "Potansiyometre ve LED",
+        code: `void setup() {\n  pinMode(9, OUTPUT);\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  int deger = analogRead(A0);\n  int parlaklik = map(deger, 0, 1023, 0, 255);\n  analogWrite(9, parlaklik);\n  Serial.print("Pot: ");\n  Serial.print(deger);\n  Serial.print(" -> Parlaklik: ");\n  Serial.println(parlaklik);\n  delay(50);\n}`
+      },
+      ultrasonic: {
+        name: "HC-SR04 Mesafe Sensörü",
+        code: `void setup() {\n  pinMode(12, OUTPUT); // Trig\n  pinMode(11, INPUT);  // Echo\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  digitalWrite(12, LOW);\n  delayMicroseconds(2);\n  digitalWrite(12, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(12, LOW);\n\n  long sure = pulseIn(11, HIGH);\n  int mesafe = (sure * 0.034) / 2;\n\n  Serial.print("Mesafe: ");\n  Serial.print(mesafe);\n  Serial.println(" cm");\n  \n  if (mesafe < 20) {\n    digitalWrite(13, HIGH);\n  } else {\n    digitalWrite(13, LOW);\n  }\n  delay(200);\n}`
+      }
+    };
+
+    const quizzes = [
+      {
+        id: 'basics',
+        title: 'Arduino Temelleri',
+        description: 'setup(), loop() ve temel kavramlar',
+        difficulty: 'Kolay',
+        icon: '',
+        color: 'from-blue-500 to-blue-700',
+        xpReward: 50,
+        questions: [
+          {
+            id: 1,
+            question: 'Arduino programında setup() fonksiyonu kaç kez çalışır?',
+            options: ['Her loop döngüsünde', 'Sadece bir kez', 'İki kez', 'Hiç çalışmaz'],
+            correct: 1,
+            explanation: 'setup() fonksiyonu program başladığında sadece bir kez çalışır ve başlangıç ayarlarını yapar.'
+          },
+          {
+            id: 2,
+            question: 'loop() fonksiyonu ne zaman çalışır?',
+            options: ['Sadece başlangıçta', 'Setup\'tan sonra sürekli tekrar eder', 'Manuel olarak çağırılınca', 'Hiç çalışmaz'],
+            correct: 1,
+            explanation: 'loop() fonksiyonu setup() bittikten sonra sürekli olarak tekrar eder. Bu Arduino\'nun ana çalışma prensibidir.'
+          },
+          {
+            id: 3,
+            question: 'pinMode(13, OUTPUT) komutu ne işe yarar?',
+            options: ['13 numaralı pini okur', '13 numaralı pini çıkış olarak ayarlar', '13 numaralı pini siler', 'LED yakar'],
+            correct: 1,
+            explanation: 'pinMode() fonksiyonu bir pini INPUT (giriş) veya OUTPUT (çıkış) olarak yapılandırır.'
+          }
+        ]
+      },
+      {
+        id: 'digital',
+        title: 'Dijital Pin Kontrolü',
+        description: 'digitalWrite, digitalRead kullanımı',
+        difficulty: 'Kolay',
+        icon: '',
+        color: 'from-yellow-500 to-orange-600',
+        xpReward: 75,
+        questions: [
+          {
+            id: 1,
+            question: 'digitalWrite(13, HIGH) komutu ne yapar?',
+            options: ['13 numaralı pini kapatır', '13 numaralı pini açar (5V)', 'Pin 13\'ü okur', 'Hiçbir şey yapmaz'],
+            correct: 1,
+            explanation: 'digitalWrite(pin, HIGH) komutu belirtilen pine 5V voltaj uygular, LED gibi cihazları açmak için kullanılır.'
+          },
+          {
+            id: 2,
+            question: 'LED yakmak için hangi komut kullanılır?',
+            options: ['analogWrite()', 'digitalRead()', 'digitalWrite()', 'pinMode()'],
+            correct: 2,
+            explanation: 'digitalWrite() komutu dijital pinleri HIGH veya LOW yapmak için kullanılır. LED yakmak için HIGH değeri kullanılır.'
+          },
+          {
+            id: 3,
+            question: 'delay(1000) komutu ne işe yarar?',
+            options: ['1 saniye bekler', '1 milisaniye bekler', '1000 saniye bekler', 'Programı durdurur'],
+            correct: 0,
+            explanation: 'delay() fonksiyonu milisaniye cinsinden bekleme yapar. delay(1000) = 1 saniye bekler.'
+          },
+          {
+            id: 4,
+            question: 'Buton durumunu okumak için hangi komut kullanılır?',
+            options: ['digitalWrite()', 'pinMode()', 'digitalRead()', 'analogRead()'],
+            correct: 2,
+            explanation: 'digitalRead() fonksiyonu dijital pinlerin durumunu (HIGH veya LOW) okumak için kullanılır.'
+          }
+        ]
+      },
+      {
+        id: 'analog',
+        title: 'Analog Dünyası',
+        description: 'analogRead, analogWrite ve Sensörler',
+        difficulty: 'Orta',
+        icon: '',
+        color: 'from-green-500 to-emerald-600',
+        xpReward: 100,
+        questions: [
+          {
+            id: 1,
+            question: 'analogRead() fonksiyonu hangi değer aralığında sonuç döndürür?',
+            options: ['0 - 1', '0 - 255', '0 - 1023', '0 - 5000'],
+            correct: 2,
+            explanation: 'Arduino\'nun 10-bit ADC\'si sayesinde analogRead() 0 ile 1023 arasında bir değer döndürür.'
+          },
+          {
+            id: 2,
+            question: 'PWM sinyali oluşturmak için hangi fonksiyon kullanılır?',
+            options: ['analogRead()', 'digitalWrite()', 'analogWrite()', 'pwmWrite()'],
+            correct: 2,
+            explanation: 'analogWrite() fonksiyonu PWM destekleyen pinlerde analog benzeri bir çıkış (0-255) oluşturmak için kullanılır.'
+          },
+          {
+            id: 3,
+            question: 'Potansiyometre Arduino\'nun hangi pinlerine bağlanmalıdır?',
+            options: ['Dijital Pinler', 'Analog Pinler (A0-A5)', 'Sadece GND ve 5V', 'Seri Port Pinleri'],
+            correct: 1,
+            explanation: 'Potansiyometre gibi değişken voltaj üreten elemanlar analog giriş (A0-A5) pinlerine bağlanır.'
+          }
+        ]
+      },
+      {
+        id: 'servo',
+        title: 'Hareket ve Servolar',
+        description: 'Servo kütüphanesi ve açı kontrolü',
+        difficulty: 'Orta',
+        icon: '',
+        color: 'from-purple-500 to-indigo-600',
+        xpReward: 120,
+        questions: [
+          {
+            id: 1,
+            question: 'Servo motoru kontrol etmek için hangi kütüphane eklenmelidir?',
+            options: ['#include <Motor.h>', '#include <Servo.h>', '#include <Wire.h>', '#include <SPI.h>'],
+            correct: 1,
+            explanation: 'Arduino\'da standart servo motorları kontrol etmek için Servo.h kütüphanesi kullanılır.'
+          },
+          {
+            id: 2,
+            question: 'servo.write(90) komutu ne yapar?',
+            options: ['Motoru 90 hızında döndürür', 'Motoru 90 derece açısına getirir', 'Motoru 90 saniye çalıştırır', '90 numaralı pini açar'],
+            correct: 1,
+            explanation: 'write() fonksiyonu servo motoru belirtilen dereceye (0-180 arası) konumlandırır.'
+          },
+          {
+            id: 3,
+            question: 'Servo motorun turuncu kablosu genellikle nereye bağlanır?',
+            options: ['GND', '5V', 'Sinyal (PWM) Pini', 'Vin'],
+            correct: 2,
+            explanation: 'Servolarda genellikle Kahverengi/Siyah: GND, Kırmızı: 5V, Turuncu/Sarı: Sinyal pinidir.'
+          }
+        ]
+      },
+      {
+        id: 'serial',
+        title: 'Seri Haberleşme',
+        description: 'Bilgisayar ile veri alışverişi',
+        difficulty: 'Kolay',
+        icon: '',
+        color: 'from-orange-500 to-red-600',
+        xpReward: 80,
+        questions: [
+          {
+            id: 1,
+            question: 'Seri haberleşmeyi başlatmak için setup() içinde hangi komut kullanılır?',
+            options: ['Serial.begin(9600)', 'Serial.start()', 'Serial.open()', 'Serial.init()'],
+            correct: 0,
+            explanation: 'Serial.begin(baudrate) komutu seri haberleşmeyi belirtilen hızda başlatır.'
+          },
+          {
+            id: 2,
+            question: 'Ekrana bir satır yazı yazıp alt satıra geçmek için hangi komut kullanılır?',
+            options: ['Serial.print()', 'Serial.write()', 'Serial.println()', 'Serial.send()'],
+            correct: 2,
+            explanation: 'println() komutu veriyi yazar ve ardından yeni bir satıra geçer.'
+          }
+        ]
+      },
+      {
+        id: 'sensors',
+        title: 'Sensör Teknolojileri',
+        description: 'Mesafe, sıcaklık ve ışık sensörleri',
+        difficulty: 'Zor',
+        icon: '',
+        color: 'from-pink-500 to-rose-600',
+        xpReward: 150,
+        questions: [
+          {
+            id: 1,
+            question: 'HC-SR04 mesafe sensörü hangi prensiple çalışır?',
+            options: ['Lazer', 'Kızılötesi', 'Ultrasonik (Ses)', 'Radyo Dalgaları'],
+            correct: 2,
+            explanation: 'HC-SR04 ses dalgaları gönderip yankısını alarak mesafe ölçer (Ultrasonik).'
+          },
+          {
+            id: 2,
+            question: 'LDR (Işığa Bağımlı Direnç) karanlıkta nasıl bir direnç gösterir?',
+            options: ['Düşük Direnç', 'Yüksek Direnç', 'Direnç Göstermez', 'Sabit Direnç'],
+            correct: 1,
+            explanation: 'LDR\'nin direnci üzerindeki ışık miktarı azaldıkça (karanlıkta) artar.'
+          }
+        ]
+      }
+    ];
+
+    // ==================== HELPER FUNCTIONS ====================
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      const colors = {
+        success: '#10B981',
+        error: '#EF4444',
+        info: '#3B82F6'
+      };
+      
+      toast.innerHTML = message;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: ${colors[type]};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function navigateTo(page) {
+      const change = () => {
+        appState.currentPage = page;
+        if (page !== 'editor' && appState.simulationRunning) {
+          stopSimulation();
+        }
+        renderApp();
+      };
+      if (document.startViewTransition) {
+        document.startViewTransition(change);
+      } else {
+        change();
+      }
+    }
+
+    function addActivity(text, icon, color) {
+      if (!appState.currentUser) return;
+      
+      appState.currentUser.activities.unshift({
+        text,
+        icon,
+        color,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (appState.currentUser.activities.length > 20) {
+        appState.currentUser.activities = appState.currentUser.activities.slice(0, 20);
+      }
+      saveAppState();
+    }
+
+    function addXP(amount, reason) {
+      if (!appState.currentUser) return;
+      
+      appState.currentUser.xp += amount;
+      
+      const today = new Date().toISOString().split('T')[0];
+      if (!appState.currentUser.dailyXP) appState.currentUser.dailyXP = {};
+      appState.currentUser.dailyXP[today] = (appState.currentUser.dailyXP[today] || 0) + amount;
+      
+      addActivity(`${amount} XP kazandın! ${reason}`, '', 'blue');
+      showToast(`+${amount} XP kazandın!`, 'success');
+      saveAppState();
+    }
+
+    function getWeeklyProgress() {
+      if (!appState.currentUser || !appState.currentUser.dailyXP) return [0, 0, 0, 0, 0, 0, 0];
+      
+      const today = new Date();
+      const progress = [];
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const xp = appState.currentUser.dailyXP[dateStr] || 0;
+        progress.push(xp);
+      }
+      
+      return progress;
+    }
+
+    function getModuleProgress(moduleId) {
+      if (!appState.currentUser) return 0;
+      const completed = appState.currentUser.completedModules.find(m => m.moduleId === moduleId);
+      return completed ? 100 : 0;
+    }
+
+    // ==================== AUTH FUNCTIONS ====================
+    function handleLogin(email, password) {
+      const user = appState.users.find(u => u.email === email && u.password === password);
+      
+      if (user) {
+        appState.currentUser = user;
+        appState.showAuthModal = false;
+        appState.currentPage = 'dashboard';
+        saveAppState();
+        renderApp();
+        showToast('Başarıyla giriş yaptınız!', 'success');
+      } else {
+        showToast('E-posta veya şifre hatalı!', 'error');
+      }
+    }
+
+    function handleRegister(name, email, password, level, goal) {
+      if (appState.users.find(u => u.email === email)) {
+        showToast('Bu e-posta adresi zaten kayıtlı!', 'error');
+        return;
+      }
+
+      const newUser = {
+        id: Date.now().toString(),
+        name,
+        email,
+        password,
+        level,
+        goal,
+        xp: 0,
+        completedModules: [],
+        activities: [],
+        badges: [],
+        dailyXP: {},
+        createdAt: new Date().toISOString()
+      };
+
+      appState.users.push(newUser);
+      appState.currentUser = newUser;
+      appState.showAuthModal = false;
+      appState.currentPage = 'dashboard';
+      saveAppState();
+      renderApp();
+      showToast('Hoş geldin! Arduino serüvenine başlayalım', 'success');
+    }
+
+    function logout() {
+      appState.currentUser = null;
+      appState.currentPage = 'home';
+      saveAppState();
+      renderApp();
+    }
+
+    // ==================== QUIZ FUNCTIONS ====================
+    function startQuiz(quizId) {
+      appState.currentQuiz = quizId;
+      appState.quizAnswers = {};
+      appState.quizCompleted = false;
+      appState.quizScore = 0;
+      renderApp();
+    }
+
+    function selectAnswer(questionId, answerIndex) {
+      appState.quizAnswers[questionId] = answerIndex;
+      renderApp();
+    }
+
+    function submitQuiz() {
+      const quiz = quizzes.find(q => q.id === appState.currentQuiz);
+      if (!quiz) return;
+      
+      let correctCount = 0;
+      quiz.questions.forEach(question => {
+        if (appState.quizAnswers[question.id] === question.correct) {
+          correctCount++;
+        }
+      });
+      
+      appState.quizScore = correctCount;
+      appState.quizCompleted = true;
+      
+      if (appState.currentUser) {
+        const percentage = (correctCount / quiz.questions.length) * 100;
+        if (percentage >= 70) {
+          const xpEarned = Math.floor(quiz.xpReward * (percentage / 100));
+          addXP(xpEarned, `"${quiz.title}" testi tamamlandı`);
+          addActivity(`"${quiz.title}" testini tamamladın! %${percentage.toFixed(0)} başarı`, '', 'green');
+        }
+      }
+      
+      renderApp();
+    }
+
+    function resetQuiz() {
+      appState.currentQuiz = null;
+      appState.quizAnswers = {};
+      appState.quizCompleted = false;
+      appState.quizScore = 0;
+      renderApp();
+    }
+
+    // ==================== MODULE FUNCTIONS ====================
+    function completeModule(moduleId) {
+      if (!appState.currentUser) return;
+      
+      const module = modules.find(m => m.id === moduleId);
+      if (!module) return;
+      
+      const alreadyCompleted = appState.currentUser.completedModules.some(m => m.moduleId === moduleId);
+      if (alreadyCompleted) {
+        showToast('Bu modülü zaten tamamladın!', 'info');
+        return;
+      }
+      
+      appState.currentUser.completedModules.push({
+        moduleId,
+        completedAt: new Date().toISOString(),
+        xpEarned: module.xpReward
+      });
+      
+      addXP(module.xpReward, `"${module.title}" tamamlandı`);
+      addActivity(`"${module.title}" modülünü tamamladın!`, '', 'green');
+      
+      appState.currentModuleView = null;
+      renderApp();
+    }
+
+    // ==================== EDITOR FUNCTIONS ====================
+    function loadExample(exampleKey) {
+      if (codeExamples[exampleKey]) {
+        appState.editorCode = codeExamples[exampleKey].code;
+        if (appState.editorInstance) {
+          appState.editorInstance.setValue(appState.editorCode);
+        }
+        stopSimulation();
+        renderApp();
+      }
+    }
+    
+    function saveEditorCode() {
+      try {
+        saveAppState();
+        showToast('Kodunuz basariyla kaydedildi!', 'success');
+      } catch (e) {
+        showToast('Gecerli kodu kaydetme islemi gerceklestirilemedi. Sorun ', 'error');
+      }
+    }
+    
+    function loadSavedEditorCode() {
+      const saved = localStorage.getItem('ardumind_editor_code');
+      if (saved !== null) {
+        appState.editorCode = saved;
+        if (appState.editorInstance) {
+          appState.editorInstance.setValue(appState.editorCode);
+        }
+        stopSimulation();
+        renderApp();
+        showToast('Kayıtlı kod yüklendi', 'info');
+      } else {
+        showToast('Kayıtlı kod bulunamadı', 'error');
+      }
+    }
+    
+    function copyEditorCode() {
+      if (navigator.clipboard && window.isSecureContext !== false) {
+        navigator.clipboard.writeText(appState.editorCode)
+          .then(() => showToast('Kod panoya kopyalandı', 'success'))
+          .catch(() => showToast('Kopyalama başarısız!', 'error'));
+      } else {
+        showToast('Kopyalama desteklenmiyor', 'error');
+      }
+    }
+    
+    function toggleEditorWrap() {
+      appState.editorWrap = !appState.editorWrap;
+      if (appState.editorInstance) {
+        appState.editorInstance.setOption('lineWrapping', appState.editorWrap);
+      }
+      renderApp();
+    }
+    
+    function handleEditorKeydown(e) {
+      // Artık CodeMirror kullanıyoruz, bu fonksiyona gerek kalmayabilir
+    }
+
+    function initEditor() {
+      const container = document.getElementById('editorContainer');
+      if (!container) return;
+
+      if (appState.editorInstance) {
+        // Eğer editör hala DOM içindeyse sadece yenile ve çık
+        if (document.body.contains(appState.editorInstance.getWrapperElement())) {
+          appState.editorInstance.refresh();
+          return;
+        }
+        // Eğer DOM'dan kopmuşsa (re-render), instance'ı temizle
+        appState.editorInstance = null;
+      }
+
+      appState.editorInstance = CodeMirror(container, {
+        value: appState.editorCode,
+        mode: 'text/x-c++src',
+        theme: 'dracula',
+        lineNumbers: true,
+        autoCloseBrackets: true,
+        styleActiveLine: true,
+        tabSize: 2,
+        indentUnit: 2,
+        lineWrapping: appState.editorWrap
+      });
+
+      appState.editorInstance.on('change', (cm) => {
+        appState.editorCode = cm.getValue();
+        saveAppState();
+      });
+
+      // Font boyutunu ve tipini CSS ile ayarladık ama burada da zorlayabiliriz
+      appState.editorInstance.refresh();
+    }
+
+    function parseArduinoCode(code) {
+      const lines = code.split('\n');
+      const commands = [];
+      
+      for (let line of lines) {
+        line = line.trim();
+        
+        const pinModeMatch = line.match(/pinMode\s*\(\s*(\d+)\s*,\s*(OUTPUT|INPUT)\s*\)/);
+        if (pinModeMatch) {
+          commands.push({ type: 'pinMode', pin: parseInt(pinModeMatch[1]), mode: pinModeMatch[2] });
+        }
+        
+        const digitalWriteMatch = line.match(/digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
+        if (digitalWriteMatch) {
+          commands.push({ type: 'digitalWrite', pin: parseInt(digitalWriteMatch[1]), value: digitalWriteMatch[2] });
+        }
+        
+        const analogWriteMatch = line.match(/analogWrite\s*\(\s*(\d+)\s*,\s*(\d+|\w+)\s*\)/);
+        if (analogWriteMatch) {
+          commands.push({ type: 'analogWrite', pin: parseInt(analogWriteMatch[1]), value: analogWriteMatch[2] });
+        }
+
+        const analogReadMatch = line.match(/(?:int\s+)?(\w+)\s*=\s*analogRead\s*\(\s*(A\d|\d+)\s*\)/);
+        if (analogReadMatch) {
+          commands.push({ type: 'analogRead', varName: analogReadMatch[1], pin: analogReadMatch[2] });
+        }
+
+        const pulseInMatch = line.match(/(?:long\s+)?(\w+)\s*=\s*pulseIn\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
+        if (pulseInMatch) {
+          commands.push({ type: 'pulseIn', varName: pulseInMatch[1], pin: parseInt(pulseInMatch[2]) });
+        }
+
+        const serialPrintlnMatch = line.match(/Serial\.println\s*\(\s*(.*)\s*\)/);
+        if (serialPrintlnMatch) {
+          commands.push({ type: 'serialPrintln', value: serialPrintlnMatch[1].trim() });
+        }
+
+        const serialPrintMatch = line.match(/Serial\.print\s*\(\s*(.*)\s*\)/);
+        if (serialPrintMatch && !line.includes('println')) {
+          commands.push({ type: 'serialPrintln', value: serialPrintMatch[1].trim() });
+        }
+
+        const serialBeginMatch = line.match(/Serial\.begin\s*\(\s*(\d+)\s*\)/);
+        if (serialBeginMatch) {
+          commands.push({ type: 'serialBegin', baud: parseInt(serialBeginMatch[1]) });
+        }
+        
+        const servoWriteMatch = line.match(/servo\.write\s*\(\s*(\d+)\s*\)/);
+        if (servoWriteMatch) {
+          commands.push({ type: 'servoWrite', angle: parseInt(servoWriteMatch[1]) });
+        }
+        
+        const delayMatch = line.match(/delay\s*\(\s*(\d+)\s*\)/);
+        if (delayMatch) {
+          commands.push({ type: 'delay', ms: parseInt(delayMatch[1]) });
+        }
+
+        const delayUsMatch = line.match(/delayMicroseconds\s*\(\s*(\d+)\s*\)/);
+        if (delayUsMatch) {
+          commands.push({ type: 'delay', ms: 1 }); // Simülasyonda mikro saniyeyi 1ms yapalım
+        }
+
+        const mapMatch = line.match(/(?:int\s+)?(\w+)\s*=\s*map\s*\(\s*([^,]+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+        if (mapMatch) {
+          commands.push({ 
+            type: 'map', 
+            varName: mapMatch[1], 
+            value: mapMatch[2].trim(),
+            inMin: mapMatch[3], 
+            inMax: mapMatch[4], 
+            outMin: mapMatch[5], 
+            outMax: mapMatch[6] 
+          });
+        }
+
+        // Basit matematiksel atamalar: int parlaklik = deger / 4;
+        const mathMatch = line.match(/(?:int\s+)?(\w+)\s*=\s*(\w+)\s*([\/\*\+\-])\s*(\d+)/);
+        if (mathMatch) {
+          commands.push({
+            type: 'math',
+            varName: mathMatch[1],
+            left: mathMatch[2],
+            op: mathMatch[3],
+            right: parseInt(mathMatch[4])
+          });
+        }
+        
+        const digitalReadAssign = line.match(/^int\s+(\w+)\s*=\s*digitalRead\s*\(\s*(\d+)\s*\)\s*;?/);
+        if (digitalReadAssign) {
+          commands.push({ type: 'digitalReadAssign', varName: digitalReadAssign[1], pin: parseInt(digitalReadAssign[2]) });
+        }
+      }
+      
+      return commands;
+    }
+    
+    function parseConditionalWrites(lines) {
+      const commands = [];
+      const varPinMap = {};
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const assignMatch = line.match(/^int\s+(\w+)\s*=\s*digitalRead\s*\(\s*(\d+)\s*\)\s*;?/);
+        if (assignMatch) {
+          varPinMap[assignMatch[1]] = parseInt(assignMatch[2]);
+          continue;
+        }
+        const ifMatch = line.match(/^if\s*\(\s*(\w+)\s*==\s*(HIGH|LOW)\s*\)\s*\{/);
+        if (ifMatch) {
+          const varName = ifMatch[1];
+          const trueWhenHigh = ifMatch[2] === 'HIGH';
+          let j = i + 1;
+          let braceDepth = 1;
+          let pinIf = null, valIf = null;
+          for (; j < lines.length; j++) {
+            const l = lines[j].trim();
+            if (l.includes('{')) braceDepth++;
+            if (l.includes('}')) {
+              braceDepth--;
+              if (braceDepth === 0) { j++; break; }
+            } else {
+              const dw = l.match(/digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
+              if (dw && pinIf === null) { pinIf = parseInt(dw[1]); valIf = dw[2]; }
+            }
+          }
+          let pinElse = null, valElse = null;
+          if (j < lines.length && lines[j] && lines[j].trim().startsWith('else')) {
+            let k = j + 1;
+            braceDepth = 0;
+            if (lines[k] && lines[k].includes('{')) { braceDepth = 1; k++; }
+            for (; k < lines.length; k++) {
+              const l = lines[k].trim();
+              if (l.includes('{')) braceDepth++;
+              if (l.includes('}')) {
+                braceDepth--;
+                if (braceDepth === 0) { break; }
+              } else {
+                const dw = l.match(/digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
+                if (dw && pinElse === null) { pinElse = parseInt(dw[1]); valElse = dw[2]; }
+              }
+            }
+          }
+          const targetPin = pinIf ?? pinElse;
+          const condPin = varPinMap[varName];
+          if (targetPin != null && condPin != null) {
+            const trueValue = trueWhenHigh ? valIf : valElse;
+            const falseValue = trueWhenHigh ? valElse : valIf;
+            commands.push({ type: 'conditionalWrite', conditionPin: condPin, targetPin, trueValue, falseValue });
+          }
+        }
+      }
+      return commands;
+    }
+
+    function updateSimulationDisplay() {
+      const arduinoBoard = document.getElementById('arduinoBoard');
+      const serialMonitor = document.getElementById('serialMonitor');
+      
+      if (arduinoBoard) {
+        arduinoBoard.innerHTML = renderArduinoBoard();
+      }
+      
+      if (serialMonitor) {
+        const scrollAtBottom = serialMonitor.scrollHeight - serialMonitor.scrollTop <= serialMonitor.clientHeight + 50;
+        
+        // Sadece kullanıcı çıktılarını gösterelim (Serial.print)
+        const displayLogs = appState.userSerialOutput.length > 0 ? appState.userSerialOutput : appState.serialOutput;
+        
+        serialMonitor.innerHTML = displayLogs.length === 0 
+          ? `<div class="text-slate-500 text-center py-8">Kodu çalıştırın...</div>` 
+          : displayLogs.map(output => `
+              <div class="mb-1 flex space-x-2">
+                <span class="text-slate-600 text-[10px] mt-1">${output.timestamp || ''}</span>
+                <span class="${output.type === 'error' ? 'text-red-400' : output.type === 'info' ? 'text-blue-400' : 'text-green-400'}">${output.text}</span>
+              </div>
+            `).join('');
+        
+        if (scrollAtBottom) {
+          serialMonitor.scrollTop = serialMonitor.scrollHeight;
+        }
+      }
+    }
+
+    function renderArduinoBoard() {
+      const hasServo = Object.keys(appState.servoStates).length > 0;
+      const hasMotor = Object.keys(appState.motorStates).length > 0;
+      
+      return `
+        <div class="grid grid-cols-4 sm:grid-cols-7 gap-3 mb-8">
+          ${[13, 11, 10, 9, 6, 5, 3].map(pin => {
+            const state = appState.ledStates[pin];
+            const isOn = state === 'HIGH' || (typeof state === 'number' && state > 0);
+            let intensity = 0;
+            if (typeof state === 'number') {
+              intensity = Math.min(Math.max(state / 255, 0), 1);
+            } else if (state === 'HIGH') {
+              intensity = 1;
+            }
+            
+            // Parlaklık etkisini daha belirgin hale getirelim
+            const glowSize = 5 + (intensity * 35);
+            const glowOpacity = 0.2 + (intensity * 0.8);
+            const ledOpacity = 0.3 + (intensity * 0.7);
+            
+            return `
+              <div class="text-center group">
+                <div 
+                  class="w-10 h-10 rounded-full mx-auto mb-2 transition-all duration-150 relative border-2 ${isOn ? 'bg-yellow-400 border-yellow-300' : 'bg-slate-700 border-slate-600'}"
+                  style="${isOn ? `box-shadow: 0 0 ${glowSize}px rgba(250,204,21,${glowOpacity}); opacity: ${ledOpacity}; transform: scale(${0.9 + intensity * 0.2});` : 'opacity: 0.4;'}"
+                >
+                  ${isOn ? `<div class="absolute inset-0 rounded-full animate-pulse bg-yellow-200 opacity-20"></div>` : ''}
+                </div>
+                <span class="text-[10px] font-bold ${isOn ? 'text-yellow-400' : 'text-slate-500'}">D${pin}${ [11, 10, 9, 6, 5, 3].includes(pin) ? '~' : '' }</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-6">
+            <!-- Potansiyometre -->
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                  <span class="text-sm font-semibold text-slate-200">Potansiyometre (A0)</span>
+                </div>
+                <span class="text-[10px] font-mono font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full border border-blue-400/20">${appState.potValue}</span>
+              </div>
+              <div class="relative px-1">
+                <input 
+                  type="range" min="0" max="1023" value="${appState.potValue}" 
+                  class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
+                  oninput="appState.potValue = parseInt(this.value); updateSimulationDisplay();"
+                >
+                <div class="flex justify-between mt-2 text-[9px] font-medium text-slate-500 uppercase tracking-wider">
+                  <span>0V</span>
+                  <span>5V</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- HC-SR04 Sensör -->
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                  <span class="text-sm font-semibold text-slate-200">Mesafe Sensörü</span>
+                </div>
+                <span class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">${appState.hcsr04Distance} cm</span>
+              </div>
+              <div class="relative px-1 py-2">
+                <input 
+                  type="range" min="2" max="400" value="${appState.hcsr04Distance}" 
+                  class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-all"
+                  oninput="appState.hcsr04Distance = parseInt(this.value); updateSimulationDisplay();"
+                >
+                <!-- Mesafe Görselleştirmesi -->
+                <div class="absolute -top-1 left-0 w-full flex items-center pointer-events-none" style="padding-left: ${(appState.hcsr04Distance/400)*100}%">
+                  <div class="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.6)] -ml-1.5 transition-all duration-200"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Butonlar -->
+            <div class="flex gap-4">
+              <button 
+                onclick="toggleButton(2)"
+                class="flex-1 group relative overflow-hidden py-3 px-4 rounded-2xl border transition-all duration-300 ${appState.buttonStates[2] ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 shadow-[0_0_20px_rgba(99,102,241,0.15)]' : 'bg-slate-800/40 border-slate-700/50 text-slate-400 hover:bg-slate-700/60'}"
+              >
+                <div class="relative z-10 flex items-center justify-center space-x-3">
+                  <div class="w-2 h-2 rounded-full transition-all duration-300 ${appState.buttonStates[2] ? 'bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)]' : 'bg-slate-600'}"></div>
+                  <span class="text-sm font-bold uppercase tracking-wide">Buton (Pin 2)</span>
+                </div>
+                ${appState.buttonStates[2] ? '<div class="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>' : ''}
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            ${hasMotor ? `
+              <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 backdrop-blur-sm shadow-xl">
+                <div class="flex items-center justify-between mb-6">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)] animate-pulse"></div>
+                    <span class="text-sm font-bold text-slate-200 tracking-wide uppercase">DC Motor Kontrolü</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  ${Object.entries(appState.motorStates).map(([pin, _]) => {
+                    const speed = Math.min((appState.displayMotorStates[pin] || 0) / 255, 1);
+                    const rpm = Math.round(speed * 12000);
+                    const angle = appState.motorAngles[pin] || 0;
+                    const isRunning = speed > 0.01;
+                    
+                    return `
+                      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-700/40 text-center transition-all duration-300 hover:border-amber-500/30 group">
+                        <div class="relative w-20 h-20 mx-auto mb-4">
+                          <!-- Motor Dış Kasa -->
+                          <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 border-2 border-slate-600 shadow-lg"></div>
+                          <!-- Motor Ön Kapak -->
+                          <div class="absolute inset-2 rounded-full bg-slate-800 border border-slate-700 shadow-inner flex items-center justify-center">
+                            <!-- Mil -->
+                            <div class="w-4 h-4 rounded-full bg-slate-600 border-2 border-slate-500 z-20"></div>
+                            
+                            <!-- Pervane (Minimal) -->
+                            <div 
+                              class="absolute inset-0 flex items-center justify-center" 
+                              style="transform: rotate(${angle}deg); filter: ${speed > 0.7 ? 'blur(1px)' : 'none'};"
+                            >
+                              <div class="w-[85%] h-1.5 bg-gradient-to-r from-transparent via-slate-400 to-transparent rounded-full opacity-90"></div>
+                              <div class="w-1.5 h-[85%] bg-gradient-to-b from-transparent via-slate-400 to-transparent rounded-full absolute opacity-90"></div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div class="space-y-1">
+                          <div class="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase">PİN ${pin}</div>
+                          <div class="flex items-center justify-center space-x-2">
+                            <div class="text-xl font-mono font-black ${isRunning ? 'text-amber-400' : 'text-slate-600'} transition-colors duration-300">
+                              ${rpm} <span class="text-[10px] text-slate-500">RPM</span>
+                            </div>
+                          </div>
+                          <!-- Hız Barı -->
+                          <div class="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
+                            <div class="h-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" style="width: ${speed * 100}%; transition: width 0.1s linear;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${hasServo ? `
+              <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 backdrop-blur-sm shadow-xl">
+                <div class="flex items-center justify-between mb-6">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)] animate-pulse"></div>
+                    <span class="text-sm font-bold text-slate-200 tracking-wide uppercase">Servo Kontrolü</span>
+                  </div>
+                </div>
+                <div class="space-y-6">
+                  ${Object.entries(appState.servoStates).map(([pin, angle]) => `
+                    <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/40 flex items-center space-x-8 transition-all duration-300 hover:border-rose-500/30">
+                      <div class="relative w-24 h-24 flex-shrink-0 group">
+                        <!-- Servo Alt Gövde -->
+                        <div class="absolute inset-x-2 bottom-0 h-16 bg-slate-800 rounded-lg border-2 border-slate-700 shadow-lg"></div>
+                        <!-- Servo Üst Kapak -->
+                        <div class="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-slate-700 rounded-full border-2 border-slate-600 shadow-md flex items-center justify-center">
+                          <div class="w-12 h-12 bg-slate-800 rounded-full border border-slate-700 shadow-inner"></div>
+                        </div>
+                        
+                        <!-- Horn (Minimal & Modern) -->
+                        <div 
+                          class="absolute top-1/2 left-1/2 w-1.5 h-20 bg-gradient-to-b from-slate-200 to-slate-400 origin-center transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) z-10 rounded-full shadow-md"
+                          style="transform: translate(-50%, -50%) rotate(${angle}deg);"
+                        >
+                          <div class="absolute top-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-slate-300 shadow-sm"></div>
+                          <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-slate-300 shadow-sm"></div>
+                        </div>
+                        
+                        <!-- Merkez Vidası -->
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-slate-600 rounded-full border-2 border-slate-500 z-20 shadow-lg flex items-center justify-center">
+                          <div class="w-1 h-3 bg-slate-400 rounded-full rotate-45"></div>
+                          <div class="w-1 h-3 bg-slate-400 rounded-full -rotate-45 absolute"></div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex-1 space-y-3">
+                        <div class="flex items-end justify-between">
+                          <div>
+                            <div class="text-[10px] font-black text-slate-500 tracking-[0.2em] uppercase mb-1">PİN ${pin} POZİSYON</div>
+                            <div class="text-4xl font-black text-rose-500 font-mono tracking-tighter leading-none">${angle}<span class="text-xl ml-1 text-rose-500/50">°</span></div>
+                          </div>
+                          <div class="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                            ${angle < 60 ? 'SOL' : angle > 120 ? 'SAĞ' : 'MERKEZ'}
+                          </div>
+                        </div>
+                        
+                        <!-- Açı Göstergesi -->
+                        <div class="relative pt-4">
+                          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                            <div class="h-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) shadow-[0_0_12px_rgba(244,63,94,0.4)]" style="width: ${(angle/180)*100}%"></div>
+                          </div>
+                          <div class="flex justify-between mt-2 text-[9px] font-black text-slate-600 tracking-widest">
+                            <span>0°</span>
+                            <span>90°</span>
+                            <span>180°</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function logToSerial(text, type = 'info', isUser = false) {
+      const log = { type, text, timestamp: new Date().toLocaleTimeString().split(' ')[0] };
+      appState.serialOutput.push(log);
+      if (isUser) {
+        appState.userSerialOutput.push(log);
+      }
+      updateSimulationDisplay();
+    }
+
+    function validateCode(code) {
+      if (!code || code.trim() === '') {
+        return { valid: false, message: 'Kod boş olamaz!' };
+      }
+      
+      if (!code.includes('void setup()')) {
+        return { valid: false, message: 'setup() fonksiyonu eksik!' };
+      }
+      
+      if (!code.includes('void loop()')) {
+        return { valid: false, message: 'loop() fonksiyonu eksik!' };
+      }
+      
+      // Temel parantez kontrolü
+      const openBraces = (code.match(/\{/g) || []).length;
+      const closeBraces = (code.match(/\}/g) || []).length;
+      if (openBraces !== closeBraces) {
+        return { valid: false, message: 'Eksik veya fazla süslü parantez { } hatası!' };
+      }
+      
+      return { valid: true };
+    }
+
+    function runSimulation() {
+      if (appState.simulationRunning) {
+        stopSimulation();
+        return;
+      }
+      
+      const validation = validateCode(appState.editorCode);
+      if (!validation.valid) {
+        showToast(validation.message, 'error');
+        appState.serialOutput = [{ type: 'error', text: validation.message }];
+        updateSimulationDisplay();
+        return;
+      }
+
+      appState.simulationRunning = true;
+      appState.ledStates = {};
+      appState.motorStates = {};
+      appState.displayMotorStates = {};
+      appState.motorAngles = {};
+      appState.servoStates = {};
+      appState.serialInitialized = false;
+      appState.serialOutput = [];
+      appState.userSerialOutput = [];
+      
+      try {
+        const commands = parseArduinoCode(appState.editorCode);
+        
+        if (commands.length === 0) {
+          logToSerial('Çalıştırılabilir komut bulunamadı!', 'error');
+          appState.simulationRunning = false;
+          return;
+        }
+        
+        logToSerial('Simülasyon başlatıldı...', 'info');
+        
+        const variables = {
+          'HIGH': 1,
+          'LOW': 0
+        };
+
+        commands.filter(c => c.type === 'pinMode').forEach(cmd => {
+          if (cmd.mode === 'OUTPUT') {
+            appState.ledStates[cmd.pin] = 'LOW';
+          }
+        });
+
+        // setup() içindeki Serial.begin ve diğer komutları çalıştır
+        let setupCommands = [];
+        let inSetup = false;
+        appState.editorCode.split('\n').forEach(line => {
+          if (line.includes('void setup()')) inSetup = true;
+          else if (inSetup && line.includes('}')) inSetup = false;
+          else if (inSetup) setupCommands.push(line);
+        });
+
+        const setupParsed = parseArduinoCode(setupCommands.join('\n'));
+        setupParsed.forEach(cmd => {
+          if (cmd.type === 'serialBegin') {
+            appState.serialInitialized = true;
+            logToSerial(`Seri haberleşme ${cmd.baud} baud hızında başlatıldı.`, 'info');
+          } else if (cmd.type === 'digitalWrite') {
+            appState.ledStates[cmd.pin] = cmd.value;
+          } else if (cmd.type === 'analogWrite') {
+            appState.ledStates[cmd.pin] = parseInt(cmd.value) || 0;
+          }
+        });
+        
+        let loopCommands = [];
+        let inLoop = false;
+        
+        appState.editorCode.split('\n').forEach(line => {
+          if (line.includes('void loop()')) inLoop = true;
+          else if (inLoop && line.includes('}')) inLoop = false;
+          else if (inLoop) loopCommands.push(line);
+        });
+        
+        let commandIndex = 0;
+        const loopText = loopCommands.join('\n');
+        let loopParsed = parseArduinoCode(loopText);
+        const condWrites = parseConditionalWrites(loopCommands);
+        if (condWrites.length > 0) {
+          loopParsed = loopParsed.filter(c => c.type !== 'digitalWrite');
+          loopParsed = condWrites.concat(loopParsed);
+        }
+        
+        function executeNextCommand() {
+          if (!appState.simulationRunning) return;
+          
+          if (commandIndex >= loopParsed.length) {
+            commandIndex = 0;
+          }
+          
+          const cmd = loopParsed[commandIndex];
+        if (!cmd) {
+          commandIndex = 0;
+          appState.simulationInterval = setTimeout(executeNextCommand, 20);
+          return;
+        }
+
+        if (cmd.type === 'map') {
+          let val = cmd.value;
+          if (variables[val] !== undefined) val = variables[val];
+          else val = parseInt(val) || 0;
+
+          const inMin = parseInt(cmd.inMin);
+          const inMax = parseInt(cmd.inMax);
+          const outMin = parseInt(cmd.outMin);
+          const outMax = parseInt(cmd.outMax);
+
+          const result = Math.round((val - inMin) * (outMax - outMin) / (inMax - inMin) + outMin);
+          variables[cmd.varName] = result;
+          logToSerial(`Map: ${val} -> ${result}`, 'info');
+        } else if (cmd.type === 'math') {
+          let leftVal = cmd.left;
+          if (variables[leftVal] !== undefined) leftVal = variables[leftVal];
+          else leftVal = parseInt(leftVal) || 0;
+
+          let result = 0;
+          switch (cmd.op) {
+            case '/': result = Math.round(leftVal / cmd.right); break;
+            case '*': result = leftVal * cmd.right; break;
+            case '+': result = leftVal + cmd.right; break;
+            case '-': result = leftVal - cmd.right; break;
+          }
+          variables[cmd.varName] = result;
+          logToSerial(`Math: ${cmd.varName} = ${leftVal} ${cmd.op} ${cmd.right} -> ${result}`, 'info');
+        } else if (cmd.type === 'digitalWrite') {
+            appState.ledStates[cmd.pin] = cmd.value;
+            logToSerial(`Pin ${cmd.pin}: ${cmd.value}`, 'info');
+          } else if (cmd.type === 'analogWrite') {
+            let val = cmd.value;
+            if (variables[val] !== undefined) val = variables[val];
+            else val = parseInt(val) || 0;
+            
+            appState.ledStates[cmd.pin] = val; // LED parlaklığı için kullanacağız
+            appState.motorStates[cmd.pin] = val;
+            logToSerial(`Analog Write Pin ${cmd.pin}: ${val}`, 'info');
+          } else if (cmd.type === 'analogRead') {
+            const val = appState.potValue;
+            variables[cmd.varName] = val;
+            logToSerial(`Analog Read Pin ${cmd.pin}: ${val}`, 'info');
+          } else if (cmd.type === 'pulseIn') {
+            // HC-SR04 Mesafe hesaplama: mesafe = (süre * 0.034) / 2
+            // Tersine: süre = (mesafe * 2) / 0.034
+            const duration = Math.round((appState.hcsr04Distance * 2) / 0.034);
+            variables[cmd.varName] = duration;
+            logToSerial(`PulseIn Pin ${cmd.pin}: ${duration} us`, 'info');
+          } else if (cmd.type === 'serialBegin') {
+            appState.serialInitialized = true;
+            logToSerial(`Seri haberleşme ${cmd.baud} baud hızında başlatıldı.`, 'info');
+          } else if (cmd.type === 'serialPrintln') {
+            if (!appState.serialInitialized) {
+              // Gerçek Arduino'da Serial.begin olmadan çıktı alınamaz ama bazen kafa karıştırıcı olabilir.
+              // Şimdilik sadece uyarı verelim veya sessizce geçelim.
+              logToSerial('Hata: Serial.begin() çağrılmadı!', 'error');
+            } else {
+              let val = cmd.value;
+              // Değişken mi yoksa string mi kontrol et
+              if (val.startsWith('"') && val.endsWith('"')) {
+                val = val.substring(1, val.length - 1);
+              } else if (variables[val] !== undefined) {
+                val = variables[val];
+              }
+              logToSerial(val, 'success', true);
+            }
+          } else if (cmd.type === 'servoWrite') {
+            appState.servoStates[9] = cmd.angle;
+            logToSerial(`Servo Açı: ${cmd.angle}°`, 'info');
+          } else if (cmd.type === 'digitalReadAssign') {
+            const val = appState.buttonStates[cmd.pin] ? 'HIGH' : 'LOW';
+            variables[cmd.varName] = val;
+            logToSerial(`Read Pin ${cmd.pin}: ${val}`, 'info');
+          } else if (cmd.type === 'conditionalWrite') {
+            const pressed = !!appState.buttonStates[cmd.conditionPin];
+            const value = pressed ? cmd.trueValue : cmd.falseValue;
+            appState.ledStates[cmd.targetPin] = value;
+            logToSerial(`Buton ${cmd.conditionPin}: ${pressed ? 'HIGH' : 'LOW'} - Pin ${cmd.targetPin}: ${value}`, 'info');
+          }
+          
+          commandIndex++;
+          
+          const nextCmd = loopParsed[commandIndex];
+          const delay = (nextCmd && nextCmd.type === 'delay') ? nextCmd.ms : 20;
+          
+          if (nextCmd && nextCmd.type === 'delay') {
+            commandIndex++;
+          }
+          
+          appState.simulationInterval = setTimeout(executeNextCommand, delay);
+        }
+        
+        executeNextCommand();
+        
+      } catch (error) {
+        logToSerial('Hata: ' + error.message, 'error');
+        appState.simulationRunning = false;
+      }
+      
+      updateSimulationDisplay();
+      const runBtn = document.querySelector('button[onclick="runSimulation()"]');
+      if (runBtn) {
+        runBtn.className = `px-4 py-1 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white transition-all text-sm`;
+        runBtn.textContent = 'Durdur';
+      }
+    }
+
+    function clearSerial() {
+      appState.serialOutput = [];
+      updateSimulationDisplay();
+    }
+
+    function resetSimulation() {
+      stopSimulation();
+      appState.ledStates = {};
+      appState.motorStates = {};
+      appState.servoStates = {};
+      appState.serialOutput = [];
+      updateSimulationDisplay();
+      showToast('Simülasyon sıfırlandı', 'info');
+    }
+
+    function stopSimulation() {
+      appState.simulationRunning = false;
+      if (appState.simulationInterval) {
+        clearTimeout(appState.simulationInterval);
+        appState.simulationInterval = null;
+      }
+      appState.ledStates = {};
+      appState.motorStates = {};
+      appState.displayMotorStates = {};
+      appState.motorAngles = {};
+      appState.servoStates = {};
+      appState.serialOutput.push({ type: 'info', text: 'Simülasyon durduruldu.' });
+      
+      renderApp();
+    }
+
+    function toggleButton(pin) {
+      appState.buttonStates[pin] = !appState.buttonStates[pin];
+      updateSimulationDisplay();
+    }
+
+    // ==================== RENDER FUNCTIONS ====================
+    function renderNavbar() {
+      return `
+        <nav class="sticky top-0 z-50 backdrop-blur-sm bg-slate-800 bg-opacity-90 border-b border-slate-700">
+          <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+              <!-- Sol: Logo ve İsim -->
+              <div class="flex items-center space-x-2 cursor-pointer flex-shrink-0" onclick="navigateTo('home')">
+                <img src="images/logo.png" alt="ArduMind" class="w-9 h-9 rounded-xl object-contain shadow-md" />
+                <span class="text-xl font-bold tracking-tight">ArduMind</span>
+              </div>
+
+              <!-- Orta: Navigasyon Sekmeleri -->
+              <div class="hidden xl:flex flex-1 justify-center items-center px-4">
+                <div class="flex items-center space-x-5 text-sm font-medium">
+                  <a href="#" onclick="navigateTo('home')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'home' ? 'text-blue-400' : ''}">Keşfet</a>
+                  <a href="#" onclick="navigateTo('components')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'components' ? 'text-blue-400' : ''}">Elemanlar</a>
+                  <a href="#" onclick="navigateTo('docs')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
+                  <a href="#" onclick="navigateTo('videos')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
+                  <a href="#" onclick="navigateTo('path')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
+                  <a href="#" onclick="navigateTo('quiz')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
+                  <a href="#" onclick="navigateTo('about')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'about' ? 'text-blue-400' : ''}">Hakkında</a>
+                  ${appState.currentUser ? `
+                    <a href="#" onclick="navigateTo('dashboard')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'dashboard' ? 'text-blue-400' : ''}">Eğitimim</a>
+                    <a href="#" onclick="navigateTo('editor')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'editor' ? 'text-blue-400' : ''}">Editör</a>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- Sağ: Profil ve Çıkış -->
+              <div class="flex items-center space-x-4 flex-shrink-0">
+                ${appState.currentUser ? `
+                  <button onclick="navigateTo('profile')" class="flex items-center space-x-2 text-slate-200 hover:text-white transition-colors">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg">
+                      ${appState.currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span class="text-sm font-semibold hidden sm:inline">${appState.currentUser.name.split(' ')[0]}</span>
+                  </button>
+                  <button onclick="logout()" class="px-4 py-1.5 rounded-lg font-bold bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all text-xs">
+                    Çıkış
+                  </button>
+                ` : `
+                  <button onclick="appState.showAuthModal = true; appState.authMode = 'login'; renderApp();" class="px-5 py-2 rounded-full font-bold bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 hover:shadow-xl transition-all text-sm">
+                    Giriş Yap
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        </nav>
+      `;
+    }
+
+    function renderIntro() {
+      return `
+        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-blue-900 overflow-hidden">
+          <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_#22d3ee_0,_transparent_55%),radial-gradient(circle_at_bottom,_#3b82f6_0,_transparent_55%)] animate-[introBackground_1.2s_ease-out_forwards]"></div>
+          <div class="relative z-10 text-center px-6 max-w-xl animate-[introZoom_0.9s_ease-out_forwards]">
+            <div class="inline-flex items-center justify-center mb-6">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 bg-opacity-70 flex items-center justify-center border border-blue-500 border-opacity-40 shadow-xl mr-3">
+                <img src="images/logo.png" alt="ArduMind" class="w-12 h-12 object-contain" />
+              </div>
+              <div class="text-left">
+                <div class="text-sm uppercase tracking-[0.35em] text-slate-400">Arduino Studio</div>
+                <div class="text-3xl font-extrabold tracking-tight">ArduMind</div>
+              </div>
+            </div>
+            <p class="text-slate-300 text-lg mb-6">Arduino kodunu sadece yazmak değil, hissetmek için sinematik bir öğrenme deneyimi.</p>
+            <button onclick="appState.showIntro = false; renderApp();" class="px-10 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-semibold tracking-wide shadow-2xl shadow-blue-500/40 transition transform hover:scale-105">Başla</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderVideos() {
+      const topics = Array.from(new Set(videoLessons.map(v => v.topic)));
+      const list = appState.currentVideoFilter ? videoLessons.filter(v => v.topic === appState.currentVideoFilter) : videoLessons;
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Videolu Eğitim</h1>
+            <p class="text-slate-400">Konulara göre seçilmiş video dersler</p>
+          </div>
+          
+          <div class="flex flex-wrap gap-2 mb-6">
+            <button onclick="appState.currentVideoFilter=''; renderApp();" class="px-4 py-2 rounded-full text-sm ${appState.currentVideoFilter === '' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}">Tümü</button>
+            ${topics.map(t => `
+              <button onclick="appState.currentVideoFilter='${t}'; renderApp();" class="px-4 py-2 rounded-full text-sm ${appState.currentVideoFilter === t ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}">${t}</button>
+            `).join('')}
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            ${list.map(v => `
+              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 h-32 flex items-center justify-center">
+                  <svg class="w-12 h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <div class="p-6">
+                  <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-bold">${v.title}</h3>
+                    <span class="text-xs bg-slate-700 px-2 py-1 rounded">${v.duration}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 text-sm">${v.topic}</span>
+                    <a href="${v.url}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">İzle</a>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLearningPath() {
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div class="text-center mb-16">
+            <h1 class="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              Öğrenme Yolculuğu
+            </h1>
+            <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+              Sıfırdan başlayarak uzmanlığa giden yolda adım adım ilerle. Her adımda teori, uygulama ve görsel destek seni bekliyor.
+            </p>
+          </div>
+          
+          <div class="relative">
+            <!-- Central Line -->
+            <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-blue-500 rounded-full opacity-20 hidden md:block"></div>
+            
+            <div class="space-y-12 md:space-y-24">
+              ${learningPath.map((step, index) => {
+                const isEven = index % 2 === 0;
+                const v = videoLessons.find(v => v.id === step.videoId);
+                
+                return `
+                  <div class="relative flex flex-col md:flex-row items-center ${isEven ? 'md:flex-row-reverse' : ''}">
+                    <!-- Step Indicator -->
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-12 h-12 rounded-full bg-slate-900 border-4 border-blue-500 flex items-center justify-center font-bold text-xl z-10 shadow-[0_0_20px_rgba(59,130,246,0.5)] hidden md:flex">
+                      ${index + 1}
+                    </div>
+                    
+                    <!-- Content Card -->
+                    <div class="w-full md:w-5/12 group">
+                      <div class="bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700 hover:border-blue-500/50 transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex items-center space-x-4 mb-4">
+                          <div class="md:hidden w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-lg">
+                            ${index + 1}
+                          </div>
+                          <h3 class="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">${step.title}</h3>
+                        </div>
+                        
+                        <p class="text-slate-400 mb-6 leading-relaxed">
+                          ${step.description}
+                        </p>
+                        
+                        <div class="grid grid-cols-1 gap-4 mb-8">
+                          <!-- Algorithm Box -->
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-blue-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Algoritma Mantığı</span>
+                            </div>
+                            <div class="text-sm text-slate-300 font-mono bg-slate-950 p-3 rounded-xl border border-slate-800">
+                              ${step.algorithm}
+                            </div>
+                          </div>
+                          
+                          <!-- Circuit Box -->
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-purple-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Devre Şeması (Proteus)</span>
+                            </div>
+                            <div class="text-sm text-slate-300 italic">
+                              ${step.circuit}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-3">
+                          <button onclick="appState.currentDocSection='${step.docKey}'; navigateTo('docs');" 
+                            class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2">
+                            <span>Ders Notları</span>
+                          </button>
+                          ${v ? `
+                            <a href="${v.url}" target="_blank" rel="noopener" 
+                              class="flex-1 px-4 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2">
+                              <span>Video İzle</span>
+                            </a>
+                          ` : ''}
+                          ${step.quizId ? `
+                            <button onclick="appState.currentQuizId='${step.quizId}'; navigateTo('quiz');" 
+                              class="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/20">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                              </svg>
+                              <span>Bilgi Testini Çöz</span>
+                            </button>
+                          ` : ''}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Spacer for Desktop -->
+                    <div class="hidden md:block md:w-2/12"></div>
+                    <div class="hidden md:block md:w-5/12"></div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+          
+          <!-- Final Step -->
+          <div class="mt-24 text-center">
+            <div class="inline-block p-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6">
+              <div class="px-8 py-3 rounded-full bg-slate-900 text-xl font-bold">
+                Tebrikler!
+              </div>
+            </div>
+            <h2 class="text-3xl font-bold mb-4">Temel Seviyeyi Tamamladın</h2>
+            <p class="text-slate-400 mb-8">Artık kendi projelerini üretmeye hazırsın. Editöre gidip hayallerini kodla!</p>
+            <button onclick="navigateTo('editor')" class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition-all hover:scale-105">
+              Kod Editörüne Git
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHomePage() {
+      return `
+        ${renderNavbar()}
+        
+        <section class="relative overflow-hidden py-20">
+          <div class="absolute inset-0 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#1E3A8A;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle cx="10" cy="10" r="30" fill="url(#grad)"/>
+              <circle cx="90" cy="90" r="40" fill="url(#grad)"/>
+            </svg>
+          </div>
+          
+          <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="mb-8">
+              <svg class="w-20 h-20 mx-auto text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            </div>
+            
+            <h1 class="text-5xl font-bold mb-6 leading-tight">Arduino'yu ezberleyerek değil, anlayarak öğren.</h1>
+            <p class="text-xl mb-8 max-w-3xl mx-auto text-slate-300">Yapay zeka destekli, kişiye özel öğrenme ve hata analizi sistemi</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button onclick="${appState.currentUser ? "navigateTo('dashboard')" : "appState.showAuthModal = true; appState.authMode = 'register'; renderApp();"}" class="px-8 py-4 rounded-full font-semibold bg-blue-500 text-white hover:bg-blue-600 hover:scale-105 hover:shadow-xl transition-all w-full sm:w-auto">
+                ${appState.currentUser ? 'Öğrenmeye Devam Et' : 'Ücretsiz Başla'}
+              </button>
+              <button onclick="navigateTo('docs')" class="px-8 py-4 rounded-full font-semibold bg-slate-800 text-slate-100 border-2 border-blue-500 hover:scale-105 transition-all w-full sm:w-auto">
+                Dokümantasyon
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-slate-800 rounded-3xl p-8 hover:scale-105 hover:shadow-2xl transition-all">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-900 flex items-center justify-center mb-6">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold mb-4">Kişiye Özel Öğrenme</h3>
+              <p class="text-slate-300 leading-relaxed">Yapay zeka senin öğrenme hızına göre yol haritası oluşturur</p>
+            </div>
+            
+            <div class="bg-slate-800 rounded-3xl p-8 hover:scale-105 hover:shadow-2xl transition-all">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-900 flex items-center justify-center mb-6">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold mb-4">Akıllı Hata Analizi</h3>
+              <p class="text-slate-300 leading-relaxed">Hatalarını analiz eder ve anlaşılır dille açıklar</p>
+            </div>
+            
+            <div class="bg-slate-800 rounded-3xl p-8 hover:scale-105 hover:shadow-2xl transition-all">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-900 flex items-center justify-center mb-6">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold mb-4">Proje Tabanlı Eğitim</h3>
+              <p class="text-slate-300 leading-relaxed">Gerçek projeler yaparak Arduino'yu öğren</p>
+            </div>
+          </div>
+        </section>
+        
+        <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="bg-gradient-to-r from-blue-500 to-blue-900 rounded-3xl p-12 text-center">
+            <h2 class="text-4xl font-bold mb-4 text-white">Arduino serüvenine başlamaya hazır mısın?</h2>
+            <p class="text-xl mb-8 text-white opacity-90">Binlerce öğrenci gibi sen de bugün başla, yapay zeka rehberliğinde öğren.</p>
+            <button onclick="${appState.currentUser ? "navigateTo('dashboard')" : "appState.showAuthModal = true; appState.authMode = 'register'; renderApp();"}" class="px-8 py-4 rounded-full font-semibold bg-white text-blue-600 hover:scale-105 hover:shadow-xl transition-all">
+              Hemen Ücretsiz Başla
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDashboard() {
+      if (!appState.currentUser) {
+        navigateTo('home');
+        return '';
+      }
+
+      const weeklyProgress = getWeeklyProgress();
+      const days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+      const maxXP = Math.max(...weeklyProgress, 1);
+
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Hoş geldin, ${appState.currentUser.name.split(' ')[0]}!</h1>
+            <p class="text-slate-400">Arduino yolculuğuna devam etmeye hazır mısın?</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-6">
+              <div class="text-3xl font-bold text-white">${appState.currentUser.xp || 0}</div>
+              <div class="text-blue-100 text-xs mt-1">Toplam XP</div>
+            </div>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6">
+              <div class="text-3xl font-bold text-white">${appState.currentUser.completedModules.length}</div>
+              <div class="text-purple-100 text-xs mt-1">${modules.length} modülden</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+              <div class="bg-slate-800 rounded-2xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Öğrenmeye Devam Et</h2>
+                <div class="space-y-4">
+                  ${modules.map(module => {
+                    const progress = getModuleProgress(module.id);
+                    const isCompleted = progress === 100;
+                    return `
+                      <div onclick="${isCompleted ? '' : `appState.currentModuleView = '${module.id}'; renderApp();`}" class="bg-slate-700 rounded-xl p-4 hover:bg-slate-600 transition-all ${isCompleted ? 'opacity-60' : 'cursor-pointer'}">
+                        <div class="flex items-center justify-between mb-3">
+                          <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br ${module.color} flex items-center justify-center text-2xl">
+                              ${module.icon}
+                            </div>
+                            <div>
+                              <h3 class="font-semibold">${module.title}</h3>
+                              <p class="text-sm text-slate-400">${module.description}</p>
+                            </div>
+                          </div>
+                          ${isCompleted ? '<span class="px-3 py-1 bg-green-500 text-white text-xs rounded-full font-medium">Tamamlandı</span>' : `<span class="text-blue-400 text-sm font-medium">%${progress}</span>`}
+                        </div>
+                        <div class="w-full bg-slate-600 rounded-full h-2">
+                          <div class="bg-gradient-to-r ${module.color} h-2 rounded-full transition-all" style="width: ${progress}%"></div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+                <button onclick="navigateTo('editor')" class="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-4 rounded-xl font-semibold transition-all">Kod Editörü'nü Aç</button>
+              </div>
+
+              <div class="bg-slate-800 rounded-2xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Haftalık İlerleme</h2>
+                <div class="flex items-end justify-between h-48 space-x-2">
+                  ${weeklyProgress.map((xp, index) => {
+                    const height = (xp / maxXP) * 100;
+                    return `
+                      <div class="flex-1 flex flex-col items-center space-y-2">
+                        <div class="w-full bg-slate-700 rounded-t-lg relative flex items-end justify-center" style="height: ${height}%; min-height: ${xp > 0 ? '20%' : '0'};">
+                          <div class="absolute inset-0 bg-gradient-to-t from-blue-500 to-purple-500 rounded-t-lg"></div>
+                          ${xp > 0 ? `<span class="relative text-xs font-bold text-white mb-1">${xp}</span>` : ''}
+                        </div>
+                        <span class="text-xs text-slate-400">${days[index]}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl p-6">
+                <div class="text-center mb-4">
+                  <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold mx-auto mb-3">
+                    ${appState.currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                  <h3 class="font-bold text-lg">${appState.currentUser.name}</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderModuleDetail() {
+      const module = modules.find(m => m.id === appState.currentModuleView);
+      if (!module) {
+        appState.currentModuleView = null;
+        return renderDashboard();
+      }
+
+      const isCompleted = appState.currentUser.completedModules.some(m => m.moduleId === module.id);
+
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button onclick="appState.currentModuleView = null; renderApp();" class="flex items-center space-x-2 text-slate-400 hover:text-white mb-6 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Geri Dön</span>
+          </button>
+
+          <div class="bg-slate-800 rounded-2xl p-8">
+            <div class="flex items-center space-x-4 mb-6">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${module.color} flex items-center justify-center text-3xl">
+                ${module.icon}
+              </div>
+              <div class="flex-1">
+                <h1 class="text-3xl font-bold mb-2">${module.title}</h1>
+                <p class="text-slate-400">${module.description}</p>
+              </div>
+            </div>
+
+            <div class="space-y-4 mb-8">
+              <h2 class="text-xl font-bold mb-4">Dersler</h2>
+              ${module.lessons.map((lesson, index) => `
+                <div class="bg-slate-700 rounded-xl p-4 flex items-center space-x-4">
+                  <div class="w-10 h-10 rounded-lg bg-gradient-to-br ${module.color} flex items-center justify-center font-bold flex-shrink-0">
+                    ${index + 1}
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="font-semibold">${lesson.title}</h3>
+                    <p class="text-sm text-slate-400">${lesson.duration}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            ${!isCompleted ? `
+              <button onclick="completeModule('${module.id}')" class="w-full bg-gradient-to-r ${module.color} text-white py-4 rounded-xl font-bold hover:scale-105 transition-all">
+                Modülü Tamamla ve ${module.xpReward} XP Kazan
+              </button>
+            ` : `
+              <div class="bg-green-500 bg-opacity-20 border-2 border-green-500 rounded-xl p-6 text-center">
+                <h3 class="text-xl font-bold mb-2">Tebrikler!</h3>
+                <p class="text-slate-300">Bu modülü tamamladın!</p>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEditor() {
+      return `
+        ${renderNavbar()}
+        
+        <div class="h-[calc(100vh-4rem)] flex">
+          <div class="w-1/2 border-r border-slate-700 flex flex-col">
+            <div class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between">
+              <h2 class="font-bold">Kod Editörü</h2>
+              <div class="flex items-center space-x-2">
+                <select onchange="loadExample(this.value); this.value='';" class="bg-slate-700 text-sm px-3 py-1 rounded-lg border border-slate-600">
+                  <option value="">Örnek Yükle</option>
+                  ${Object.entries(codeExamples).map(([key, ex]) => `<option value="${key}">${ex.name}</option>`).join('')}
+                </select>
+                <button onclick="runSimulation()" class="px-4 py-1 rounded-lg font-medium ${appState.simulationRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-all text-sm">
+                  ${appState.simulationRunning ? 'Durdur' : 'Çalıştır'}
+                </button>
+                <button onclick="saveEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Kaydet</button>
+                <button onclick="loadSavedEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Yükle</button>
+                <button onclick="copyEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Kopyala</button>
+                <button onclick="toggleEditorWrap()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">${appState.editorWrap ? 'Satır Kırmayı Kapat' : 'Satır Kırmayı Aç'}</button>
+              </div>
+            </div>
+            <div class="flex-1 overflow-hidden bg-slate-900">
+              <div id="editorContainer" class="w-full h-full"></div>
+            </div>
+          </div>
+
+          <div class="w-1/2 flex flex-col">
+            <div class="flex-1 bg-slate-800 p-6 overflow-auto">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold">Arduino Simülasyonu</h3>
+                <button onclick="resetSimulation()" class="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs transition-all border border-slate-600">Sıfırla</button>
+              </div>
+              
+              <div class="bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl p-6 mb-6">
+                <div class="text-center mb-4">
+                  <div class="inline-block bg-slate-800 px-4 py-2 rounded-lg">
+                    <span class="font-bold text-blue-400">Arduino UNO</span>
+                  </div>
+                </div>
+
+                <div id="arduinoBoard"></div>
+              </div>
+            </div>
+
+            <div class="flex-1 border-t border-slate-700 bg-slate-900 flex flex-col">
+              <div class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex items-center justify-between">
+                <span class="font-bold text-sm text-slate-400 uppercase tracking-wider">Seri Monitör</span>
+                <button onclick="clearSerial()" class="text-xs text-blue-400 hover:text-blue-300">Temizle</button>
+              </div>
+              <div id="serialMonitor" class="flex-1 overflow-auto p-4 font-mono text-sm">
+                ${appState.serialOutput.length === 0 ? `<div class="text-slate-500 text-center py-8">Kodu çalıştırın...</div>` : appState.serialOutput.map(output => `<div class="mb-1 ${output.type === 'error' ? 'text-red-400' : output.type === 'info' ? 'text-blue-400' : 'text-green-400'}">${output.text}</div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAuthModal() {
+      return `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) { appState.showAuthModal = false; renderApp(); }">
+          <div class="bg-slate-800 rounded-2xl p-8 max-w-md w-full" onclick="event.stopPropagation()">
+            <div class="text-center mb-6">
+              <h2 class="text-2xl font-bold mb-2">${appState.authMode === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}</h2>
+              <p class="text-slate-400">${appState.authMode === 'login' ? 'Arduino serüvenine devam et' : 'Yeni bir serüvene başla'}</p>
+            </div>
+
+            <form onsubmit="event.preventDefault(); ${appState.authMode === 'login' ? 'handleLogin' : 'handleRegister'}(${appState.authMode === 'login' ? 'this.email.value, this.password.value' : 'this.name.value, this.email.value, this.password.value, this.level.value, this.goal.value'});" class="space-y-4">
+              ${appState.authMode === 'register' ? `
+                <div>
+                  <label class="block text-sm font-medium mb-2">İsim Soyisim</label>
+                  <input type="text" name="name" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+              ` : ''}
+
+              <div>
+                <label class="block text-sm font-medium mb-2">E-posta</label>
+                <input type="email" name="email" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-2">Şifre</label>
+                <input type="password" name="password" required minlength="6" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              ${appState.authMode === 'register' ? `
+                <div>
+                  <label class="block text-sm font-medium mb-2">Seviyem</label>
+                  <select name="level" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="beginner">Başlangıç - Hiç bilgim yok</option>
+                    <option value="basic">Temel - Biraz bilgim var</option>
+                    <option value="intermediate">Orta - Proje yapabilirim</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium mb-2">Hedefim</label>
+                  <select name="goal" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="learn">Arduino öğrenmek</option>
+                    <option value="project">Proje yapmak</option>
+                  </select>
+                </div>
+              ` : ''}
+
+              <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-bold transition-all">
+                ${appState.authMode === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
+              </button>
+            </form>
+
+            <div class="mt-6 text-center">
+              <button onclick="appState.authMode = appState.authMode === 'login' ? 'register' : 'login'; renderApp();" class="text-blue-400 hover:text-blue-300 text-sm">
+                ${appState.authMode === 'login' ? 'Hesabın yok mu? Kayıt ol' : 'Zaten hesabın var mı? Giriş yap'}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDocumentation() {
+      const sections = Object.entries(documentation);
+      const currentSection = documentation[appState.currentDocSection];
+      
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Arduino Dokümantasyon</h1>
+            <p class="text-slate-400">Arduino yazılım dilini örneklerle öğrenin</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1">
+              <div class="bg-slate-800 rounded-2xl p-4 sticky top-24">
+                <h3 class="text-sm font-bold text-slate-400 uppercase mb-3">Kategoriler</h3>
+                <div class="space-y-2">
+                  ${sections.map(([key, section]) => `
+                    <button 
+                      onclick="appState.currentDocSection = '${key}'; renderApp();"
+                      class="w-full text-left px-4 py-3 rounded-xl transition-all ${
+                        appState.currentDocSection === key 
+                          ? `bg-gradient-to-r ${section.color} text-white shadow-lg` 
+                          : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                      }"
+                    >
+                      <div class="flex items-center space-x-3">
+                        <span class="text-2xl">${section.icon}</span>
+                        <span class="font-medium text-sm">${section.title}</span>
+                      </div>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-3">
+              <div class="bg-slate-800 rounded-2xl p-8">
+                <div class="flex items-center space-x-4 mb-6">
+                  <div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${currentSection.color} flex items-center justify-center text-3xl">
+                    ${currentSection.icon}
+                  </div>
+                  <div>
+                    <h2 class="text-3xl font-bold">${currentSection.title}</h2>
+                    <p class="text-slate-400">${currentSection.topics.length} konu</p>
+                  </div>
+                </div>
+
+                <div class="space-y-8">
+                  ${currentSection.topics.map((topic, index) => `
+                    <div class="border-b border-slate-700 last:border-b-0 pb-8 last:pb-0">
+                      <div class="flex items-start space-x-4 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br ${currentSection.color} flex items-center justify-center text-white font-bold flex-shrink-0">
+                          ${index + 1}
+                        </div>
+                        <div class="flex-1">
+                          <h3 class="text-2xl font-bold mb-2">${topic.title}</h3>
+                          <p class="text-slate-400 mb-4">${topic.description}</p>
+                        </div>
+                      </div>
+                      
+                      <div class="ml-14 text-slate-300 leading-relaxed">
+                        ${topic.content}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                ${appState.currentUser ? `
+                  <div class="mt-8 bg-gradient-to-r ${currentSection.color} bg-opacity-20 border-2 border-opacity-50 rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h4 class="font-bold text-lg mb-1">Öğrendiklerini Dene!</h4>
+                        <p class="text-sm opacity-80">Kod editöründe bu konuları uygulayabilirsin</p>
+                      </div>
+                      <button onclick="navigateTo('editor')" class="px-6 py-3 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg font-semibold transition-all flex items-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                        <span>Editöre Git</span>
+                      </button>
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderComponents() {
+      const components = [
+        {
+          id: 'breadboard',
+          name: 'Breadboard',
+          icon: '',
+          color: 'from-gray-500 to-gray-700',
+          description: 'Devre elemanlarını lehimsiz bağlamak için kullanılan devre tahtası',
+          usage: 'Breadboard üzerindeki delikler içten iletken şeritlerle bağlıdır. Aynı satırdaki delikler birbirine bağlıdır.',
+          tips: [
+            'Üst ve alt power rail\'ler (+/-) tüm breadboard boyunca bağlıdır',
+            'Orta kısımdaki satırlar yatay olarak bağlıdır',
+            'Arduino\'dan 5V ve GND bağlantılarını power rail\'lere yapın'
+          ]
+        },
+        {
+          id: 'led',
+          name: 'LED (Işık Yayan Diyot)',
+          icon: '',
+          color: 'from-yellow-500 to-orange-600',
+          description: 'Elektrik akımı geçtiğinde ışık yayan elektronik devre elemanı',
+          usage: 'LED\'in uzun bacağı (+) anot, kısa bacağı (-) katottur. Mutlaka direnç ile kullanılmalıdır.',
+          tips: [
+            'LED\'ler polarize elemanlardır - yönü önemlidir',
+            'Genellikle 220Ω veya 330Ω direnç ile kullanılır',
+            'Doğrudan güç kaynağına bağlamayın, yanar!'
+          ]
+        },
+        {
+          id: 'resistor',
+          name: 'Direnç',
+          icon: '',
+          color: 'from-blue-500 to-cyan-600',
+          description: 'Devredeki akım miktarını sınırlamak için kullanılan eleman',
+          usage: 'Renk kodları ile değeri belirlenir. LED ve sensör gibi elemanları korumak için kullanılır.',
+          tips: [
+            'LED için 220Ω (kırmızı-kırmızı-kahverengi) yaygın kullanılır',
+            'Pull-up/down dirençler için 10kΩ kullanılır',
+            'Dirençlerin polaritesi yoktur - iki yönde de çalışır'
+          ]
+        },
+        {
+          id: 'button',
+          name: 'Buton (Push Button)',
+          icon: '',
+          color: 'from-green-500 to-emerald-600',
+          description: 'Basıldığında devreyi kapatan, bırakıldığında açan anahtar',
+          usage: 'Dijital giriş olarak kullanılır. Pull-down veya pull-up direnç ile birlikte kullanılmalıdır.',
+          tips: [
+            'Genellikle 4 bacaklıdır - karşılıklı bacaklar birbirine bağlıdır',
+            '10kΩ pull-down direnci ile GND\'ye bağlanır',
+            'digitalRead() ile butona basılıp basılmadığı okunur'
+          ]
+        },
+        {
+          id: 'jumper',
+          name: 'Jumper Kablo',
+          icon: '',
+          color: 'from-purple-500 to-pink-600',
+          description: 'Devre elemanlarını birbirine bağlamak için kullanılan kablolar',
+          usage: 'Erkek-erkek, erkek-dişi ve dişi-dişi olmak üzere 3 türü vardır.',
+          tips: [
+            'Renk kodlaması: Kırmızı (+5V), Siyah (GND), diğerleri sinyal',
+            'Breadboard için erkek-erkek kablo kullanın',
+            'Arduino pinlerine bağlamak için erkek-dişi kullanın'
+          ]
+        },
+        {
+          id: 'potentiometer',
+          name: 'Potansiyometre',
+          icon: '',
+          color: 'from-orange-500 to-red-600',
+          description: 'Direnci elle ayarlanabilen değişken direnç',
+          usage: 'Analog giriş olarak kullanılır. Ses seviyesi, parlaklık gibi ayarlar için idealdir.',
+          tips: [
+            '3 bacaklıdır: +5V, Analog Out (orta), GND',
+            'analogRead() ile 0-1023 arası değer okunur',
+            'map() fonksiyonu ile deper aralığı değiştirilebilir'
+          ]
+        }
+      ];
+
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Arduino Elemanları</h1>
+            <p class="text-slate-400">Temel elektronik bileşenleri tanıyalım</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ${components.map(component => `
+              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all fade-in">
+                <div class="bg-gradient-to-r ${component.color} p-6">
+                  <div class="flex items-center space-x-4">
+                    ${component.icon ? `<div class="text-6xl">${component.icon}</div>` : ''}
+                    <div>
+                      <h2 class="text-2xl font-bold text-white">${component.name}</h2>
+                      <p class="text-white text-opacity-90 text-sm mt-1">${component.description}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="p-6">
+                  <div class="mb-4">
+                    <h3 class="font-bold text-lg mb-2 text-blue-400">Kullanım</h3>
+                    <p class="text-slate-300 leading-relaxed">${component.usage}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 class="font-bold text-lg mb-3 text-green-400">İpuçları</h3>
+                    <ul class="space-y-2">
+                      ${component.tips.map(tip => `
+                        <li class="flex items-start space-x-2">
+                          <span class="text-green-400 mt-1">•</span>
+                          <span class="text-slate-300 text-sm leading-relaxed">${tip}</span>
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          ${appState.currentUser ? `
+            <div class="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-center">
+              <h2 class="text-3xl font-bold mb-3 text-white">Bu elemanları kullanmaya hazır mısın?</h2>
+              <p class="text-white text-opacity-90 mb-6">Kod editöründe bu bileşenlerle projeler oluşturabilirsin!</p>
+              <button onclick="navigateTo('editor')" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:scale-105 transition-all">
+                Kod Editörüne Git
+              </button>
+            </div>
+          ` : `
+            <div class="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-center">
+              <h2 class="text-3xl font-bold mb-3 text-white">Bu elemanlarla projeler yapmaya başla!</h2>
+              <p class="text-white text-opacity-90 mb-6">Ücretsiz kayıt ol, simülatörde dene!</p>
+              <button onclick="appState.showAuthModal = true; appState.authMode = 'register'; renderApp();" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:scale-105 transition-all">
+                Ücretsiz Başla
+              </button>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderQuiz() {
+      if (appState.currentQuiz) {
+        const quiz = quizzes.find(q => q.id === appState.currentQuiz);
+        if (!quiz) {
+          appState.currentQuiz = null;
+          return renderQuiz();
+        }
+
+        if (appState.quizCompleted) {
+          const percentage = (appState.quizScore / quiz.questions.length) * 100;
+          const passed = percentage >= 70;
+
+          return `
+            ${renderNavbar()}
+            
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div class="bg-slate-800 rounded-2xl p-8 text-center">
+                <h1 class="text-4xl font-bold mb-4">${passed ? 'Tebrikler!' : 'Daha İyisini Yapabilirsin!'}</h1>
+                <p class="text-xl text-slate-300 mb-6">${quiz.title} testini tamamladın</p>
+                
+                <div class="bg-slate-700 rounded-xl p-8 mb-6">
+                  <div class="text-5xl font-bold mb-2 ${passed ? 'text-green-400' : 'text-orange-400'}">
+                    ${appState.quizScore} / ${quiz.questions.length}
+                  </div>
+                  <div class="text-lg text-slate-300">%${percentage.toFixed(0)} Başarı</div>
+                  ${appState.currentUser && passed ? `
+                    <div class="mt-4 text-yellow-400 font-bold">
+                      +${Math.floor(quiz.xpReward * (percentage / 100))} XP Kazandın!
+                    </div>
+                  ` : ''}
+                </div>
+
+                <div class="space-y-4 mb-6 text-left">
+                  ${quiz.questions.map(question => {
+                    const userAnswer = appState.quizAnswers[question.id];
+                    const isCorrect = userAnswer === question.correct;
+                    
+                    return `
+                      <div class="bg-slate-700 rounded-xl p-4">
+                        <div class="flex items-start space-x-3 mb-3">
+                          <div class="flex-shrink-0 mt-1">
+                            ${isCorrect ? `
+                              <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                              </svg>
+                            ` : `
+                              <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                              </svg>
+                            `}
+                          </div>
+                          <div class="flex-1">
+                            <p class="font-medium mb-2">${question.question.replace(/\n/g, '<br>')}</p>
+                            <div class="text-sm space-y-1">
+                              <div class="${isCorrect ? 'text-green-400' : 'text-red-400'}">Senin cevabın: ${question.options[userAnswer]}</div>
+                              ${!isCorrect ? `<div class="text-green-400">Doğru cevap: ${question.options[question.correct]}</div>` : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="bg-slate-600/50 border border-slate-500/20 rounded-lg p-3 text-sm text-slate-200">
+                          <span class="font-bold text-blue-400">Bilgi:</span> ${question.explanation}
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+
+                <div class="flex gap-4">
+                  <button onclick="resetQuiz()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition-all">
+                    Testlere Dön
+                  </button>
+                  <button onclick="startQuiz('${quiz.id}')" class="flex-1 bg-gradient-to-r ${quiz.color} text-white py-3 rounded-xl font-bold hover:scale-105 transition-all">
+                    Tekrar Dene
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        const allAnswered = quiz.questions.every(q => appState.quizAnswers[q.id] !== undefined);
+
+        return `
+          ${renderNavbar()}
+          
+          <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <button onclick="resetQuiz()" class="flex items-center space-x-2 text-slate-400 hover:text-white mb-6 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              <span>Testlere Dön</span>
+            </button>
+
+            <div class="bg-slate-800 rounded-2xl p-8">
+              <div class="flex items-center space-x-4 mb-6">
+                <div class="flex-1">
+                  <h1 class="text-3xl font-bold mb-2">${quiz.title}</h1>
+                  <p class="text-slate-400">${quiz.description} • ${quiz.difficulty} • ${quiz.questions.length} Soru</p>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                ${quiz.questions.map((question, index) => `
+                  <div class="bg-slate-700 rounded-xl p-6">
+                    <h3 class="font-bold text-lg mb-4">
+                      <span class="text-blue-400">${index + 1}.</span> ${question.question.replace(/\n/g, '<br>')}
+                    </h3>
+                    <div class="space-y-3">
+                      ${question.options.map((option, optIndex) => {
+                        const isSelected = appState.quizAnswers[question.id] === optIndex;
+                        return `
+                          <button 
+                            onclick="selectAnswer(${question.id}, ${optIndex})"
+                            class="w-full text-left p-4 rounded-lg transition-all ${
+                              isSelected 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-slate-600 hover:bg-slate-500 text-slate-200'
+                            }"
+                          >
+                            <span class="font-medium">${String.fromCharCode(65 + optIndex)})</span> ${option}
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <button 
+                onclick="submitQuiz()"
+                ${!allAnswered ? 'disabled' : ''}
+                class="w-full mt-6 py-4 rounded-xl font-bold transition-all ${
+                  allAnswered 
+                    ? 'bg-gradient-to-r ' + quiz.color + ' text-white hover:scale-105' 
+                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                }"
+              >
+                ${allAnswered ? 'Testi Tamamla' : `Tüm Soruları Cevapla (${Object.keys(appState.quizAnswers).length}/${quiz.questions.length})`}
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">Arduino Bilgi Testleri</h1>
+            <p class="text-slate-400">Bilgini test et, XP kazan ve kendini geliştir!</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ${quizzes.map(quiz => `
+              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all fade-in border border-slate-700">
+                <div class="bg-gradient-to-r ${quiz.color} p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-wider">
+                      ${quiz.difficulty}
+                    </div>
+                  </div>
+                  <h2 class="text-2xl font-bold text-white mb-2">${quiz.title}</h2>
+                  <p class="text-white text-opacity-90 text-sm">${quiz.description}</p>
+                </div>
+                
+                <div class="p-6">
+                  <div class="flex items-center justify-between mb-4 text-sm">
+                    <div class="flex items-center space-x-4">
+                      <span class="text-slate-400">
+                        <span class="font-bold text-white">${quiz.questions.length}</span> Soru
+                      </span>
+                      ${appState.currentUser ? `
+                        <span class="text-yellow-400">
+                          <span class="font-bold">${quiz.xpReward}</span> XP
+                        </span>
+                      ` : ''}
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onclick="${appState.currentUser ? `startQuiz('${quiz.id}')` : `appState.showAuthModal = true; appState.authMode = 'register'; renderApp();`}"
+                    class="w-full bg-gradient-to-r ${quiz.color} text-white py-3 rounded-xl font-bold hover:scale-105 transition-all"
+                  >
+                    ${appState.currentUser ? 'Teste Başla' : 'Giriş Yap ve Başla'}
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          ${!appState.currentUser ? `
+            <div class="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-center">
+              <h2 class="text-3xl font-bold mb-3 text-white">Testleri çöz, XP kazan!</h2>
+              <p class="text-white text-opacity-90 mb-6">Ücretsiz kayıt ol, testlerle kendini geliştir ve XP kazanarak seviye atla!</p>
+              <button onclick="appState.showAuthModal = true; appState.authMode = 'register'; renderApp();" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:scale-105 transition-all">
+                Ücretsiz Başla
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderAbout() {
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="text-center mb-12 fade-in">
+            <div class="inline-block bg-gradient-to-r from-red-500 to-red-700 px-6 py-2 rounded-full text-sm font-bold mb-4">
+              TEKNOFEST 2026 Projesi
+            </div>
+            <h1 class="text-5xl font-bold mb-4">ArduMind Hakkında</h1>
+            <p class="text-xl text-slate-400">Arduino'yu ezberleyerek değil, anlayarak öğrenmenin yeni yolu</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-slate-800 rounded-2xl p-8 hover:scale-105 transition-all fade-in">
+              <h2 class="text-2xl font-bold mb-3">Proje Vizyonu</h2>
+              <p class="text-slate-300 leading-relaxed">
+                ArduMind, Arduino öğrenimini kişiselleştiren, yapay zeka destekli bir eğitim platformudur. 
+                Öğrencilerin kendi hızlarında ilerlemesini sağlar ve her öğrencinin ihtiyaçlarına özel çözümler sunar.
+              </p>
+            </div>
+
+            <div class="bg-slate-800 rounded-2xl p-8 hover:scale-105 transition-all fade-in">
+              <h2 class="text-2xl font-bold mb-3">Neden ArduMind?</h2>
+              <p class="text-slate-300 leading-relaxed">
+                Geleneksel Arduino eğitimleri ezber odaklıdır. ArduMind, kavramsal öğrenmeyi ön plana çıkarır, 
+                hataları anlaşılır şekilde açıklar ve gerçek zamanlı simülasyon ile öğrenmeyi eğlenceli hale getirir.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-r from-blue-900 to-purple-900 rounded-3xl p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-center">Temel Özellikler</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
+                <h3 class="font-bold text-lg mb-2">Yapay Zeka Asistanı</h3>
+                <p class="text-sm text-slate-300">Kodlarınızı analiz eder, hataları açıklar ve anlık çözümler sunar</p>
+              </div>
+
+              <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
+                <h3 class="font-bold text-lg mb-2">İnteraktif Simülasyon</h3>
+                <p class="text-sm text-slate-300">Kodunuzu gerçek zamanlı test edin, LED'leri yakıp söndürün</p>
+              </div>
+
+              <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
+                <h3 class="font-bold text-lg mb-2">Gamification Sistemi</h3>
+                <p class="text-sm text-slate-300">XP kazanın, seviye atlayın ve başarılarınızı takip edin</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-800 rounded-2xl p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6">Proje Hedefleri</h2>
+            <div class="space-y-4">
+              <div class="flex items-start space-x-4">
+                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg mb-1">Arduino Öğrenimini Demokratikleştirmek</h3>
+                  <p class="text-slate-300">Herkes için erişilebilir, ücretsiz ve kaliteli Arduino eğitimi sunmak</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg mb-1">Kavramsal Öğrenmeyi Teşvik Etmek</h3>
+                  <p class="text-slate-300">Ezber yerine anlayarak öğrenme metodolojisini yaygınlaştırmak</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg mb-1">Gençleri Teknolojiye Kazandırmak</h3>
+                  <p class="text-slate-300">IoT, robotik ve elektronik alanlarında yeni nesil yetişkinler yetiştirmek</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl p-8 mb-12 hover:scale-105 transition-all">
+            <h2 class="text-3xl font-bold mb-6">Kullanılan Teknolojiler</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-slate-900 rounded-xl p-4 text-center">
+                <p class="font-medium">HTML/CSS/JS</p>
+              </div>
+              <div class="bg-slate-900 rounded-xl p-4 text-center">
+                <p class="font-medium">CSS</p>
+              </div>
+              <div class="bg-slate-900 rounded-xl p-4 text-center">
+                <p class="font-medium">Simülasyon</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl p-12 text-center">
+            <h2 class="text-4xl font-bold mb-4 text-white">Geleceği Birlikte İnşa Edelim!</h2>
+            <p class="text-xl text-white text-opacity-90 mb-6">
+              ArduMind ile Arduino öğrenmenin geleceğini şekillendiriyoruz
+            </p>
+            <button onclick="navigateTo('${appState.currentUser ? 'dashboard' : 'home'}')" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:scale-105 transition-all">
+              ${appState.currentUser ? 'Öğrenmeye Devam Et' : 'Hemen Başla'}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProfile() {
+      if (!appState.currentUser) {
+        navigateTo('home');
+        return '';
+      }
+
+      const levelNames = {
+        'beginner': 'Başlangıç',
+        'basic': 'Temel',
+        'intermediate': 'Orta'
+      };
+
+      const goalNames = {
+        'project': 'Proje Yapmak',
+        'learn': 'Arduino Öğrenmek'
+      };
+
+      return `
+        ${renderNavbar()}
+        
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="bg-slate-800 rounded-2xl p-8">
+            <div class="text-center mb-8">
+              <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-5xl font-bold mx-auto mb-4">
+                ${appState.currentUser.name.charAt(0).toUpperCase()}
+              </div>
+              <h1 class="text-3xl font-bold mb-2">${appState.currentUser.name}</h1>
+              <p class="text-slate-400">${appState.currentUser.email}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div class="bg-slate-700 rounded-xl p-6">
+                <h3 class="font-bold mb-4">Seviye Bilgileri</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Mevcut Seviye</span>
+                    <span class="font-bold">${levelNames[appState.currentUser.level]}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Toplam XP</span>
+                    <span class="font-bold text-yellow-400">${appState.currentUser.xp || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-700 rounded-xl p-6">
+                <h3 class="font-bold mb-4">İlerleme</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Tamamlanan</span>
+                    <span class="font-bold">${appState.currentUser.completedModules.length} modül</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Rozetler</span>
+                    <span class="font-bold">${appState.currentUser.badges ? appState.currentUser.badges.length : 0}/5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-700 rounded-xl p-6 mb-6">
+              <h3 class="font-bold mb-4">Öğrenme Hedefi</h3>
+              <p class="text-lg">${goalNames[appState.currentUser.goal]}</p>
+            </div>
+
+            <button onclick="logout()" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition-all">
+              Çıkış Yap
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== MAIN RENDER ====================
+    function renderApp() {
+      let content = '';
+      
+      if (appState.currentModuleView && appState.currentUser) {
+        content = renderModuleDetail();
+      } else {
+        switch(appState.currentPage) {
+          case 'home':
+            content = renderHomePage();
+            break;
+          case 'dashboard':
+            content = appState.currentUser ? renderDashboard() : renderHomePage();
+            break;
+          case 'editor':
+            content = renderEditor();
+            break;
+          case 'docs':
+            content = renderDocumentation();
+            break;
+          case 'components':
+            content = renderComponents();
+            break;
+          case 'videos':
+            content = renderVideos();
+            break;
+          case 'path':
+            content = renderLearningPath();
+            break;
+          case 'quiz':
+            content = renderQuiz();
+            break;
+          case 'profile':
+            content = renderProfile();
+            break;
+          case 'about':
+            content = renderAbout();
+            break;
+          default:
+            content = renderHomePage();
+        }
+      }
+      
+      document.getElementById('app').innerHTML = content + (appState.showAuthModal ? renderAuthModal() : '') + (appState.showIntro ? renderIntro() : '');
+      
+      if (appState.currentPage === 'editor') {
+        setTimeout(() => {
+          initEditor();
+          const arduinoBoard = document.getElementById('arduinoBoard');
+          if (arduinoBoard) {
+            arduinoBoard.innerHTML = renderArduinoBoard();
+          }
+        }, 100);
+      }
+    }
+
+    renderApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9af09f37e3c45267',t:'MTc2NTkxMzcwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
