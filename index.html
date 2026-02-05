@@ -1921,7 +1921,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       for (let line of lines) {
         line = line.trim();
         
-        const pinModeMatch = line.match(/pinMode\s*\(\s*(\d+)\s*,\s*(OUTPUT|INPUT)\s*\)/);
+        const pinModeMatch = line.match(/pinMode\s*\(\s*(\d+)\s*,\s*(OUTPUT|INPUT|INPUT_PULLUP)\s*\)/);
         if (pinModeMatch) {
           commands.push({ type: 'pinMode', pin: parseInt(pinModeMatch[1]), mode: pinModeMatch[2] });
         }
@@ -1939,6 +1939,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         const analogReadMatch = line.match(/(?:int\s+)?(\w+)\s*=\s*analogRead\s*\(\s*(A\d|\d+)\s*\)/);
         if (analogReadMatch) {
           commands.push({ type: 'analogRead', varName: analogReadMatch[1], pin: analogReadMatch[2] });
+        }
+
+        const digitalReadAssignMatch = line.match(/(?:int\s+)?(\w+)\s*=\s*digitalRead\s*\(\s*(\d+)\s*\)/);
+        if (digitalReadAssignMatch) {
+          commands.push({ type: 'digitalReadAssign', varName: digitalReadAssignMatch[1], pin: parseInt(digitalReadAssignMatch[2]) });
         }
 
         const pulseInMatch = line.match(/(?:long\s+)?(\w+)\s*=\s*pulseIn\s*\(\s*(\d+)\s*,\s*(HIGH|LOW)\s*\)/);
@@ -2143,7 +2148,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           }).join('')}
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-6">
             <!-- Potansiyometre -->
             <div class="bg-gradient-to-br from-slate-800/40 to-slate-900/40 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm hover:border-blue-500/30 transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.3)]">
@@ -2348,7 +2353,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
               >
                 <div class="relative z-10 flex items-center justify-center space-x-3">
                   <div class="w-2 h-2 rounded-full transition-all duration-300 ${appState.buttonStates[2] ? 'bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)]' : 'bg-slate-600'}"></div>
-                  <span class="text-sm font-bold uppercase tracking-wide">Buton (Pin 2)</span>
+                  <span class="text-sm font-bold uppercase tracking-wide">Buton (Pin 2) • ${appState.buttonStates[2] ? 'BASILI' : 'SERBEST'}</span>
                 </div>
                 ${appState.buttonStates[2] ? '<div class="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>' : ''}
               </button>
@@ -2489,26 +2494,101 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
     }
 
     function validateCode(code) {
+      const issues = [];
+      const addError = (text) => issues.push({ level: 'error', text });
+      const addWarn = (text) => issues.push({ level: 'info', text });
+      
       if (!code || code.trim() === '') {
-        return { valid: false, message: 'Kod boş olamaz!' };
+        addError('Kod boş olamaz!');
+        return { valid: false, message: 'Kod boş olamaz!', issues };
       }
       
       if (!code.includes('void setup()')) {
-        return { valid: false, message: 'setup() fonksiyonu eksik!' };
+        addError('setup() fonksiyonu eksik!');
+        return { valid: false, message: 'setup() fonksiyonu eksik!', issues };
       }
       
       if (!code.includes('void loop()')) {
-        return { valid: false, message: 'loop() fonksiyonu eksik!' };
+        addError('loop() fonksiyonu eksik!');
+        return { valid: false, message: 'loop() fonksiyonu eksik!', issues };
       }
       
       // Temel parantez kontrolü
       const openBraces = (code.match(/\{/g) || []).length;
       const closeBraces = (code.match(/\}/g) || []).length;
       if (openBraces !== closeBraces) {
-        return { valid: false, message: 'Eksik veya fazla süslü parantez { } hatası!' };
+        addError('Eksik veya fazla süslü parantez { } hatası!');
+        return { valid: false, message: 'Eksik veya fazla süslü parantez { } hatası!', issues };
       }
       
-      return { valid: true };
+      // Gelişmiş doğrulama kuralları
+      const cmds = parseArduinoCode(code);
+      const pinModes = {};
+      const pwmPins = [3, 5, 6, 9, 10, 11];
+      let hasSerialBegin = false;
+      
+      cmds.forEach(c => {
+        if (c.type === 'pinMode') {
+          pinModes[c.pin] = c.mode;
+        }
+        if (c.type === 'serialBegin') hasSerialBegin = true;
+      });
+      
+      // setup ve loop gövdelerini ayır ve sıraya göre değişken atamalarını izle
+      const assignedVars = new Set();
+      const lines = code.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i].trim();
+        const analogAssign = l.match(/(?:int|long|float|double)\s+(\w+)\s*=\s*analogRead\s*\(/);
+        const digitalAssign = l.match(/(?:int|long|float|double)\s+(\w+)\s*=\s*digitalRead\s*\(/);
+        const pulseAssign = l.match(/(?:int|long|float|double|long)\s+(\w+)\s*=\s*pulseIn\s*\(/);
+        const mathAssign = l.match(/^(?:int|long|float|double)\s+(\w+)\s*=\s*[^;]+;/);
+        if (analogAssign) assignedVars.add(analogAssign[1]);
+        else if (digitalAssign) assignedVars.add(digitalAssign[1]);
+        else if (pulseAssign) assignedVars.add(pulseAssign[1]);
+        else if (mathAssign) assignedVars.add(mathAssign[1]);
+        
+        const ifVar = l.match(/^if\s*\(\s*(\w+)\s*(<|>|==|<=|>=|!=)/);
+        if (ifVar && !assignedVars.has(ifVar[1])) {
+          addWarn(`'${ifVar[1]}' değişkeni atanmadan koşulda kullanılıyor.`);
+        }
+      }
+      
+      // Komut düzeyi kontroller
+      cmds.forEach(c => {
+        if (c.type === 'digitalWrite') {
+          const mode = pinModes[c.pin];
+          if (!mode) addError(`Pin ${c.pin} için pinMode(OUTPUT) tanımlı değil.`);
+          else if (mode !== 'OUTPUT') addError(`Pin ${c.pin} ${mode} olarak ayarlı; digitalWrite için OUTPUT gerekli.`);
+        }
+        if (c.type === 'analogWrite') {
+          const mode = pinModes[c.pin];
+          if (!mode) addError(`Pin ${c.pin} için pinMode(OUTPUT) tanımlı değil (analogWrite).`);
+          else if (mode !== 'OUTPUT') addError(`Pin ${c.pin} ${mode} olarak ayarlı; analogWrite için OUTPUT gerekli.`);
+          if (!pwmPins.includes(c.pin)) addError(`analogWrite yalnızca PWM pinlerinde kullanılabilir (${pwmPins.join(', ')}). Pin ${c.pin} PWM değil.`);
+        }
+        if (c.type === 'analogRead') {
+          const p = c.pin;
+          if (typeof p === 'string' && !p.startsWith('A')) {
+            addError(`analogRead için 'A0-A5' biçiminde analog pin kullanılmalıdır. '${p}' geçersiz.`);
+          }
+        }
+        if (c.type === 'digitalReadAssign') {
+          const mode = pinModes[c.pin];
+          if (!mode) addError(`Pin ${c.pin} için pinMode(INPUT/INPUT_PULLUP) tanımlı değil (digitalRead).`);
+          else if (mode === 'OUTPUT') addError(`Pin ${c.pin} OUTPUT iken digitalRead kullanılamaz.`);
+        }
+        if (c.type === 'serialPrintln' && !hasSerialBegin) {
+          addWarn('Serial.begin() çağrısı olmadan Serial.print/println kullanılıyor.');
+        }
+      });
+      
+      if (issues.some(i => i.level === 'error')) {
+        const first = issues.find(i => i.level === 'error');
+        return { valid: false, message: first.text, issues };
+      }
+      
+      return { valid: true, issues };
     }
 
     function runSimulation() {
@@ -2520,9 +2600,13 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const validation = validateCode(appState.editorCode);
       if (!validation.valid) {
         showToast(validation.message, 'error');
-        appState.serialOutput = [{ type: 'error', text: validation.message }];
+        appState.serialOutput = (validation.issues || []).map(i => ({ type: i.level === 'error' ? 'error' : 'info', text: i.text }));
         updateSimulationDisplay();
         return;
+      }
+      // Uyarıları seri monitöre yansıt
+      if (validation.issues && validation.issues.length) {
+        validation.issues.forEach(i => { if (i.level !== 'error') appState.serialOutput.push({ type: 'info', text: i.text }); });
       }
 
       appState.simulationRunning = true;
@@ -2534,6 +2618,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       appState.serialInitialized = false;
       appState.serialOutput = [];
       appState.userSerialOutput = [];
+      appState.lastReadValues = {};
+      appState.lastReadTimes = {};
+      appState.lastWriteValues = {};
+      appState.lastWriteTimes = {};
+      appState.logThrottleMs = 300;
       
       try {
         const commands = parseArduinoCode(appState.editorCode);
@@ -2557,14 +2646,24 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           }
         });
 
-        // setup() içindeki Serial.begin ve diğer komutları çalıştır
+        // setup() komutlarını çıkar
         let setupCommands = [];
-        let inSetup = false;
-        appState.editorCode.split('\n').forEach(line => {
-          if (line.includes('void setup()')) inSetup = true;
-          else if (inSetup && line.includes('}')) inSetup = false;
-          else if (inSetup) setupCommands.push(line);
-        });
+        {
+          let inSetup = false;
+          let depth = 0;
+          appState.editorCode.split('\n').forEach(line => {
+            if (!inSetup && line.includes('void setup()')) { inSetup = true; }
+            else if (inSetup) {
+              if (line.includes('{')) depth++;
+              if (line.includes('}')) {
+                if (depth === 0) { inSetup = false; return; }
+                depth--;
+              } else {
+                setupCommands.push(line);
+              }
+            }
+          });
+        }
 
         const setupParsed = parseArduinoCode(setupCommands.join('\n'));
         setupParsed.forEach(cmd => {
@@ -2579,13 +2678,22 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         });
         
         let loopCommands = [];
-        let inLoop = false;
-        
-        appState.editorCode.split('\n').forEach(line => {
-          if (line.includes('void loop()')) inLoop = true;
-          else if (inLoop && line.includes('}')) inLoop = false;
-          else if (inLoop) loopCommands.push(line);
-        });
+        {
+          let inLoop = false;
+          let depth = 0;
+          appState.editorCode.split('\n').forEach(line => {
+            if (!inLoop && line.includes('void loop()')) { inLoop = true; }
+            else if (inLoop) {
+              if (line.includes('{')) depth++;
+              if (line.includes('}')) {
+                if (depth === 0) { inLoop = false; return; }
+                depth--;
+              } else {
+                loopCommands.push(line);
+              }
+            }
+          });
+        }
         
         let commandIndex = 0;
         const loopText = loopCommands.join('\n');
@@ -2690,7 +2798,15 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           } else if (cmd.type === 'digitalReadAssign') {
             const val = appState.buttonStates[cmd.pin] ? 1 : 0;
             variables[cmd.varName] = val;
-            logToSerial(`Read Pin ${cmd.pin}: ${val ? 'HIGH' : 'LOW'}`, 'info');
+            const now = Date.now();
+            const lastVal = appState.lastReadValues[cmd.pin];
+            const lastTime = appState.lastReadTimes[cmd.pin] || 0;
+            const throttle = appState.logThrottleMs || 300;
+            if (val !== lastVal || now - lastTime > throttle) {
+              logToSerial(`Read Pin ${cmd.pin}: ${val ? 'HIGH' : 'LOW'}`, 'info');
+              appState.lastReadValues[cmd.pin] = val;
+              appState.lastReadTimes[cmd.pin] = now;
+            }
           } else if (cmd.type === 'conditionalWrite') {
             let conditionMet = false;
             if (cmd.conditionPin) {
@@ -2714,14 +2830,23 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             }
             
             const value = conditionMet ? cmd.trueValue : cmd.falseValue;
+            const prev = appState.ledStates[cmd.targetPin];
             appState.ledStates[cmd.targetPin] = value;
-            logToSerial(`${cmd.varName || 'Buton'} ${cmd.operator || '=='} ${cmd.threshold || (cmd.conditionPin ? 'HIGH' : 'LOW')}: ${conditionMet} - Pin ${cmd.targetPin}: ${value}`, 'info');
+            const now = Date.now();
+            const lastWVal = appState.lastWriteValues[cmd.targetPin];
+            const lastWTime = appState.lastWriteTimes[cmd.targetPin] || 0;
+            const throttle = appState.logThrottleMs || 300;
+            if (value !== lastWVal || now - lastWTime > throttle) {
+              logToSerial(`${cmd.varName || 'Buton'} ${cmd.operator || '=='} ${cmd.threshold || (cmd.conditionPin ? 'HIGH' : 'LOW')}: ${conditionMet} - Pin ${cmd.targetPin}: ${value}`, 'info');
+              appState.lastWriteValues[cmd.targetPin] = value;
+              appState.lastWriteTimes[cmd.targetPin] = now;
+            }
           }
           
           commandIndex++;
           
           const nextCmd = loopParsed[commandIndex];
-          const delay = (nextCmd && nextCmd.type === 'delay') ? nextCmd.ms : 20;
+          const delay = (nextCmd && nextCmd.type === 'delay') ? nextCmd.ms : 50;
           
           if (nextCmd && nextCmd.type === 'delay') {
             commandIndex++;
@@ -2778,6 +2903,9 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
 
     function toggleButton(pin) {
       appState.buttonStates[pin] = !appState.buttonStates[pin];
+      if (!appState.lastReadValues) appState.lastReadValues = {};
+      appState.lastReadValues[pin] = appState.buttonStates[pin] ? 1 : 0;
+      logToSerial(`Buton ${pin}: ${appState.buttonStates[pin] ? 'HIGH' : 'LOW'}`, 'info');
       updateSimulationDisplay();
     }
 
