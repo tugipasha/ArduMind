@@ -1,0 +1,26 @@
+Kullanılan Kaynaklar
+
+Milli Eğitim Bakanlığı (MEB)
+Elektrik-Elektronik Teknolojisi Ders Kitapları (Ortaokul & Lise)
+
+Arduino Resmi Dokümantasyonu
+Arduino Learning & Basics
+https://www.arduino.cc
+
+SparkFun Electronics – Learn
+Breadboard, LED, direnç, buton anlatımları
+https://learn.sparkfun.com
+
+Adafruit Learning System
+Temel elektronik bileşenler
+https://learn.adafruit.com
+
+All About Circuits
+Temel elektronik teorisi
+https://www.allaboutcircuits.com
+
+Thomas L. Floyd
+Electronic Devices (Temel elektronik bileşenler)
+
+Robert L. Boylestad
+Electronic Devices and Circuit Theory
