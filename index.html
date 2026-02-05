@@ -282,6 +282,55 @@ void loop() {
                 &nbsp;&nbsp;YAZ "Klima Kapat"<br>
                 BİTİR
               </div>`
+          },
+          {
+            id: 4,
+            question: 'Bir algoritmanın “Sonluluk” özelliği neyi ifade eder?',
+            options: ['Sonsuz döngü içerir', 'Belirli adımlardan sonra biter', 'Girdi gerektirmez', 'Çıkışı yoktur'],
+            correct: 1,
+            explanation: 'Sonluluk, algoritmanın bir noktada mutlaka sona ermesi gerektiğini belirtir.'
+          },
+          {
+            id: 5,
+            question: 'Akış diyagramında oval şekil hangi adımı temsil eder?',
+            options: ['İşlem', 'Başla/Bitir', 'Karar', 'Giriş/Çıkış'],
+            correct: 1,
+            explanation: 'Oval, sürecin başlangıç ve bitişini gösterir.'
+          },
+          {
+            id: 6,
+            question: 'Bir algoritmada “Kesinlik” ne demektir?',
+            options: ['Adımların esnek tanımlanması', 'Her adımın net ve anlaşılır olması', 'Hızlı çalışma', 'Az bellek kullanımı'],
+            correct: 1,
+            explanation: 'Kesinlik, adımların yorumdan bağımsız, açık ve belirli olmasıdır.'
+          },
+          {
+            id: 7,
+            question: 'Giriş ve Çıkış kavramları için doğru olanı seçin:',
+            options: ['Algoritma yalnızca çıkış üretir', 'Girdi olmadan algoritma çalışmaz', 'Girdi işlem için gereken veridir, çıkış sonuçtur', 'Girdi ve çıkış aynı şeydir'],
+            correct: 2,
+            explanation: 'Girdi, algoritmaya sağlanan veridir; çıkış ise algoritmanın ürettiği sonuçtur.'
+          },
+          {
+            id: 8,
+            question: 'Karar noktaları için en uygun akış diyagramı şekli hangisidir?',
+            options: ['Dikdörtgen', 'Paralelkenar', 'Eşkenar dörtgen', 'Oval'],
+            correct: 2,
+            explanation: 'Koşul/karar yapıları eşkenar dörtgen ile gösterilir.'
+          },
+          {
+            id: 9,
+            question: 'Algoritma tasarımında sözde kodun avantajı nedir?',
+            options: ['Derleyiciye özel olması', 'Dile özgü anahtar sözcükler kullanması', 'Hızlı prototipleme ve mantık netliği sağlaması', 'Sadece matematik için kullanılması'],
+            correct: 2,
+            explanation: 'Sözde kod dil bağımsızdır ve düşünceyi düzenlemeyi kolaylaştırır.'
+          },
+          {
+            id: 10,
+            question: 'Aşağıdaki adımlardan hangisi tipik bir problem çözme sürecinin parçasıdır?',
+            options: ['Rastgele deneme', 'Problem tanımlama, çözüm adımlarını belirleme, test etme', 'Yalnızca kod yazma', 'Yalnızca test etme'],
+            correct: 1,
+            explanation: 'İyi bir süreç problem tanımı, algoritma oluşturma ve doğrulamayı içerir.'
           }
         ]
       },
@@ -523,6 +572,41 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 <span class="keyword">if</span> (!isParasut) {
   <span class="keyword">Serial</span>.<span class="function">println</span>(<span class="string">"Parasüt açılmadı!"</span>);
 }</div>`
+          },
+          {
+            id: 6,
+            question: 'Switch-case yapısında hangi türlerle karşılaştırma yapılabilir?',
+            options: ['String', 'double', 'int/char/enum', 'float'],
+            correct: 2,
+            explanation: 'C/C++’ta switch-case int, char ve enum ile çalışır.'
+          },
+          {
+            id: 7,
+            question: 'Dizilerde ilk elemanın indeksi nedir?',
+            options: ['1', '0', '–1', 'Eleman sayısına bağlı'],
+            correct: 1,
+            explanation: 'Çoğu dilde olduğu gibi C/C++’ta ilk indeks 0’dır.'
+          },
+          {
+            id: 8,
+            question: 'Aşağıdakilerden hangisi geçerli bir yorum biçimidir?',
+            options: ['// tek satır', '/* çok satır */', 'Her ikisi', 'Yorum desteklenmez'],
+            correct: 2,
+            explanation: 'Tek satır ve çok satır yorumlar desteklenir.'
+          },
+          {
+            id: 9,
+            question: 'Süslü parantezler {} neyi belirtir?',
+            options: ['Satır sonunu', 'Kod bloklarını', 'Değişken tipini', 'Derleyici direktifini'],
+            correct: 1,
+            explanation: 'Koşullar, fonksiyonlar ve döngüler için blok sınırlarıdır.'
+          },
+          {
+            id: 10,
+            question: 'Ternary (?:) operatörünün karşılığı nedir?',
+            options: ['for döngüsü', 'switch yapısı', 'kısa if-else', 'goto'],
+            correct: 2,
+            explanation: 'Koşula göre iki değerden birini seçen kısa bir if-else yazımıdır.'
           }
         ]
       },
@@ -573,6 +657,27 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 <span class="keyword">int</span> ledPin = <span class="number">13</span>;
 <span class="keyword">float</span> sicaklik = <span class="number">25.5</span>;
 <span class="keyword">bool</span> butonBasili = <span class="keyword">false</span>;</div>`
+          },
+          {
+            id: 4,
+            question: 'Aşağıdakilerden hangisi temel yazım kuralıdır?',
+            options: ['Komutlar noktalı virgülle biter', 'Süslü parantezler şart değildir', 'Yorumlar çalışmayı etkiler', 'Boşluklar hata üretir'],
+            correct: 0,
+            explanation: 'Komut satırları ; ile sonlanır.'
+          },
+          {
+            id: 5,
+            question: 'Derleme hatalarının tipik nedeni nedir?',
+            options: ['Yanlış port seçimi', 'Eksik noktalı virgül veya parantez eşleşmesi', 'Düşük baud değeri', 'Yanlış kablolama'],
+            correct: 1,
+            explanation: 'Sözdizimi hataları derleme sırasında yakalanır.'
+          },
+          {
+            id: 6,
+            question: 'Aşağıdakilerden hangisi loop içinde yapılmamalıdır?',
+            options: ['Sürekli Serial.begin() çağırmak', 'Sensör okumak', 'LED yakıp söndürmek', 'Değişken güncellemek'],
+            correct: 0,
+            explanation: 'Serial.begin() genelde setup() içinde bir kez çağrılmalıdır.'
           }
         ]
       },
@@ -607,6 +712,27 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalRead(pin)</h4>
               <p class="mb-3">Bir pindeki voltajın HIGH (5V) mı yoksa LOW (0V) mu olduğunu okur.</p>
               <div class="doc-code-block mb-4">int durum = digitalRead(2); <span class="comment">// Pin 2'yi oku</span></div>`
+          },
+          {
+            id: 5,
+            question: 'Pull-down direnci ne amaçla kullanılır?',
+            options: ['Pin’i varsayılan HIGH yapmak', 'Pin’i varsayılan LOW yapmak', 'Akımı artırmak', 'PWM üretmek'],
+            correct: 1,
+            explanation: 'Pull-down direnç pini basılmadığında LOW seviyede tutar.'
+          },
+          {
+            id: 6,
+            question: 'Dijital sinyalde “debounce” hangi problem için uygulanır?',
+            options: ['Gürültülü analog okuma', 'Butonun mekanik titremesi', 'PWM frekansı', 'ADC çözünürlüğü'],
+            correct: 1,
+            explanation: 'Buton basışlarında mekanik titreşim yanlış çoklu okumalara yol açar.'
+          },
+          {
+            id: 7,
+            question: 'INPUT_PULLUP modu ne sağlar?',
+            options: ['Harici pull-up', 'Dahili pull-up', 'PWM çıkışı', 'Analog okuma'],
+            correct: 1,
+            explanation: 'Arduino’da bazı pinlerde dahili pull-up aktif edilebilir.'
           }
         ]
       },
@@ -644,6 +770,27 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <p class="mb-4">Bir aralıktaki değeri başka bir aralığa oranlamak için kullanılır. En yaygın kullanımı 0-1023 (analog giriş) değerini 0-255 (PWM çıkış) aralığına çekmektir.</p>
               <div class="doc-code-block mb-4">
 <span class="keyword">int</span> parlaklik = <span class="function">map</span>(sensorDegeri, <span class="number">0</span>, <span class="number">1023</span>, <span class="number">0</span>, <span class="number">255</span>);</div>`
+          },
+          {
+            id: 4,
+            question: 'analogWrite() için tipik değer aralığı nedir?',
+            options: ['0–1023', '0–255', '0–1', '–255–255'],
+            correct: 1,
+            explanation: 'PWM çıkışı 0–255 aralığında ayarlanır.'
+          },
+          {
+            id: 5,
+            question: 'map() fonksiyonu ne yapar?',
+            options: ['Dizileri sıralar', 'Değer aralığını başka aralığa dönüştürür', 'Pin modunu değiştirir', 'Kütüphane ekler'],
+            correct: 1,
+            explanation: 'Bir değeri bir aralıktan başka bir aralığa ölçekler.'
+          },
+          {
+            id: 6,
+            question: 'ADC çözünürlüğü 10-bit ise kaç seviye vardır?',
+            options: ['256', '512', '1024', '2048'],
+            correct: 2,
+            explanation: '10-bit ADC 2^10 = 1024 seviyeye sahiptir.'
           }
         ]
       },
@@ -669,6 +816,20 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 <span class="keyword">if</span> (<span class="keyword">Serial</span>.<span class="function">available</span>() > <span class="number">0</span>) {
   <span class="keyword">char</span> gelenVeri = <span class="keyword">Serial</span>.<span class="function">read</span>();
 }</div>`
+          },
+          {
+            id: 4,
+            question: 'Servo motorlar için doğru güç beslemesi neden önemlidir?',
+            options: ['Yalnızca LED parlaklığı için', 'Aşırı akım çekebilirler', 'Seri portu etkiler', 'PWM’i kapatır'],
+            correct: 1,
+            explanation: 'Servo motorlar akım çeker; Arduino 5V hattı yetersiz olabilir, harici besleme önerilir.'
+          },
+          {
+            id: 5,
+            question: 'attach(pin) fonksiyonu ne yapar?',
+            options: ['Seri portu başlatır', 'Servo sinyal pinini bağlar', 'PWM’i kapatır', 'ADC’yi başlatır'],
+            correct: 1,
+            explanation: 'Servo nesnesini belirtilen pin ile ilişkilendirir.'
           }
         ]
       },
@@ -684,6 +845,20 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <p class="mb-4">Interrupt'lar (Kesmeler), ana program ne yaparsa yapsın, önemli bir olay olduğunda (bir butona basılması gibi) programı durdurup özel bir fonksiyonu çalıştırır.</p>
               <div class="doc-code-block mb-4">attachInterrupt(digitalPinToInterrupt(2), isr, RISING);</div>
               <p class="text-slate-300"><b>RISING:</b> Voltaj 0'dan 5V'a çıktığında tetiklenir.</p>`
+          },
+          {
+            id: 3,
+            question: '9600 nedir?',
+            options: ['PWM frekansı', 'ADC çözünürlüğü', 'Baud (saniyedeki bit) değeri', 'Pin numarası'],
+            correct: 2,
+            explanation: 'Seri haberleşme hızı baud cinsinden belirtilir.'
+          },
+          {
+            id: 4,
+            question: 'Serial.print ve Serial.println arasındaki fark nedir?',
+            options: ['Hiç fark yok', 'println satır sonu ekler', 'print daha hızlıdır', 'println yalnızca sayıları yazar'],
+            correct: 1,
+            explanation: 'println veri sonuna newline ekler.'
           }
         ]
       },
@@ -712,6 +887,20 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
     <span class="comment">// İşlem yap (Örn: LED durumunu değiştir)</span>
   }
 }</div>`
+          },
+          {
+            id: 3,
+            question: 'HC-SR04 için tipik trig ve echo pinleri nereye bağlanır?',
+            options: ['Trig GND, Echo 5V', 'Trig dijital çıkış, Echo dijital giriş', 'Trig analog giriş, Echo PWM', 'Her ikisi 5V'],
+            correct: 1,
+            explanation: 'Trig çıkış sinyali üretir, Echo girişte yankı süresi ölçülür.'
+          },
+          {
+            id: 4,
+            question: 'PIR hareket sensörü nasıl çalışır?',
+            options: ['Manyetik alan ölçer', 'Işık şiddeti ölçer', 'Kızılötesi değişimi algılar', 'Ses ölçer'],
+            correct: 2,
+            explanation: 'PIR, ortamdaki kızılötesi değişimlere duyarlıdır.'
           }
         ]
       },
