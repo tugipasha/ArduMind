@@ -3722,52 +3722,60 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           name: 'Breadboard',
           icon: '',
           color: 'from-gray-500 to-gray-700',
-          description: 'Devre elemanlarını lehimsiz bağlamak için kullanılan devre tahtası',
-          usage: 'Breadboard üzerindeki delikler içten iletken şeritlerle bağlıdır. Aynı satırdaki delikler birbirine bağlıdır.',
+          description: 'Lehimsiz devre kurmayı sağlayan çok amaçlı devre tahtası',
+          usage: 'Yanlardaki power rail (+/–) boyunca bağlantılıdır. Orta kısımda 5’li sütunlar yatay olarak birbirine bağlıdır; bileşenleri bu hat yapısına uygun yerleştirin.',
           tips: [
-            'Üst ve alt power rail\'ler (+/-) tüm breadboard boyunca bağlıdır',
-            'Orta kısımdaki satırlar yatay olarak bağlıdır',
+            'Üst/alt power rail (+/–) tüm uzunluk boyunca bağlıdır',
+            'Orta şeritler 5 delikli gruplar halinde yatay bağlıdır',
             'Arduino\'dan 5V ve GND bağlantılarını power rail\'lere yapın'
-          ]
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'BreadBoardBüyük.jpg', caption: 'Breadboard' }]
         },
         {
           id: 'led',
           name: 'LED (Işık Yayan Diyot)',
           icon: '',
           color: 'from-yellow-500 to-orange-600',
-          description: 'Elektrik akımı geçtiğinde ışık yayan elektronik devre elemanı',
-          usage: 'LED\'in uzun bacağı (+) anot, kısa bacağı (-) katottur. Mutlaka direnç ile kullanılmalıdır.',
+          description: 'Elektrik akımıyla ışık yayan diyot; polarize elemandır',
+          usage: 'Uzun bacak (+) anot, kısa bacak (–) katot. İleri yönde tipik ~2V düşüm olur. 220–330Ω direnç ile kullanın.',
           tips: [
             'LED\'ler polarize elemanlardır - yönü önemlidir',
             'Genellikle 220Ω veya 330Ω direnç ile kullanılır',
             'Doğrudan güç kaynağına bağlamayın, yanar!'
-          ]
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'KırmızıLed.jpg', caption: 'LED' }]
         },
         {
           id: 'resistor',
           name: 'Direnç',
           icon: '',
           color: 'from-blue-500 to-cyan-600',
-          description: 'Devredeki akım miktarını sınırlamak için kullanılan eleman',
-          usage: 'Renk kodları ile değeri belirlenir. LED ve sensör gibi elemanları korumak için kullanılır.',
+          description: 'Akımı sınırlar; elemanları korur; yönsüzdür',
+          usage: 'Renk kodları ile değeri okunur. Güç değeri (W) ısınma dayanımını belirtir. LED ve sensörleri korumak için kullanılır.',
           tips: [
             'LED için 220Ω (kırmızı-kırmızı-kahverengi) yaygın kullanılır',
             'Pull-up/down dirençler için 10kΩ kullanılır',
             'Dirençlerin polaritesi yoktur - iki yönde de çalışır'
-          ]
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'DirençRenkKodlarıı.jpg', caption: 'Direnç Renk Kodları' }]
         },
         {
           id: 'button',
           name: 'Buton (Push Button)',
           icon: '',
           color: 'from-green-500 to-emerald-600',
-          description: 'Basıldığında devreyi kapatan, bırakıldığında açan anahtar',
-          usage: 'Dijital giriş olarak kullanılır. Pull-down veya pull-up direnç ile birlikte kullanılmalıdır.',
+          description: 'Devreyi tamamlayan/kesen mekanik anahtar; sıklıkla 4 bacaklı',
+          usage: 'Dijital giriş olarak kullanılır. Kararlı okuma için pull-up/pull-down direnç ile bağlayın ve yazılımsal debounce uygulayın.',
           tips: [
             'Genellikle 4 bacaklıdır - karşılıklı bacaklar birbirine bağlıdır',
             '10kΩ pull-down direnci ile GND\'ye bağlanır',
             'digitalRead() ile butona basılıp basılmadığı okunur'
-          ]
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'Buton.jpg', caption: 'Buton' }]
         },
         {
           id: 'jumper',
@@ -3780,7 +3788,8 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             'Renk kodlaması: Kırmızı (+5V), Siyah (GND), diğerleri sinyal',
             'Breadboard için erkek-erkek kablo kullanın',
             'Arduino pinlerine bağlamak için erkek-dişi kullanın'
-          ]
+          ],
+          images: []
         },
         {
           id: 'potentiometer',
@@ -3788,12 +3797,44 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           icon: '',
           color: 'from-orange-500 to-red-600',
           description: 'Direnci elle ayarlanabilen değişken direnç',
-          usage: 'Analog giriş olarak kullanılır. Ses seviyesi, parlaklık gibi ayarlar için idealdir.',
+          usage: 'Üç bacaklıdır: +5V, GND ve orta “süpürücü” çıkışı. Analog girişle 0–1023 aralığında değer okunur.',
           tips: [
             '3 bacaklıdır: +5V, Analog Out (orta), GND',
             'analogRead() ile 0-1023 arası değer okunur',
-            'map() fonksiyonu ile deper aralığı değiştirilebilir'
-          ]
+            'map() fonksiyonu ile değer aralığı dönüştürülebilir'
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'Potansiyometre.jpg', caption: 'Potansiyometre' }]
+        },
+        {
+          id: 'servo',
+          name: 'Servo Motor',
+          icon: '',
+          color: 'from-teal-500 to-cyan-600',
+          description: '0–180° arası hassas açı kontrolü yapabilen motor',
+          usage: 'Kırmızı: Vcc, Kahverengi: GND, Turuncu: Sinyal. PWM darbe genişliği ~1–2 ms aralığıyla konum belirlenir.',
+          tips: [
+            'Harici güç kaynağı önerilir; yüksek akım çekebilir',
+            'Sinyal pinini PWM destekli pine bağlayın',
+            'Açı kontrolü için uygun kütüphane/fonksiyonları kullanın'
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'servo-motor-uclari.png', caption: 'Servo Motor Bağlantıları' }]
+        },
+        {
+          id: 'hc-sr04',
+          name: 'HC-SR04 Mesafe Sensörü',
+          icon: '',
+          color: 'from-indigo-500 to-blue-600',
+          description: 'Ultrasonik dalga ile 2–400 cm arası mesafe ölçer',
+          usage: 'Trig pini kısa darbe gönderir; Echo pini dönüş süresini ölçer. Mesafe süre/343 m/s hızına göre hesaplanır.',
+          tips: [
+            'İstikrarlı ölçüm için sabit montaj ve temiz hat çekin',
+            '5V besleme kullanın; sinyal seviyelerini doğrulayın',
+            'Zaman ölçümünde mikrosaniye hassasiyet gerekir'
+          ],
+          path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
+          images: [{ src: 'hcsr-4.webp', caption: 'HC-SR04 Sensörü' }]
         }
       ];
 
@@ -3831,6 +3872,24 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                       <h3 class="font-bold text-lg mb-2 text-blue-400">Kullanım</h3>
                       <p class="text-slate-300 leading-relaxed">${component.usage}</p>
                     </div>
+                    
+                    ${component.images && component.images.length ? `
+                      <div class="mt-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          ${component.images.map(img => `
+                            <div class="bg-slate-900/40 rounded-xl border border-slate-700/50 p-3 flex flex-col items-center">
+                              <img
+                                src="${component.path ? `${component.path}/${img.src}` : img.src}"
+                                alt="${img.caption}"
+                                class="h-24 w-full object-contain"
+                                loading="lazy"
+                              />
+                              <span class="mt-2 text-xs text-slate-300">${img.caption}</span>
+                            </div>
+                          `).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
                     
                     <div>
                       <h3 class="font-bold text-lg mb-3 text-green-400">İpuçları</h3>
@@ -4355,21 +4414,21 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
               <div>
                 <h4 class="font-bold text-white">Breadboard (Devre Tahtası)</h4>
-                <p class="text-xs text-slate-400 mb-2">Lehim yapmadan devre kurmayı sağlar. Dikey ve yatay hatları birbirine bağlıdır.</p>
+                <p class="text-xs text-slate-400 mb-2">Lehim yapmadan devre kurmayı sağlar. Yanlardaki güç hatları (+/–) uzunlamasına bağlıdır; orta kısımda 5’li sütunlar birbirine bağlıdır.</p>
                 <h4 class="font-bold text-white">LED</h4>
-                <p class="text-xs text-slate-400 mb-2">Işık yayan diyot. Uzun bacak (+), kısa bacak (-). Mutlaka direnç ile kullanılmalıdır.</p>
+                <p class="text-xs text-slate-400 mb-2">Işık yayan diyot. Uzun bacak (+) anot, kısa bacak (–) katottur. Genellikle 220–330Ω direnç ile kullanılır; ileri yönde ~2V düşüm oluşturur.</p>
                 <h4 class="font-bold text-white">Direnç</h4>
-                <p class="text-xs text-slate-400 mb-2">Akımı sınırlar, parçaları yanmaktan korur. Renk kodları ile değeri okunur. Yönsüzdür.</p>
+                <p class="text-xs text-slate-400 mb-2">Akımı sınırlar ve elemanları korur. Renk kodları ile değeri okunur; yönsüzdür. Güç değeri (W) ısınmaya karşı dayanımı gösterir.</p>
                 <h4 class="font-bold text-white">Potansiyometre</h4>
-                <p class="text-xs text-slate-400">Ayarlanabilir dirençtir. Ses veya ışık şiddetini ayarlamak için kullanılır.</p>
+                <p class="text-xs text-slate-400">Üç bacaklı ayarlanabilir dirençtir. Orta uç “süpürücü”dür; ses, ışık şiddeti gibi değeri analog olarak ayarlamak için kullanılır.</p>
               </div>
               <div>
                 <h4 class="font-bold text-white">Servo Motor</h4>
-                <p class="text-xs text-slate-400 mb-2">0-180 derece arası hassas açı yapabilen motordur. Robot kollarda kullanılır. (Kırmızı: Güç, Kahve: GND, Turuncu: Sinyal).</p>
+                <p class="text-xs text-slate-400 mb-2">0–180° arası hassas açı kontrolü yapar. Kırmızı: Vcc, Kahverengi: GND, Turuncu: Sinyal. Tipik PWM darbe genişliği 1–2 ms aralığındadır.</p>
                 <h4 class="font-bold text-white">HC-SR04 Mesafe Sensörü</h4>
-                <p class="text-xs text-slate-400 mb-2">Ultrasonik ses dalgaları ile mesafe ölçer (Yarasa mantığı). Trig (gönder) ve Echo (al) pinleri vardır.</p>
+                <p class="text-xs text-slate-400 mb-2">Ultrasonik dalga ile 2–400 cm aralığında mesafe ölçer. Trig gönderir, Echo dönen dalganın süresini ölçer.</p>
                 <h4 class="font-bold text-white">Buton</h4>
-                <p class="text-xs text-slate-400">Devreyi tamamlayan veya kesen anahtardır. Genellikle 4 bacaklıdır.</p>
+                <p class="text-xs text-slate-400">Devreyi tamamlayan/kesen anahtardır. Genelde 4 bacaklıdır. Kararlı okuma için pull-up/pull-down ve yazılımsal debounce önerilir.</p>
               </div>
             </div>
           `,
@@ -4382,6 +4441,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             { src: "Potansiyometre.jpg", caption: "Potansiyometre" },
             { src: "hcsr-4.webp", caption: "Mesafe Sensörü" },
             { src: "servo-motor-uclari.png", caption: "Servo Motor" }
+          ],
+          thumbnails: [
+            { src: "KırmızıLed.jpg", caption: "LED" },
+            { src: "DirençRenkKodlarıı.jpg", caption: "Direnç" },
+            { src: "Potansiyometre.jpg", caption: "Potansiyometre" },
+            { src: "Buton.jpg", caption: "Buton" }
           ]
         }
       ];
@@ -4408,6 +4473,23 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                   ${section.details ? `
                     <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
                       ${section.details}
+                      ${section.thumbnails && section.thumbnails.length ? `
+                        <div class="mt-6">
+                          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            ${section.thumbnails.map(img => `
+                              <div class="bg-slate-800 rounded-xl border border-slate-700/50 p-3 flex flex-col items-center">
+                                <img
+                                  src="${section.path}/${img.src}"
+                                  alt="${img.caption}"
+                                  class="h-20 w-full object-contain"
+                                  loading="lazy"
+                                />
+                                <span class="mt-2 text-xs text-slate-300">${img.caption}</span>
+                              </div>
+                            `).join('')}
+                          </div>
+                        </div>
+                      ` : ''}
                     </div>
                   ` : ''}
                 </div>
