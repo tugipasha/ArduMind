@@ -3722,12 +3722,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           name: 'Breadboard',
           icon: '',
           color: 'from-gray-500 to-gray-700',
-          description: 'Lehimsiz devre kurmayı sağlayan çok amaçlı devre tahtası',
-          usage: 'Yanlardaki power rail (+/–) boyunca bağlantılıdır. Orta kısımda 5’li sütunlar yatay olarak birbirine bağlıdır; bileşenleri bu hat yapısına uygun yerleştirin.',
+          description: 'Lehimsiz devre kurmayı sağlayan çok amaçlı deneme tahtası',
+          usage: 'Yanlardaki power rail (+/–) tüm uzunluk boyunca bağlıdır. Orta kısımda 5’li sütunlar yatay bağlıdır; bileşenleri bu hat yapısına göre yerleştirin. Öğrenme, deneme-yanılma ve Arduino projelerinde kullanılır.',
           tips: [
-            'Üst/alt power rail (+/–) tüm uzunluk boyunca bağlıdır',
-            'Orta şeritler 5 delikli gruplar halinde yatay bağlıdır',
-            'Arduino\'dan 5V ve GND bağlantılarını power rail\'lere yapın'
+            'Yüksek voltaj için uygun değildir',
+            'Parçaları takarken zorlamayın; iç bağlantılar bozulabilir',
+            'Çalışmıyorsa bağlantıları tek tek kontrol edin'
           ],
           path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
           images: [{ src: 'BreadBoardBüyük.jpg', caption: 'Breadboard' }]
@@ -3738,11 +3738,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           icon: '',
           color: 'from-yellow-500 to-orange-600',
           description: 'Elektrik akımıyla ışık yayan diyot; polarize elemandır',
-          usage: 'Uzun bacak (+) anot, kısa bacak (–) katot. İleri yönde tipik ~2V düşüm olur. 220–330Ω direnç ile kullanın.',
+          usage: 'Uzun bacak (+) anot, kısa bacak (–) katot. İleri yönde tipik ~2V düşüm olur. 220–330Ω direnç ile kullanın; ters bağlanırsa ışık vermez.',
           tips: [
-            'LED\'ler polarize elemanlardır - yönü önemlidir',
-            'Genellikle 220Ω veya 330Ω direnç ile kullanılır',
-            'Doğrudan güç kaynağına bağlamayın, yanar!'
+            'Her zaman direnç ile kullanın',
+            'Doğrudan pil/Arduino’ya bağlamak tehlikelidir',
+            'Ters bağlantı uzun sürerse zarar görebilir'
           ],
           path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
           images: [{ src: 'KırmızıLed.jpg', caption: 'LED' }]
@@ -3753,11 +3753,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           icon: '',
           color: 'from-blue-500 to-cyan-600',
           description: 'Akımı sınırlar; elemanları korur; yönsüzdür',
-          usage: 'Renk kodları ile değeri okunur. Güç değeri (W) ısınma dayanımını belirtir. LED ve sensörleri korumak için kullanılır.',
+          usage: 'Renk bantları değeri gösterir. Güç değeri (W) ısınma dayanımını belirtir. LED ve sensörleri korumak için kullanılır.',
           tips: [
-            'LED için 220Ω (kırmızı-kırmızı-kahverengi) yaygın kullanılır',
-            'Pull-up/down dirençler için 10kΩ kullanılır',
-            'Dirençlerin polaritesi yoktur - iki yönde de çalışır'
+            'Çok küçük direnç LED’i yakabilir',
+            'Çok büyük direnç LED’i sönük yapar',
+            'Uzun kullanımda ısı üretebilir',
+            'Yönsüzdür; her iki yönde çalışır'
           ],
           path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
           images: [{ src: 'DirençRenkKodlarıı.jpg', caption: 'Direnç Renk Kodları' }]
@@ -3767,12 +3768,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           name: 'Buton (Push Button)',
           icon: '',
           color: 'from-green-500 to-emerald-600',
-          description: 'Devreyi tamamlayan/kesen mekanik anahtar; sıklıkla 4 bacaklı',
-          usage: 'Dijital giriş olarak kullanılır. Kararlı okuma için pull-up/pull-down direnç ile bağlayın ve yazılımsal debounce uygulayın.',
+          description: 'Basılınca devreyi çalıştıran, bırakılınca kapatan mekanik anahtar',
+          usage: 'Genellikle 4 bacaklıdır; karşılıklı bacaklar bağlıdır. Kararlı okuma için pull-up/pull-down ve yazılımsal debounce uygulanır.',
           tips: [
-            'Genellikle 4 bacaklıdır - karşılıklı bacaklar birbirine bağlıdır',
-            '10kΩ pull-down direnci ile GND\'ye bağlanır',
-            'digitalRead() ile butona basılıp basılmadığı okunur'
+            'Yanlış yönde takılırsa devre sürekli çalışır',
+            'Hassastır; sert basmayın',
+            'Arduino ile kullanımda uygun direnç tercih edin'
           ],
           path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
           images: [{ src: 'Buton.jpg', caption: 'Buton' }]
@@ -3783,11 +3784,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           icon: '',
           color: 'from-purple-500 to-pink-600',
           description: 'Devre elemanlarını birbirine bağlamak için kullanılan kablolar',
-          usage: 'Erkek-erkek, erkek-dişi ve dişi-dişi olmak üzere 3 türü vardır.',
+          usage: 'Erkek-erkek, erkek-dişi ve dişi-dişi türleri vardır; breadboard ve Arduino bağlantılarında kullanılır.',
           tips: [
-            'Renk kodlaması: Kırmızı (+5V), Siyah (GND), diğerleri sinyal',
-            'Breadboard için erkek-erkek kablo kullanın',
-            'Arduino pinlerine bağlamak için erkek-dişi kullanın'
+            'Gevşek takılan kablolar devrenin çalışmamasına neden olur',
+            'Uzun kablolar sinyal karışıklığı yapabilir',
+            'Renkli kablolar karışıklığı azaltır'
           ],
           images: []
         },
@@ -3796,12 +3797,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           name: 'Potansiyometre',
           icon: '',
           color: 'from-orange-500 to-red-600',
-          description: 'Direnci elle ayarlanabilen değişken direnç',
+          description: 'Değeri ayarlanabilen değişken direnç; ses ve ışık ayarında kullanılır',
           usage: 'Üç bacaklıdır: +5V, GND ve orta “süpürücü” çıkışı. Analog girişle 0–1023 aralığında değer okunur.',
           tips: [
-            '3 bacaklıdır: +5V, Analog Out (orta), GND',
-            'analogRead() ile 0-1023 arası değer okunur',
-            'map() fonksiyonu ile değer aralığı dönüştürülebilir'
+            'Yanlış bacak bağlantısı çalışmayı engeller',
+            'Ani çevirmek akım değişimine neden olabilir',
+            'LED’i tek başına korumaz; gerekiyorsa ek direnç kullanın'
           ],
           path: 'Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)',
           images: [{ src: 'Potansiyometre.jpg', caption: 'Potansiyometre' }]
@@ -3845,6 +3846,16 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           <div class="mb-8">
             <h1 class="text-4xl font-bold mb-2">Arduino Elemanları</h1>
             <p class="text-slate-400">Temel elektronik bileşenleri tanıyalım</p>
+            <div class="mt-6 bg-yellow-900/30 border border-yellow-700/40 rounded-2xl p-5">
+              <h2 class="text-lg font-bold text-yellow-300 mb-2">Genel ve Önemli Uyarılar</h2>
+              <ul class="text-slate-200 text-sm space-y-1 list-disc ml-5">
+                <li>Elektronik devre kurarken acele edilmemelidir</li>
+                <li>Enerji vermeden önce bağlantılar iki kez kontrol edilmelidir</li>
+                <li>LED dirençsiz asla kullanılmaz</li>
+                <li>Yanlış bağlantılar Arduino ve parçaları kalıcı olarak bozabilir</li>
+                <li>İlk devreler her zaman basit tutulmalıdır</li>
+              </ul>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -4407,48 +4418,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             { src: "ArduinoUno Bacakları.jpg", caption: "Arduino Uno Pin Diyagramı" }
           ]
         },
-        {
-          title: "Temel Elemanlar",
-          description: "Elektronik devrelerde kullanılan temel bileşenler ve görevleri.",
-          details: `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-              <div>
-                <h4 class="font-bold text-white">Breadboard (Devre Tahtası)</h4>
-                <p class="text-xs text-slate-400 mb-2">Lehim yapmadan devre kurmayı sağlar. Yanlardaki güç hatları (+/–) uzunlamasına bağlıdır; orta kısımda 5’li sütunlar birbirine bağlıdır.</p>
-                <h4 class="font-bold text-white">LED</h4>
-                <p class="text-xs text-slate-400 mb-2">Işık yayan diyot. Uzun bacak (+) anot, kısa bacak (–) katottur. Genellikle 220–330Ω direnç ile kullanılır; ileri yönde ~2V düşüm oluşturur.</p>
-                <h4 class="font-bold text-white">Direnç</h4>
-                <p class="text-xs text-slate-400 mb-2">Akımı sınırlar ve elemanları korur. Renk kodları ile değeri okunur; yönsüzdür. Güç değeri (W) ısınmaya karşı dayanımı gösterir.</p>
-                <h4 class="font-bold text-white">Potansiyometre</h4>
-                <p class="text-xs text-slate-400">Üç bacaklı ayarlanabilir dirençtir. Orta uç “süpürücü”dür; ses, ışık şiddeti gibi değeri analog olarak ayarlamak için kullanılır.</p>
-              </div>
-              <div>
-                <h4 class="font-bold text-white">Servo Motor</h4>
-                <p class="text-xs text-slate-400 mb-2">0–180° arası hassas açı kontrolü yapar. Kırmızı: Vcc, Kahverengi: GND, Turuncu: Sinyal. Tipik PWM darbe genişliği 1–2 ms aralığındadır.</p>
-                <h4 class="font-bold text-white">HC-SR04 Mesafe Sensörü</h4>
-                <p class="text-xs text-slate-400 mb-2">Ultrasonik dalga ile 2–400 cm aralığında mesafe ölçer. Trig gönderir, Echo dönen dalganın süresini ölçer.</p>
-                <h4 class="font-bold text-white">Buton</h4>
-                <p class="text-xs text-slate-400">Devreyi tamamlayan/kesen anahtardır. Genelde 4 bacaklıdır. Kararlı okuma için pull-up/pull-down ve yazılımsal debounce önerilir.</p>
-              </div>
-            </div>
-          `,
-          path: "Teknofest 2026/4.Kısım(Temel Elemanlar 1.Kısım)",
-          images: [
-            { src: "BreadBoardBüyük.jpg", caption: "Breadboard" },
-            { src: "DirençRenkKodlarıı.jpg", caption: "Direnç Renk Kodları" },
-            { src: "KırmızıLed.jpg", caption: "LED" },
-            { src: "Buton.jpg", caption: "Buton" },
-            { src: "Potansiyometre.jpg", caption: "Potansiyometre" },
-            { src: "hcsr-4.webp", caption: "Mesafe Sensörü" },
-            { src: "servo-motor-uclari.png", caption: "Servo Motor" }
-          ],
-          thumbnails: [
-            { src: "KırmızıLed.jpg", caption: "LED" },
-            { src: "DirençRenkKodlarıı.jpg", caption: "Direnç" },
-            { src: "Potansiyometre.jpg", caption: "Potansiyometre" },
-            { src: "Buton.jpg", caption: "Buton" }
-          ]
-        }
+        // Temel Elemanlar bölümü kaldırıldı
       ];
 
       return `
