@@ -6,129 +6,14 @@
   <title>ArduMind - Arduino'yu Anlayarak Öğren</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- CodeMirror for Professional Editor -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
 
-  <style>
-    body {
-      box-sizing: border-box;
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
-    }
-    
-    @keyframes glow {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-    
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    
-    @keyframes slideOut {
-      from {
-        transform: translateX(0);
-        opacity: 1;
-      }
-      to {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    
-    @keyframes clickEffect {
-      0% { transform: scale(1); opacity: 0.5; }
-      100% { transform: scale(2.5); opacity: 0; }
-    }
-    
-    /* Ultrasonik Dalga Animasyonu */
-    @keyframes waveAnimation {
-      0% {
-        transform: scale(0);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(1);
-        opacity: 0;
-      }
-    }
-    
-    /* CodeMirror Custom Styles */
-    .CodeMirror {
-      height: 100% !important;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 14px;
-      background: transparent !important;
-    }
-    .cm-s-dracula.CodeMirror {
-      background-color: transparent !important;
-    }
-    .CodeMirror-gutters {
-      background-color: #1e293b !important;
-      border-right: 1px solid #334155 !important;
-    }
-    .CodeMirror-linenumber {
-      color: #64748b !important;
-    }
-    .CodeMirror-activeline-background {
-      background: rgba(51, 65, 85, 0.3) !important;
-    }
-
-    textarea.code-input {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      tab-size: 2;
-      resize: none;
-    }
-    
-    .doc-code-block {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      background: #1e293b;
-      border-radius: 8px;
-      padding: 16px;
-      overflow-x: auto;
-      border: 1px solid #334155;
-    }
-    
-    .keyword { color: #c792ea; font-weight: 500; }
-    .function { color: #82aaff; }
-    .number { color: #f78c6c; }
-    .string { color: #c3e88d; }
-    .comment { color: #546e7a; font-style: italic; }
-  </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
@@ -150,7 +35,8 @@
       currentVideoFilter: '',
       editorWrap: false,
       editorInstance: null,
-      showIntro: false,
+      showIntro: true,
+      introAutoScheduled: false,
       currentModuleView: null,
       currentDocSection: 'basics',
       collapsedTopics: {}, // Açılır-kapanır bloklar için
@@ -282,61 +168,12 @@ void loop() {
                 &nbsp;&nbsp;YAZ "Klima Kapat"<br>
                 BİTİR
               </div>`
-          },
-          {
-            id: 4,
-            question: 'Bir algoritmanın “Sonluluk” özelliği neyi ifade eder?',
-            options: ['Sonsuz döngü içerir', 'Belirli adımlardan sonra biter', 'Girdi gerektirmez', 'Çıkışı yoktur'],
-            correct: 1,
-            explanation: 'Sonluluk, algoritmanın bir noktada mutlaka sona ermesi gerektiğini belirtir.'
-          },
-          {
-            id: 5,
-            question: 'Akış diyagramında oval şekil hangi adımı temsil eder?',
-            options: ['İşlem', 'Başla/Bitir', 'Karar', 'Giriş/Çıkış'],
-            correct: 1,
-            explanation: 'Oval, sürecin başlangıç ve bitişini gösterir.'
-          },
-          {
-            id: 6,
-            question: 'Bir algoritmada “Kesinlik” ne demektir?',
-            options: ['Adımların esnek tanımlanması', 'Her adımın net ve anlaşılır olması', 'Hızlı çalışma', 'Az bellek kullanımı'],
-            correct: 1,
-            explanation: 'Kesinlik, adımların yorumdan bağımsız, açık ve belirli olmasıdır.'
-          },
-          {
-            id: 7,
-            question: 'Giriş ve Çıkış kavramları için doğru olanı seçin:',
-            options: ['Algoritma yalnızca çıkış üretir', 'Girdi olmadan algoritma çalışmaz', 'Girdi işlem için gereken veridir, çıkış sonuçtur', 'Girdi ve çıkış aynı şeydir'],
-            correct: 2,
-            explanation: 'Girdi, algoritmaya sağlanan veridir; çıkış ise algoritmanın ürettiği sonuçtur.'
-          },
-          {
-            id: 8,
-            question: 'Karar noktaları için en uygun akış diyagramı şekli hangisidir?',
-            options: ['Dikdörtgen', 'Paralelkenar', 'Eşkenar dörtgen', 'Oval'],
-            correct: 2,
-            explanation: 'Koşul/karar yapıları eşkenar dörtgen ile gösterilir.'
-          },
-          {
-            id: 9,
-            question: 'Algoritma tasarımında sözde kodun avantajı nedir?',
-            options: ['Derleyiciye özel olması', 'Dile özgü anahtar sözcükler kullanması', 'Hızlı prototipleme ve mantık netliği sağlaması', 'Sadece matematik için kullanılması'],
-            correct: 2,
-            explanation: 'Sözde kod dil bağımsızdır ve düşünceyi düzenlemeyi kolaylaştırır.'
-          },
-          {
-            id: 10,
-            question: 'Aşağıdaki adımlardan hangisi tipik bir problem çözme sürecinin parçasıdır?',
-            options: ['Rastgele deneme', 'Problem tanımlama, çözüm adımlarını belirleme, test etme', 'Yalnızca kod yazma', 'Yalnızca test etme'],
-            correct: 1,
-            explanation: 'İyi bir süreç problem tanımı, algoritma oluşturma ve doğrulamayı içerir.'
           }
         ]
       },
       'temel-yazilim': {
         title: 'Temel Yazılım Bilgileri',
-        icon: '',
+        icon: '💻',
         color: 'from-purple-500 to-pink-600',
         topics: [
           {
@@ -572,47 +409,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 <span class="keyword">if</span> (!isParasut) {
   <span class="keyword">Serial</span>.<span class="function">println</span>(<span class="string">"Parasüt açılmadı!"</span>);
 }</div>`
-          },
-          {
-            id: 6,
-            question: 'Switch-case yapısında hangi türlerle karşılaştırma yapılabilir?',
-            options: ['String', 'double', 'int/char/enum', 'float'],
-            correct: 2,
-            explanation: 'C/C++’ta switch-case int, char ve enum ile çalışır.'
-          },
-          {
-            id: 7,
-            question: 'Dizilerde ilk elemanın indeksi nedir?',
-            options: ['1', '0', '–1', 'Eleman sayısına bağlı'],
-            correct: 1,
-            explanation: 'Çoğu dilde olduğu gibi C/C++’ta ilk indeks 0’dır.'
-          },
-          {
-            id: 8,
-            question: 'Aşağıdakilerden hangisi geçerli bir yorum biçimidir?',
-            options: ['// tek satır', '/* çok satır */', 'Her ikisi', 'Yorum desteklenmez'],
-            correct: 2,
-            explanation: 'Tek satır ve çok satır yorumlar desteklenir.'
-          },
-          {
-            id: 9,
-            question: 'Süslü parantezler {} neyi belirtir?',
-            options: ['Satır sonunu', 'Kod bloklarını', 'Değişken tipini', 'Derleyici direktifini'],
-            correct: 1,
-            explanation: 'Koşullar, fonksiyonlar ve döngüler için blok sınırlarıdır.'
-          },
-          {
-            id: 10,
-            question: 'Ternary (?:) operatörünün karşılığı nedir?',
-            options: ['for döngüsü', 'switch yapısı', 'kısa if-else', 'goto'],
-            correct: 2,
-            explanation: 'Koşula göre iki değerden birini seçen kısa bir if-else yazımıdır.'
           }
         ]
       },
       basics: {
         title: 'Arduino Temelleri',
-        icon: '',
+        icon: '🔌',
         color: 'from-blue-500 to-blue-700',
         topics: [
           {
@@ -657,33 +459,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 <span class="keyword">int</span> ledPin = <span class="number">13</span>;
 <span class="keyword">float</span> sicaklik = <span class="number">25.5</span>;
 <span class="keyword">bool</span> butonBasili = <span class="keyword">false</span>;</div>`
-          },
-          {
-            id: 4,
-            question: 'Aşağıdakilerden hangisi temel yazım kuralıdır?',
-            options: ['Komutlar noktalı virgülle biter', 'Süslü parantezler şart değildir', 'Yorumlar çalışmayı etkiler', 'Boşluklar hata üretir'],
-            correct: 0,
-            explanation: 'Komut satırları ; ile sonlanır.'
-          },
-          {
-            id: 5,
-            question: 'Derleme hatalarının tipik nedeni nedir?',
-            options: ['Yanlış port seçimi', 'Eksik noktalı virgül veya parantez eşleşmesi', 'Düşük baud değeri', 'Yanlış kablolama'],
-            correct: 1,
-            explanation: 'Sözdizimi hataları derleme sırasında yakalanır.'
-          },
-          {
-            id: 6,
-            question: 'Aşağıdakilerden hangisi loop içinde yapılmamalıdır?',
-            options: ['Sürekli Serial.begin() çağırmak', 'Sensör okumak', 'LED yakıp söndürmek', 'Değişken güncellemek'],
-            correct: 0,
-            explanation: 'Serial.begin() genelde setup() içinde bir kez çağrılmalıdır.'
           }
         ]
       },
       digital: {
         title: 'Dijital Pin Kontrol',
-        icon: '',
+        icon: '🔘',
         color: 'from-yellow-500 to-orange-600',
         topics: [
           {
@@ -712,33 +493,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalRead(pin)</h4>
               <p class="mb-3">Bir pindeki voltajın HIGH (5V) mı yoksa LOW (0V) mu olduğunu okur.</p>
               <div class="doc-code-block mb-4">int durum = digitalRead(2); <span class="comment">// Pin 2'yi oku</span></div>`
-          },
-          {
-            id: 5,
-            question: 'Pull-down direnci ne amaçla kullanılır?',
-            options: ['Pin’i varsayılan HIGH yapmak', 'Pin’i varsayılan LOW yapmak', 'Akımı artırmak', 'PWM üretmek'],
-            correct: 1,
-            explanation: 'Pull-down direnç pini basılmadığında LOW seviyede tutar.'
-          },
-          {
-            id: 6,
-            question: 'Dijital sinyalde “debounce” hangi problem için uygulanır?',
-            options: ['Gürültülü analog okuma', 'Butonun mekanik titremesi', 'PWM frekansı', 'ADC çözünürlüğü'],
-            correct: 1,
-            explanation: 'Buton basışlarında mekanik titreşim yanlış çoklu okumalara yol açar.'
-          },
-          {
-            id: 7,
-            question: 'INPUT_PULLUP modu ne sağlar?',
-            options: ['Harici pull-up', 'Dahili pull-up', 'PWM çıkışı', 'Analog okuma'],
-            correct: 1,
-            explanation: 'Arduino’da bazı pinlerde dahili pull-up aktif edilebilir.'
           }
         ]
       },
       analog: {
         title: 'Analog İşlemler',
-        icon: '',
+        icon: '📉',
         color: 'from-green-500 to-emerald-600',
         topics: [
           {
@@ -770,33 +530,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <p class="mb-4">Bir aralıktaki değeri başka bir aralığa oranlamak için kullanılır. En yaygın kullanımı 0-1023 (analog giriş) değerini 0-255 (PWM çıkış) aralığına çekmektir.</p>
               <div class="doc-code-block mb-4">
 <span class="keyword">int</span> parlaklik = <span class="function">map</span>(sensorDegeri, <span class="number">0</span>, <span class="number">1023</span>, <span class="number">0</span>, <span class="number">255</span>);</div>`
-          },
-          {
-            id: 4,
-            question: 'analogWrite() için tipik değer aralığı nedir?',
-            options: ['0–1023', '0–255', '0–1', '–255–255'],
-            correct: 1,
-            explanation: 'PWM çıkışı 0–255 aralığında ayarlanır.'
-          },
-          {
-            id: 5,
-            question: 'map() fonksiyonu ne yapar?',
-            options: ['Dizileri sıralar', 'Değer aralığını başka aralığa dönüştürür', 'Pin modunu değiştirir', 'Kütüphane ekler'],
-            correct: 1,
-            explanation: 'Bir değeri bir aralıktan başka bir aralığa ölçekler.'
-          },
-          {
-            id: 6,
-            question: 'ADC çözünürlüğü 10-bit ise kaç seviye vardır?',
-            options: ['256', '512', '1024', '2048'],
-            correct: 2,
-            explanation: '10-bit ADC 2^10 = 1024 seviyeye sahiptir.'
           }
         ]
       },
       serial: {
         title: 'Seri Haberleşme',
-        icon: '',
+        icon: '📡',
         color: 'from-purple-500 to-pink-600',
         topics: [
           {
@@ -816,26 +555,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 <span class="keyword">if</span> (<span class="keyword">Serial</span>.<span class="function">available</span>() > <span class="number">0</span>) {
   <span class="keyword">char</span> gelenVeri = <span class="keyword">Serial</span>.<span class="function">read</span>();
 }</div>`
-          },
-          {
-            id: 4,
-            question: 'Servo motorlar için doğru güç beslemesi neden önemlidir?',
-            options: ['Yalnızca LED parlaklığı için', 'Aşırı akım çekebilirler', 'Seri portu etkiler', 'PWM’i kapatır'],
-            correct: 1,
-            explanation: 'Servo motorlar akım çeker; Arduino 5V hattı yetersiz olabilir, harici besleme önerilir.'
-          },
-          {
-            id: 5,
-            question: 'attach(pin) fonksiyonu ne yapar?',
-            options: ['Seri portu başlatır', 'Servo sinyal pinini bağlar', 'PWM’i kapatır', 'ADC’yi başlatır'],
-            correct: 1,
-            explanation: 'Servo nesnesini belirtilen pin ile ilişkilendirir.'
           }
         ]
       },
       interrupts: {
         title: 'Kesme (Interrupt)',
-        icon: '',
+        icon: '⚡',
         color: 'from-red-500 to-orange-600',
         topics: [
           {
@@ -845,26 +570,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <p class="mb-4">Interrupt'lar (Kesmeler), ana program ne yaparsa yapsın, önemli bir olay olduğunda (bir butona basılması gibi) programı durdurup özel bir fonksiyonu çalıştırır.</p>
               <div class="doc-code-block mb-4">attachInterrupt(digitalPinToInterrupt(2), isr, RISING);</div>
               <p class="text-slate-300"><b>RISING:</b> Voltaj 0'dan 5V'a çıktığında tetiklenir.</p>`
-          },
-          {
-            id: 3,
-            question: '9600 nedir?',
-            options: ['PWM frekansı', 'ADC çözünürlüğü', 'Baud (saniyedeki bit) değeri', 'Pin numarası'],
-            correct: 2,
-            explanation: 'Seri haberleşme hızı baud cinsinden belirtilir.'
-          },
-          {
-            id: 4,
-            question: 'Serial.print ve Serial.println arasındaki fark nedir?',
-            options: ['Hiç fark yok', 'println satır sonu ekler', 'print daha hızlıdır', 'println yalnızca sayıları yazar'],
-            correct: 1,
-            explanation: 'println veri sonuna newline ekler.'
           }
         ]
       },
       timing: {
         title: 'Zamanlama',
-        icon: '',
+        icon: '⏱️',
         color: 'from-slate-500 to-slate-700',
         topics: [
           {
@@ -887,26 +598,12 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
     <span class="comment">// İşlem yap (Örn: LED durumunu değiştir)</span>
   }
 }</div>`
-          },
-          {
-            id: 3,
-            question: 'HC-SR04 için tipik trig ve echo pinleri nereye bağlanır?',
-            options: ['Trig GND, Echo 5V', 'Trig dijital çıkış, Echo dijital giriş', 'Trig analog giriş, Echo PWM', 'Her ikisi 5V'],
-            correct: 1,
-            explanation: 'Trig çıkış sinyali üretir, Echo girişte yankı süresi ölçülür.'
-          },
-          {
-            id: 4,
-            question: 'PIR hareket sensörü nasıl çalışır?',
-            options: ['Manyetik alan ölçer', 'Işık şiddeti ölçer', 'Kızılötesi değişimi algılar', 'Ses ölçer'],
-            correct: 2,
-            explanation: 'PIR, ortamdaki kızılötesi değişimlere duyarlıdır.'
           }
         ]
       },
       libraries: {
         title: 'Kütüphaneler ve Protokoller',
-        icon: '',
+        icon: '📚',
         color: 'from-indigo-500 to-indigo-700',
         topics: [
           {
@@ -944,7 +641,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       },
       best: {
         title: 'İyi Uygulamalar',
-        icon: '',
+        icon: '🌟',
         color: 'from-teal-500 to-teal-700',
         topics: [
           {
@@ -1137,7 +834,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         quizId: 'algoritma-temelleri',
         algoBuilder: true,
         algorithm: 'BAŞLA -> Problemi Tanımla -> Adımları Belirle -> Koşulları Kontrol Et -> Çözüme Ulaş -> BİTİR',
-        circuit: 'Sadece kağıt, kalem ve zihniniz yeterli!'
+        circuit: 'Sadece kağıt, kalem ve zihniniz yeterli!',
+        objectives: ['Problem parçalamayı öğren', 'Akış diyagramı çiz', 'Koşul ve döngü ilişkisini kavra'],
+        tasks: ['Basit bir günlük rutinin akışını çiz', 'İki koşullu (if/else) örnek oluştur'],
+        pitfalls: ['Çok fazla detaya boğulmak', 'Koşulsuz döngü planlamak']
       },
       { 
         id: 'step-0', 
@@ -1147,7 +847,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'getting-started',
         quizId: 'temel-yazilim',
         algorithm: 'ÖĞREN -> Değişkenler -> Koşullar (if-else) -> Döngüler -> Fonksiyonlar -> PRATİK ET',
-        circuit: 'Bilgisayar ve internet bağlantısı yeterlidir.'
+        circuit: 'Bilgisayar ve internet bağlantısı yeterlidir.',
+        objectives: ['Temel kontrol yapıları', 'Fonksiyon yapısı ve çağrım', 'Değişken kapsamı'],
+        tasks: ['İki sayı toplayan fonksiyon yaz', 'Koşulla min/max bul'],
+        pitfalls: ['Sonsuz döngü', 'Yanlış tür dönüşümü']
       },
       { 
         id: 'step-1', 
@@ -1157,7 +860,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'getting-started',
         quizId: 'basics',
         algorithm: 'BAŞLA -> Pin 13 Çıkış Yap -> DÖNGÜ: LED Yak -> 1sn Bekle -> LED Söndür -> 1sn Bekle -> DÖNGÜ BAŞI',
-        circuit: 'Arduino Uno -> USB Kablosu -> Dahili LED (Pin 13)'
+        circuit: 'Arduino Uno -> USB Kablosu -> Dahili LED (Pin 13)',
+        sampleCodeKey: 'blink',
+        objectives: ['Geliştirme ortamını kur', 'pinMode/digitalWrite kullan'],
+        tasks: ['Blink süresini değiştir', 'LED’i 3 kez hızlı yak-söndür'],
+        pitfalls: ['Yanlış pin seçimi', 'Bekleme süresini çok uzun tutma']
       },
       { 
         id: 'step-2', 
@@ -1167,7 +874,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'digital-write',
         quizId: 'digital',
         algorithm: 'BAŞLA -> Pin 9 Çıkış Yap -> DÖNGÜ: Pin 9 HIGH -> Bekle -> Pin 9 LOW -> Bekle -> DÖNGÜ BAŞI',
-        circuit: 'Arduino Pin 9 -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND'
+        circuit: 'Arduino Pin 9 -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND',
+        objectives: ['LED yönünü doğru bağla', 'Direnç seçimini öğren'],
+        tasks: ['220 vs 330 ohm farkını gözle', 'Morse kodu ile “SOS” yak'],
+        pitfalls: ['Dirençsiz LED', 'GND/5V hatalarını karıştırma']
       },
       { 
         id: 'step-3', 
@@ -1177,7 +887,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'button',
         quizId: 'digital',
         algorithm: 'BAŞLA -> Pin 2 Giriş, Pin 13 Çıkış -> DÖNGÜ: Pin 2 OKU -> EĞER Basılıysa LED Yak DEĞİLSE Söndür -> DÖNGÜ BAŞI',
-        circuit: '5V -> Buton -> Pin 2 (10k Pull-down direnç ile GND\'ye bağlı)'
+        circuit: '5V -> Buton -> Pin 2 (10k Pull-down direnç ile GND\'ye bağlı)',
+        objectives: ['Pull-up/Pull-down mantığı', 'Sıçrama (debounce) kavramı'],
+        tasks: ['INPUT_PULLUP ile kur', 'Basılı tutma ve tek tık farkını uygula'],
+        pitfalls: ['Debounce yoksa yalancı tetik', 'Yanlış direnç yönü']
       },
       { 
         id: 'step-switch', 
@@ -1187,7 +900,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'getting-started',
         quizId: 'temel-yazilim',
         algorithm: 'BAŞLA -> Mod Oku -> SWITCH(mod): 0 Kapalı, 1 Yavaş, 2 Hızlı -> LED Kontrol -> DÖNGÜ BAŞI',
-        circuit: 'Arduino Pin 13 -> Dahili LED veya harici LED'
+        circuit: 'Arduino Pin 13 -> Dahili LED veya harici LED',
+        sampleCodeKey: 'switch_modes',
+        objectives: ['Çoklu durum yönetimi', 'default durum güvenliği'],
+        tasks: ['3 farklı blink modu oluştur', 'Invalid mod için güvenli fallback'],
+        pitfalls: ['break eksikliği', 'Modlar arasında tutarsız gecikme']
       },
       { 
         id: 'step-4', 
@@ -1197,7 +914,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'analog',
         quizId: 'analog',
         algorithm: 'BAŞLA -> Pin A0 Analog Giriş -> DÖNGÜ: A0 OKU -> Değeri Seri Porta Yaz -> Bekle -> DÖNGÜ BAŞI',
-        circuit: 'Potansiyometre: Sol Pin (GND), Orta Pin (A0), Sağ Pin (5V)'
+        circuit: 'Potansiyometre: Sol Pin (GND), Orta Pin (A0), Sağ Pin (5V)',
+        sampleCodeKey: 'potentiometer',
+        objectives: ['Analog okuma ve map kullanımı', 'Seri monitör çıktısı'],
+        tasks: ['Parlaklığı pot ile kontrol et', 'Okumayı ortalama alarak yumuşat'],
+        pitfalls: ['Yanlış pin (A0 yerine 0)', 'Gürültülü okuma için filtresiz kullanım']
       },
       { 
         id: 'step-5', 
@@ -1207,7 +928,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'servo',
         quizId: 'servo',
         algorithm: 'BAŞLA -> Servo Kütüphanesi Ekle -> Pin 9 Servo Seç -> DÖNGÜ: 0 Dereceye Git -> Bekle -> 180 Dereceye Git -> Bekle',
-        circuit: 'Servo: Kahverengi (GND), Kırmızı (5V), Turuncu (Pin 9)'
+        circuit: 'Servo: Kahverengi (GND), Kırmızı (5V), Turuncu (Pin 9)',
+        sampleCodeKey: 'servo',
+        objectives: ['Servo.attach ve .write', 'Besleme ve akım ihtiyacı'],
+        tasks: ['Pot ile servo açısını kontrol et', '90° merkezleme animasyonu'],
+        pitfalls: ['USB’den yetersiz akım', 'Yanlış PWM pin kullanımı']
       },
       { 
         id: 'step-6', 
@@ -1217,7 +942,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'motor',
         quizId: 'analog',
         algorithm: 'BAŞLA -> Pin 9 (PWM) Çıkış -> DÖNGÜ: 0\'dan 255\'e kadar PARLAKLIK ARTTIR -> Bekle -> 255\'ten 0\'a PARLAKLIK AZALT',
-        circuit: 'Arduino Pin 9 (PWM) -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND'
+        circuit: 'Arduino Pin 9 (PWM) -> 220 Ohm Direnç -> LED (+) | LED (-) -> GND',
+        sampleCodeKey: 'motor',
+        objectives: ['PWM temelleri', 'Düzgün geçiş için adım ve gecikme'],
+        tasks: ['Sinüs tabanlı dimming dene', 'PWM pin olmayanlarda hata kontrolü'],
+        pitfalls: ['PWM olmayan pine analogWrite', 'Çok büyük gecikme ile donuk animasyon']
       },
       { 
         id: 'step-7', 
@@ -1227,7 +956,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'getting-started',
         quizId: 'serial',
         algorithm: 'BAŞLA -> Seri Haberleşme Başlat (9600 baud) -> DÖNGÜ: "Merhaba Dünya" Yaz -> 1sn Bekle',
-        circuit: 'Arduino -> USB Kablosu -> Bilgisayar (Seri Port Ekranı)'
+        circuit: 'Arduino -> USB Kablosu -> Bilgisayar (Seri Port Ekranı)',
+        objectives: ['Serial.begin ve baud seçimi', 'print vs println'],
+        tasks: ['Sensör verisini formatlı yaz', 'Hata durumunu ayrı satırda göster'],
+        pitfalls: ['Serial.begin unutma', 'Yanlış baud']
       },
       { 
         id: 'step-8', 
@@ -1237,7 +969,85 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         videoId: 'ultrasonic',
         quizId: 'sensors',
         algorithm: 'BAŞLA -> Trig Pin Çıkış, Echo Pin Giriş -> DÖNGÜ: Sinyal Gönder -> Süre Ölç -> Mesafeye Çevir -> Seri Porta Yaz',
-        circuit: 'Trig: Pin 12, Echo: Pin 11, VCC: 5V, GND: GND'
+        circuit: 'Trig: Pin 12, Echo: Pin 11, VCC: 5V, GND: GND',
+        sampleCodeKey: 'ultrasonic',
+        objectives: ['pulseIn ile süre ölçümü', 'Mesafeye dönüşüm'],
+        tasks: ['Yakınlıkta LED yak', 'Mesafeye göre PWM parlaklık ayarla'],
+        pitfalls: ['Yanlış pin eşlemesi', 'Yanlış ölçek katsayısı']
+      },
+      { 
+        id: 'step-9',
+        title: 'Zamanlama: delay’siz millis()',
+        description: 'Engelleyici gecikmeleri bırak; millis() ile akıcı zamanlama yap.',
+        docKey: 'basics',
+        videoId: 'getting-started',
+        quizId: 'basics',
+        algorithm: 'BAŞLA -> SonZaman=millis -> DÖNGÜ: millis - SonZaman >= aralık ise eylem -> SonZamanı güncelle',
+        circuit: 'LED ve buton ile non-blocking blink',
+        objectives: ['Non-blocking akış', 'Çoklu zamanlayıcı'],
+        tasks: ['İki farklı aralıkta iki LED yönet', 'Butonla zamanlayıcı sıfırla'],
+        pitfalls: ['unsigned long taşması', 'millis farkını yanlış almak']
+      },
+      { 
+        id: 'step-10',
+        title: 'Kesme (Interrupt) ile Hızlı Tepki',
+        description: 'Harici olaylara anında tepki vermeyi öğren.',
+        docKey: 'basics',
+        videoId: 'getting-started',
+        quizId: 'digital',
+        algorithm: 'BAŞLA -> attachInterrupt -> ISR içinde bayrak ayarla -> DÖNGÜ: bayrağa göre eylem',
+        circuit: 'Pin 2/3 üzerine buton (debounce dikkat)',
+        objectives: ['attachInterrupt parametreleri', 'ISR kısıtları'],
+        tasks: ['Butonla sayaç artır', 'RISING/FALLING modlarını dene'],
+        pitfalls: ['ISR içinde delay', 'Değişkenleri volatile yapmama']
+      },
+      { 
+        id: 'step-11',
+        title: 'I2C OLED (SSD1306) ile Görselleştirme',
+        description: 'Verileri küçük ekranda görselleştir.',
+        docKey: 'basics',
+        videoId: 'getting-started',
+        algorithm: 'BAŞLA -> Wire başlat -> OLED init -> DÖNGÜ: metin/grafik çiz',
+        circuit: 'VCC/GND, SCL(A5), SDA(A4) bağlantıları',
+        objectives: ['I2C adres ve init', 'Metin yerleştirme'],
+        tasks: ['Pot değerini ekranda bar ile göster', 'Mesafe sensörü grafiği'],
+        pitfalls: ['Yanlış adres', 'Görüntü güncellemeyi bloklamak']
+      },
+      { 
+        id: 'step-12',
+        title: 'Sıcaklık Sensörü (LM35)',
+        description: 'Analog okumayı sıcaklığa çevir.',
+        docKey: 'analog',
+        videoId: 'analog',
+        algorithm: 'BAŞLA -> A0 oku -> mV’ye çevir -> °C hesapla -> yazdır',
+        circuit: 'LM35: Vout -> A0, Vcc -> 5V, GND -> GND',
+        objectives: ['Ölçeklendirme', 'Ortalama alma'],
+        tasks: ['Son 10 ölçüm ortalaması', 'Sıcaklığa göre fan PWM'],
+        pitfalls: ['Yanlış katsayı', 'Gürültüyü filtrelememe']
+      },
+      { 
+        id: 'step-13',
+        title: 'Fonksiyonlar ve Modüler Tasarım',
+        description: 'Kodunu parçalara ayır ve yeniden kullanılabilir yap.',
+        docKey: 'temel-yazilim',
+        videoId: 'getting-started',
+        algorithm: 'BAŞLA -> Sensör okuma fonksiyonu -> İşleme fonksiyonu -> Gösterim fonksiyonu',
+        circuit: 'Mevcut devreler',
+        objectives: ['Fonksiyon parametre/dönüş', 'Dosya düzeni'],
+        tasks: ['Blink’i fonksiyonlaştır', 'Sensör okuma modülü'],
+        pitfalls: ['Global bağımlılık', 'Tekrarlanan kod']
+      },
+      { 
+        id: 'step-14',
+        title: 'Mini Proje: Akıllı Işık',
+        description: 'Sensöre dayalı aydınlatma sistemi: yakınlık ve ortam ışığına göre parlaklık.',
+        docKey: 'basics',
+        videoId: 'getting-started',
+        algorithm: 'BAŞLA -> Mesafe/ışık oku -> Karar ver -> PWM ile sür',
+        circuit: 'HC-SR04 + LDR + LED (PWM pin)',
+        objectives: ['Sensör füzyonu', 'Zamanlama ve durum makinesi'],
+        tasks: ['Gece modu', 'Enerji tasarruf davranışı'],
+        pitfalls: ['Çakışan koşullar', 'Yanlış kalibrasyon']
       }
     ];
 
@@ -1641,6 +1451,51 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       }
     }
 
+    const badgeDefinitions = {
+      'welcome': { title: 'Hoş Geldin', icon: '👋', description: 'ArduMind ailesine katıldın!', color: 'from-blue-400 to-blue-600' },
+      'first-quiz': { title: 'İlk Adım', icon: '🎯', description: 'İlk testini başarıyla tamamladın!', color: 'from-green-400 to-emerald-600' },
+      'xp-hunter': { title: 'XP Avcısı', icon: '💎', description: '100 XP sınırını aştın!', color: 'from-yellow-400 to-orange-500' },
+      'module-master': { title: 'Modül Ustası', icon: '🏆', description: 'Bir eğitim modülünü tamamen bitirdin!', color: 'from-purple-500 to-pink-600' },
+      'perfect-score': { title: 'Kusursuz', icon: '🌟', description: 'Bir testten 100 tam puan aldın!', color: 'from-cyan-400 to-blue-500' }
+    };
+
+    function checkBadges() {
+      if (!appState.currentUser) return;
+      
+      const badges = appState.currentUser.badges || [];
+      const newBadges = [];
+
+      // Hoş Geldin Rozeti
+      if (!badges.includes('welcome')) {
+        newBadges.push('welcome');
+      }
+
+      // İlk Adım Rozeti
+      if (!badges.includes('first-quiz') && appState.currentUser.activities.some(a => a.text.includes('testini tamamladın'))) {
+        newBadges.push('first-quiz');
+      }
+
+      // XP Avcısı Rozeti
+      if (!badges.includes('xp-hunter') && appState.currentUser.xp >= 100) {
+        newBadges.push('xp-hunter');
+      }
+
+      // Modül Ustası Rozeti
+      if (!badges.includes('module-master') && appState.currentUser.completedModules.length >= 1) {
+        newBadges.push('module-master');
+      }
+
+      if (newBadges.length > 0) {
+        appState.currentUser.badges = [...badges, ...newBadges];
+        newBadges.forEach(badgeId => {
+          const badge = badgeDefinitions[badgeId];
+          showToast(`Yeni Rozet Kazanıldı: ${badge.title}`, 'success');
+          addActivity(`"${badge.title}" rozetini kazandın! ${badge.description}`, badge.icon, 'purple');
+        });
+        saveAppState();
+      }
+    }
+
     function addActivity(text, icon, color) {
       if (!appState.currentUser) return;
       
@@ -1668,6 +1523,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       
       addActivity(`${amount} XP kazandın! ${reason}`, '', 'blue');
       showToast(`+${amount} XP kazandın!`, 'success');
+      checkBadges();
       saveAppState();
     }
 
@@ -1735,6 +1591,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       appState.currentUser = newUser;
       appState.showAuthModal = false;
       appState.currentPage = 'dashboard';
+      checkBadges();
       saveAppState();
       renderApp();
       showToast('Hoş geldin! Arduino serüvenine başlayalım', 'success');
@@ -1781,6 +1638,17 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           const xpEarned = Math.floor(quiz.xpReward * (percentage / 100));
           addXP(xpEarned, `"${quiz.title}" testi tamamlandı`);
           addActivity(`"${quiz.title}" testini tamamladın! %${percentage.toFixed(0)} başarı`, '', 'green');
+          
+          if (percentage === 100) {
+            const badges = appState.currentUser.badges || [];
+            if (!badges.includes('perfect-score')) {
+              appState.currentUser.badges = [...badges, 'perfect-score'];
+              const badge = badgeDefinitions['perfect-score'];
+              showToast(`Yeni Rozet Kazanıldı: ${badge.title}`, 'success');
+              addActivity(`"${badge.title}" rozetini kazandın! ${badge.description}`, badge.icon, 'purple');
+            }
+          }
+          checkBadges();
         }
       }
       
@@ -3198,18 +3066,13 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       return `
         <div class="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-blue-900 overflow-hidden">
           <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_#22d3ee_0,_transparent_55%),radial-gradient(circle_at_bottom,_#3b82f6_0,_transparent_55%)] animate-[introBackground_1.2s_ease-out_forwards]"></div>
-          <div class="relative z-10 text-center px-6 max-w-xl animate-[introZoom_0.9s_ease-out_forwards]">
-            <div class="inline-flex items-center justify-center mb-6">
-              <div class="w-16 h-16 rounded-2xl bg-slate-900 bg-opacity-70 flex items-center justify-center border border-blue-500 border-opacity-40 shadow-xl mr-3">
-                <img src="images/logo.png" alt="ArduMind" class="w-12 h-12 object-contain" />
+          <div class="relative z-10 text-center px-6 animate-[introZoom_0.9s_ease-out_forwards]">
+            <div class="mx-auto">
+              <div class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-500 bg-[length:200%_200%] font-extrabold tracking-tight text-5xl sm:text-6xl md:text-7xl animate-[titleShimmer_2s_ease-in-out_infinite,titleReveal_2.2s_ease-out_forwards]">
+                ArduMind
               </div>
-              <div class="text-left">
-                <div class="text-sm uppercase tracking-[0.35em] text-slate-400">Arduino Studio</div>
-                <div class="text-3xl font-extrabold tracking-tight">ArduMind</div>
-              </div>
+              <div class="mt-3 text-slate-400 text-sm tracking-[0.35em] animate-[titleReveal_2.2s_ease-out_forwards]">ARDUINO STUDIO</div>
             </div>
-            <p class="text-slate-300 text-lg mb-6">Arduino kodunu sadece yazmak değil, hissetmek için sinematik bir öğrenme deneyimi.</p>
-            <button onclick="appState.showIntro = false; renderApp();" class="px-10 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-semibold tracking-wide shadow-2xl shadow-blue-500/40 transition transform hover:scale-105">Başla</button>
           </div>
         </div>
       `;
@@ -3329,6 +3192,48 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                               ${step.circuit}
                             </div>
                           </div>
+                          
+                          ${step.objectives ? `
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-emerald-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Hedefler</span>
+                            </div>
+                            <ul class="text-sm text-slate-300 space-y-1">
+                              ${step.objectives.map(o => `<li>• ${o}</li>`).join('')}
+                            </ul>
+                          </div>
+                          ` : ''}
+                          
+                          ${step.tasks ? `
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-indigo-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2v-7H3v7a2 2 0 002 2z"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Mini Görevler</span>
+                            </div>
+                            <ul class="text-sm text-slate-300 space-y-1">
+                              ${step.tasks.map(t => `<li>• ${t}</li>`).join('')}
+                            </ul>
+                          </div>
+                          ` : ''}
+                          
+                          ${step.pitfalls ? `
+                          <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50">
+                            <div class="flex items-center space-x-2 mb-2 text-red-400">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2v6m0-6V8m0 8H6m6 0h4"/>
+                              </svg>
+                              <span class="text-xs font-bold uppercase tracking-wider">Dikkat Edilecekler</span>
+                            </div>
+                            <ul class="text-sm text-slate-300 space-y-1">
+                              ${step.pitfalls.map(p => `<li>• ${p}</li>`).join('')}
+                            </ul>
+                          </div>
+                          ` : ''}
                         </div>
                         
                         <div class="flex flex-wrap gap-3">
@@ -3349,6 +3254,15 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                               </svg>
                               <span>Bilgi Testini Çöz</span>
+                            </button>
+                          ` : ''}
+                          ${step.sampleCodeKey ? `
+                            <button onclick="loadExample('${step.sampleCodeKey}'); navigateTo('editor');" 
+                              class="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 shadow-lg shadow-blue-900/20">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8"/>
+                              </svg>
+                              <span>Örnek Kodu Aç</span>
                             </button>
                           ` : ''}
                         </div>
@@ -3787,15 +3701,17 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                   </div>
                   <div>
                     <h2 class="text-3xl font-bold">${currentSection.title}</h2>
-                    <p class="text-slate-400">${currentSection.topics.length} konu</p>
+                    <p class="text-slate-400">${(currentSection.topics || []).filter(t => t && t.title && t.content).length} konu</p>
                   </div>
                 </div>
 
                 <div class="space-y-4">
-                  ${currentSection.topics.map((topic, index) => {
-                    const topicKey = `${appState.currentDocSection}-${index}`;
-                    const isCollapsed = appState.collapsedTopics[topicKey] || false;
-                    return `
+                  ${(() => {
+                    const displayTopics = (currentSection.topics || []).filter(t => t && t.title && t.content);
+                    return displayTopics.map((topic, index) => {
+                      const topicKey = `${appState.currentDocSection}-${index}`;
+                      const isCollapsed = appState.collapsedTopics[topicKey] || false;
+                      return `
                     <div class="border border-slate-700 rounded-xl overflow-hidden transition-all">
                       <button onclick="toggleTopic('${topicKey}')" class="w-full flex items-center justify-between p-6 text-left bg-slate-800 hover:bg-slate-750 transition-all">
                         <div class="flex items-center space-x-4">
@@ -3804,7 +3720,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                           </div>
                           <div class="flex-1">
                             <h3 class="text-2xl font-bold">${topic.title}</h3>
-                            <p class="text-slate-400 mt-1">${topic.description}</p>
+                            <p class="text-slate-400 mt-1">${topic.description || ''}</p>
                           </div>
                         </div>
                         <div class="text-2xl text-slate-400 transition-transform duration-300 ${isCollapsed ? 'rotate-0' : 'rotate-180'}">
@@ -3813,11 +3729,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                       </button>
                       
                       <div class="ml-14 p-6 text-slate-300 leading-relaxed overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'}">
-                        ${topic.content}
+                        ${topic.content || ''}
                       </div>
                     </div>
                   `;
-                  }).join('')}
+                    }).join('');
+                  })()}
                 </div>
 
                 ${appState.currentUser ? `
@@ -4277,116 +4194,142 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       return `
         ${renderNavbar()}
         
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="text-center mb-12 fade-in">
-            <div class="inline-block bg-gradient-to-r from-red-500 to-red-700 px-6 py-2 rounded-full text-sm font-bold mb-4">
-              TEKNOFEST 2026 Projesi
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div class="text-center mb-16 fade-in">
+            <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-red-500/20 to-red-700/20 px-6 py-2 rounded-full text-red-400 text-sm font-bold mb-6 border border-red-500/30">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+              <span>TEKNOFEST 2026 Projesi</span>
             </div>
-            <h1 class="text-5xl font-bold mb-4">ArduMind Hakkında</h1>
-            <p class="text-xl text-slate-400">Arduino'yu ezberleyerek değil, anlayarak öğrenmenin yeni yolu</p>
+            <h1 class="text-6xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">ArduMind Hakkında</h1>
+            <p class="text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed">Arduino ve robotik dünyasına adım atmak isteyenler için tasarlanmış, yapay zeka destekli yeni nesil eğitim ekosistemi.</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div class="bg-slate-800 rounded-2xl p-8 hover:scale-105 transition-all fade-in">
-              <h2 class="text-2xl font-bold mb-3">Proje Vizyonu</h2>
-              <p class="text-slate-300 leading-relaxed">
-                ArduMind, Arduino öğrenimini kişiselleştiren, yapay zeka destekli bir eğitim platformudur. 
-                Öğrencilerin kendi hızlarında ilerlemesini sağlar ve her öğrencinin ihtiyaçlarına özel çözümler sunar.
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+            <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-3xl p-10 hover:border-blue-500/50 transition-all group fade-in">
+              <div class="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+              </div>
+              <h2 class="text-3xl font-bold mb-4">Proje Vizyonu</h2>
+              <p class="text-slate-400 leading-relaxed text-lg">
+                ArduMind, karmaşık mühendislik kavramlarını basitleştirerek her yaştan öğrencinin kendi hızında öğrenebileceği, kişiselleştirilmiş bir deneyim sunar. Amacımız, teknolojiyi sadece tüketen değil, aynı zamanda üreten bir nesil yetiştirmektir.
               </p>
             </div>
 
-            <div class="bg-slate-800 rounded-2xl p-8 hover:scale-105 transition-all fade-in">
-              <h2 class="text-2xl font-bold mb-3">Neden ArduMind?</h2>
-              <p class="text-slate-300 leading-relaxed">
-                Geleneksel Arduino eğitimleri ezber odaklıdır. ArduMind, kavramsal öğrenmeyi ön plana çıkarır, 
-                hataları anlaşılır şekilde açıklar ve gerçek zamanlı simülasyon ile öğrenmeyi eğlenceli hale getirir.
+            <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-3xl p-10 hover:border-purple-500/50 transition-all group fade-in">
+              <div class="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <h2 class="text-3xl font-bold mb-4">Neden ArduMind?</h2>
+              <p class="text-slate-400 leading-relaxed text-lg">
+                Geleneksel eğitim materyalleri genellikle statiktir. ArduMind ise dinamik simülasyonlar, etkileşimli algoritmalar ve anlık geri bildirim veren yapay zeka asistanı ile öğrenme sürecini çok daha verimli ve eğlenceli hale getirir.
               </p>
             </div>
           </div>
 
-          <div class="bg-gradient-to-r from-blue-900 to-purple-900 rounded-3xl p-8 mb-12">
-            <h2 class="text-3xl font-bold mb-6 text-center">Temel Özellikler</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
-                <h3 class="font-bold text-lg mb-2">Yapay Zeka Asistanı</h3>
-                <p class="text-sm text-slate-300">Kodlarınızı analiz eder, hataları açıklar ve anlık çözümler sunar</p>
+          <div class="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-[2.5rem] p-12 mb-20">
+            <div class="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full"></div>
+            <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full"></div>
+            
+            <h2 class="text-4xl font-bold mb-12 text-center">Öne Çıkan Özellikler</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors">
+                <div class="text-4xl mb-6">🤖</div>
+                <h3 class="font-bold text-xl mb-3 text-white">Yapay Zeka Asistanı</h3>
+                <p class="text-slate-400">Kodunuzdaki hataları sadece bulmakla kalmaz, nedenlerini açıklar ve çözüm önerileri geliştirir.</p>
               </div>
 
-              <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
-                <h3 class="font-bold text-lg mb-2">İnteraktif Simülasyon</h3>
-                <p class="text-sm text-slate-300">Kodunuzu gerçek zamanlı test edin, LED'leri yakıp söndürün</p>
+              <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors">
+                <div class="text-4xl mb-6">🎮</div>
+                <h3 class="font-bold text-xl mb-3 text-white">Oyunlaştırılmış Eğitim</h3>
+                <p class="text-slate-400">Görevleri tamamladıkça XP kazanın, seviye atlayın ve başarı rozetleri ile gelişiminizi taçlandırın.</p>
               </div>
 
-              <div class="bg-slate-800 bg-opacity-50 rounded-xl p-6">
-                <h3 class="font-bold text-lg mb-2">Gamification Sistemi</h3>
-                <p class="text-sm text-slate-300">XP kazanın, seviye atlayın ve başarılarınızı takip edin</p>
+              <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors">
+                <div class="text-4xl mb-6">🔌</div>
+                <h3 class="font-bold text-xl mb-3 text-white">Gerçek Zamanlı Simülasyon</h3>
+                <p class="text-slate-400">Donanım gerektirmeden kodunuzun çıktısını anında görün, bileşenlerin tepkisini izleyin.</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-slate-800 rounded-2xl p-8 mb-12">
-            <h2 class="text-3xl font-bold mb-6">Proje Hedefleri</h2>
-            <div class="space-y-4">
-              <div class="flex items-start space-x-4">
-                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+            <div class="space-y-8">
+              <h2 class="text-4xl font-bold mb-4">Proje Hedefleri</h2>
+              <div class="flex items-start space-x-6">
+                <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center flex-shrink-0 text-green-500">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="font-bold text-lg mb-1">Arduino Öğrenimini Demokratikleştirmek</h3>
-                  <p class="text-slate-300">Herkes için erişilebilir, ücretsiz ve kaliteli Arduino eğitimi sunmak</p>
+                  <h3 class="font-bold text-xl mb-2">Erişilebilirlik</h3>
+                  <p class="text-slate-400 leading-relaxed">Karmaşık robotik eğitimini herkes için ulaşılabilir ve anlaşılır bir seviyeye indirmek.</p>
                 </div>
               </div>
 
-              <div class="flex items-start space-x-4">
-                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex items-start space-x-6">
+                <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center flex-shrink-0 text-green-500">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="font-bold text-lg mb-1">Kavramsal Öğrenmeyi Teşvik Etmek</h3>
-                  <p class="text-slate-300">Ezber yerine anlayarak öğrenme metodolojisini yaygınlaştırmak</p>
+                  <h3 class="font-bold text-xl mb-2">Sürdürülebilirlik</h3>
+                  <p class="text-slate-400 leading-relaxed">Kullanıcıların öğrendiklerini projeye dönüştürebilecekleri bir temel oluşturmak.</p>
                 </div>
               </div>
 
-              <div class="flex items-start space-x-4">
-                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex items-start space-x-6">
+                <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center flex-shrink-0 text-green-500">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="font-bold text-lg mb-1">Gençleri Teknolojiye Kazandırmak</h3>
-                  <p class="text-slate-300">IoT, robotik ve elektronik alanlarında yeni nesil yetişkinler yetiştirmek</p>
+                  <h3 class="font-bold text-xl mb-2">Teknoloji Okuryazarlığı</h3>
+                  <p class="text-slate-400 leading-relaxed">Elektronik ve yazılım dünyasını genç nesillere doğru bir metodoloji ile tanıtmak.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-800/30 rounded-[2.5rem] p-10 border border-slate-700/50">
+              <h2 class="text-3xl font-bold mb-8 text-center">Teknoloji Yığınımız</h2>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="p-6 bg-slate-900/50 rounded-2xl text-center border border-slate-800">
+                  <div class="text-2xl mb-2">🎨</div>
+                  <p class="font-bold text-slate-300">Tailwind CSS</p>
+                </div>
+                <div class="p-6 bg-slate-900/50 rounded-2xl text-center border border-slate-800">
+                  <div class="text-2xl mb-2">⚡</div>
+                  <p class="font-bold text-slate-300">Vanilla JS</p>
+                </div>
+                <div class="p-6 bg-slate-900/50 rounded-2xl text-center border border-slate-800">
+                  <div class="text-2xl mb-2">📝</div>
+                  <p class="font-bold text-slate-300">CodeMirror</p>
+                </div>
+                <div class="p-6 bg-slate-900/50 rounded-2xl text-center border border-slate-800">
+                  <div class="text-2xl mb-2">💾</div>
+                  <p class="font-bold text-slate-300">Local Storage</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl p-8 mb-12 hover:scale-105 transition-all">
-            <h2 class="text-3xl font-bold mb-6">Kullanılan Teknolojiler</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <p class="font-medium">HTML/CSS/JS</p>
-              </div>
-              <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <p class="font-medium">CSS</p>
-              </div>
-              <div class="bg-slate-900 rounded-xl p-4 text-center">
-                <p class="font-medium">Simülasyon</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl p-12 text-center">
-            <h2 class="text-4xl font-bold mb-4 text-white">Geleceği Birlikte İnşa Edelim!</h2>
-            <p class="text-xl text-white text-opacity-90 mb-6">
-              ArduMind ile Arduino öğrenmenin geleceğini şekillendiriyoruz
+          <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-[3rem] p-16 text-center relative overflow-hidden group shadow-2xl shadow-blue-500/20">
+            <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+            <h2 class="text-5xl font-extrabold mb-6 text-white relative z-10">Geleceği Birlikte İnşa Edelim!</h2>
+            <p class="text-2xl text-white/90 mb-10 max-w-2xl mx-auto relative z-10">
+              ArduMind ile hayallerinizi koda, kodlarınızı gerçeğe dönüştürün.
             </p>
-            <button onclick="handleAboutCTA()" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:scale-105 transition-all">
-              ${appState.currentUser ? 'Öğrenmeye Devam Et' : 'Hemen Başla'}
+            <button onclick="handleAboutCTA()" class="px-10 py-5 bg-white text-blue-600 rounded-2xl font-bold text-xl hover:scale-105 hover:shadow-xl transition-all relative z-10 active:scale-95">
+              ${appState.currentUser ? 'Eğitime Devam Et' : 'Hemen Aramıza Katıl'}
             </button>
           </div>
         </div>
@@ -4410,57 +4353,176 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         'learn': 'Arduino Öğrenmek'
       };
 
+      const user = appState.currentUser;
+      const nextLevelXP = 500; // Örnek hedef
+      const xpProgress = Math.min((user.xp / nextLevelXP) * 100, 100);
+
       return `
         ${renderNavbar()}
         
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="bg-slate-800 rounded-2xl p-8">
-            <div class="text-center mb-8">
-              <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-5xl font-bold mx-auto mb-4">
-                ${appState.currentUser.name.charAt(0).toUpperCase()}
-              </div>
-              <h1 class="text-3xl font-bold mb-2">${appState.currentUser.name}</h1>
-              <p class="text-slate-400">${appState.currentUser.email}</p>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <!-- Üst Profil Kartı -->
+          <div class="bg-slate-800 rounded-3xl p-8 mb-8 border border-slate-700 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-10">
+              <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div class="bg-slate-700 rounded-xl p-6">
-                <h3 class="font-bold mb-4">Seviye Bilgileri</h3>
-                <div class="space-y-2">
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Mevcut Seviye</span>
-                    <span class="font-bold">${levelNames[appState.currentUser.level]}</span>
+            
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10">
+              <div class="relative">
+                <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-5xl font-bold shadow-xl transform rotate-3">
+                  ${user.name.charAt(0).toUpperCase()}
+                </div>
+                <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-slate-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                  LVL ${Math.floor(user.xp / 100) + 1}
+                </div>
+              </div>
+              
+              <div class="flex-1 text-center md:text-left">
+                <h1 class="text-4xl font-black mb-2 text-white">${user.name}</h1>
+                <p class="text-slate-400 mb-4 flex items-center justify-center md:justify-start gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  ${user.email}
+                </p>
+                
+                <div class="bg-slate-900/50 rounded-2xl p-4 inline-flex items-center gap-4">
+                  <div class="text-center px-4 border-r border-slate-700">
+                    <div class="text-2xl font-black text-yellow-400">${user.xp}</div>
+                    <div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Toplam XP</div>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Toplam XP</span>
-                    <span class="font-bold text-yellow-400">${appState.currentUser.xp || 0}</span>
+                  <div class="text-center px-4">
+                    <div class="text-2xl font-black text-blue-400">${user.completedModules.length}</div>
+                    <div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Modül</div>
                   </div>
                 </div>
               </div>
 
-              <div class="bg-slate-700 rounded-xl p-6">
-                <h3 class="font-bold mb-4">İlerleme</h3>
-                <div class="space-y-2">
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Tamamlanan</span>
-                    <span class="font-bold">${appState.currentUser.completedModules.length} modül</span>
+              <div class="flex flex-col gap-3 w-full md:w-auto">
+                <button onclick="logout()" class="px-6 py-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl font-bold transition-all border border-red-500/20 flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                  Çıkış Yap
+                </button>
+              </div>
+            </div>
+
+            <!-- XP Bar -->
+            <div class="mt-10">
+              <div class="flex justify-between items-end mb-2">
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Sonraki Seviye İlerlemesi</span>
+                <span class="text-sm font-black text-white">${user.xp} / ${nextLevelXP} XP</span>
+              </div>
+              <div class="w-full h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-1000" style="width: ${xpProgress}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Sol Kolon: Rozetler -->
+            <div class="lg:col-span-2 space-y-8">
+              <div class="bg-slate-800 rounded-3xl p-8 border border-slate-700">
+                <h3 class="text-xl font-black mb-6 flex items-center gap-3">
+                  <span class="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                  </span>
+                  Başarı Rozetleri
+                </h3>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  ${Object.entries(badgeDefinitions).map(([id, badge]) => {
+                    const isEarned = user.badges && user.badges.includes(id);
+                    return `
+                      <div class="group relative bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50 flex flex-col items-center text-center transition-all ${isEarned ? 'hover:scale-105 border-purple-500/30' : 'opacity-40 grayscale'}">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${isEarned ? badge.color : 'from-slate-700 to-slate-800'} flex items-center justify-center text-3xl mb-3 shadow-lg group-hover:rotate-12 transition-transform">
+                          ${badge.icon}
+                        </div>
+                        <div class="font-black text-xs uppercase tracking-tighter mb-1">${badge.title}</div>
+                        <p class="text-[10px] text-slate-500 leading-tight">${badge.description}</p>
+                        
+                        ${!isEarned ? `
+                          <div class="absolute inset-0 flex items-center justify-center bg-slate-900/80 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-[10px] font-bold text-slate-400">Henüz Kazanılmadı</span>
+                          </div>
+                        ` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- İstatistikler ve Bilgiler -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="bg-slate-800 rounded-3xl p-6 border border-slate-700">
+                  <h4 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Seviye & Hedef</h4>
+                  <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                      <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                      </div>
+                      <div>
+                        <div class="text-xs text-slate-500 font-bold uppercase">Mevcut Seviye</div>
+                        <div class="font-black text-white">${levelNames[user.level]}</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                      </div>
+                      <div>
+                        <div class="text-xs text-slate-500 font-bold uppercase">Öğrenme Hedefi</div>
+                        <div class="font-black text-white">${goalNames[user.goal]}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Rozetler</span>
-                    <span class="font-bold">${appState.currentUser.badges ? appState.currentUser.badges.length : 0}/5</span>
+                </div>
+
+                <div class="bg-slate-800 rounded-3xl p-6 border border-slate-700">
+                  <h4 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Hesap Özeti</h4>
+                  <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                      <span class="text-slate-500 text-sm font-bold">Kayıt Tarihi</span>
+                      <span class="text-white font-black">${new Date(user.createdAt).toLocaleDateString('tr-TR')}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-slate-500 text-sm font-bold">Tamamlanan Testler</span>
+                      <span class="text-white font-black">${user.activities.filter(a => a.text.includes('testini tamamladın')).length}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="bg-slate-700 rounded-xl p-6 mb-6">
-              <h3 class="font-bold mb-4">Öğrenme Hedefi</h3>
-              <p class="text-lg">${goalNames[appState.currentUser.goal]}</p>
+            <!-- Sağ Kolon: Son Aktiviteler -->
+            <div class="space-y-6">
+              <div class="bg-slate-800 rounded-3xl p-8 border border-slate-700 h-full">
+                <h3 class="text-xl font-black mb-6 flex items-center gap-3">
+                  <span class="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </span>
+                  Son Hareketler
+                </h3>
+                
+                <div class="space-y-6 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-px before:bg-slate-700">
+                  ${user.activities.slice(0, 8).map(activity => `
+                    <div class="relative pl-12">
+                      <div class="absolute left-0 w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-lg z-10">
+                        ${activity.icon || '✨'}
+                      </div>
+                      <div>
+                        <div class="text-xs font-black text-slate-300 leading-tight mb-1">${activity.text}</div>
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">${new Date(activity.timestamp).toLocaleDateString('tr-TR')}</div>
+                      </div>
+                    </div>
+                  `).join('')}
+                  
+                  ${user.activities.length === 0 ? `
+                    <div class="text-center py-10">
+                      <div class="text-4xl mb-4">🌱</div>
+                      <p class="text-slate-500 text-sm font-bold">Henüz bir hareketin yok.<br>Hemen öğrenmeye başla!</p>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
             </div>
-
-            <button onclick="logout()" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition-all">
-              Çıkış Yap
-            </button>
           </div>
         </div>
       `;
@@ -4666,6 +4728,14 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       }
       
       document.getElementById('app').innerHTML = content + (appState.showAuthModal ? renderAuthModal() : '') + (appState.showIntro ? renderIntro() : '');
+      
+      if (appState.showIntro && !appState.introAutoScheduled) {
+        appState.introAutoScheduled = true;
+        setTimeout(() => {
+          appState.showIntro = false;
+          renderApp();
+        }, 2400);
+      }
       
       if (appState.currentPage === 'algo-builder') {
         setTimeout(() => renderConnectionsSVG(), 0);

@@ -1,0 +1,136 @@
+body {
+      box-sizing: border-box;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes introBackground {
+      from { opacity: 0; transform: scale(1.02); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes introZoom {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    @keyframes titleReveal {
+      0% { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateY(10px); }
+      40% { opacity: 1; clip-path: inset(0 0 0 0); transform: translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-6px); }
+    }
+    
+    @keyframes titleShimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes clickEffect {
+      0% { transform: scale(1); opacity: 0.5; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    
+    /* Ultrasonik Dalga Animasyonu */
+    @keyframes waveAnimation {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 0;
+      }
+    }
+    
+    /* CodeMirror Custom Styles */
+    .CodeMirror {
+      height: 100% !important;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 14px;
+      background: transparent !important;
+    }
+    .cm-s-dracula.CodeMirror {
+      background-color: transparent !important;
+    }
+    .CodeMirror-gutters {
+      background-color: #1e293b !important;
+      border-right: 1px solid #334155 !important;
+    }
+    .CodeMirror-linenumber {
+      color: #64748b !important;
+    }
+    .CodeMirror-activeline-background {
+      background: rgba(51, 65, 85, 0.3) !important;
+    }
+
+    textarea.code-input {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      tab-size: 2;
+      resize: none;
+    }
+    
+    .doc-code-block {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      border: 1px solid #334155;
+    }
+    
+    .keyword { color: #c792ea; font-weight: 500; }
+    .function { color: #82aaff; }
+    .number { color: #f78c6c; }
+    .string { color: #c3e88d; }
+    .comment { color: #546e7a; font-style: italic; }
