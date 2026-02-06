@@ -64,6 +64,7 @@
     const savedUsers = JSON.parse(localStorage.getItem('ardumind_users') || '[]');
     const savedCurrentUser = JSON.parse(localStorage.getItem('ardumind_current_user') || 'null');
     const savedCode = localStorage.getItem('ardumind_editor_code');
+    const savedForumThreads = JSON.parse(localStorage.getItem('ardumind_forum_threads') || 'null');
 
     let appState = {
       currentUser: savedCurrentUser,
@@ -118,7 +119,38 @@ void loop() {
       flowchartNodes: [],
       flowchartConnections: [],
       algoDraggingNode: null,
-      algoConnectingFrom: null
+      algoConnectingFrom: null,
+      forumThreads: Array.isArray(savedForumThreads) ? savedForumThreads : [
+        {
+          id: 1,
+          title: 'HC-SR04 ile mesafe ölçümü neden kararsız?',
+          author: 'Zeynep B.',
+          userId: null,
+          category: 'Sensörler',
+          createdAt: Date.now() - 86400000,
+          likes: 3,
+          body: 'HC-SR04 ile 20-30 cm arası değerler çok oynuyor. Kodda ortalama almak yeterli mi?',
+          replies: [
+            { id: 101, author: 'Mehmet S.', userId: null, createdAt: Date.now() - 86300000, body: 'Ortalama almak yardımcı olur. Ayrıca foam veya koruma ile yankıları azalt.' },
+            { id: 102, author: 'Ayşe K.', userId: null, createdAt: Date.now() - 86200000, body: 'Sensörü sabit tut ve güç beslemesini stabil yap. 5 örnek alıp median hesapla.' }
+          ]
+        },
+        {
+          id: 2,
+          title: 'PWM ile LED parlaklığı lineer değil, normal mi?',
+          author: 'Ahmet Y.',
+          userId: null,
+          category: 'Elektronik',
+          createdAt: Date.now() - 43200000,
+          likes: 5,
+          body: 'analogWrite ile parlaklık artışı lineer değil gibi. Göz algısı nedeniyle mi?',
+          replies: [
+            { id: 201, author: 'Can D.', userId: null, createdAt: Date.now() - 43100000, body: 'Evet, insan gözü logaritmik algılar. Gamma düzeltmesi uygulayabilirsin.' }
+          ]
+        }
+      ],
+      forumActiveThreadId: null,
+      forumCategoryFilter: 'Tümü'
     };
 
     function updateAnimations() {
@@ -1549,6 +1581,81 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       } else {
         change();
       }
+    }
+
+    function escapeHTML(s) {
+      return String(s).replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;');
+    }
+
+    function saveForum() {
+      localStorage.setItem('ardumind_forum_threads', JSON.stringify(appState.forumThreads));
+    }
+
+    function createThread(form) {
+      if (!appState.currentUser) {
+        appState.showAuthModal = true;
+        appState.authMode = 'login';
+        renderApp();
+        return;
+      }
+      const title = form.title.value.trim();
+      const category = form.category.value.trim() || 'Genel';
+      const body = form.body.value.trim();
+      if (!title || !body) return;
+      const id = Date.now();
+      appState.forumThreads.unshift({
+        id,
+        title,
+        author: appState.currentUser.name,
+        userId: appState.currentUser.id,
+        category,
+        createdAt: Date.now(),
+        likes: 0,
+        body,
+        replies: []
+      });
+      saveForum();
+      renderApp();
+    }
+
+    function likeThread(id) {
+      const t = appState.forumThreads.find(x => x.id === id);
+      if (!t) return;
+      t.likes = (t.likes || 0) + 1;
+      saveForum();
+      renderApp();
+    }
+
+    function openThread(id) {
+      appState.forumActiveThreadId = id;
+      renderApp();
+    }
+
+    function addReply(form, threadId) {
+      if (!appState.currentUser) {
+        appState.showAuthModal = true;
+        appState.authMode = 'login';
+        renderApp();
+        return;
+      }
+      const body = form.body.value.trim();
+      if (!body) return;
+      const t = appState.forumThreads.find(x => x.id === threadId);
+      if (!t) return;
+      t.replies.push({
+        id: Date.now(),
+        author: appState.currentUser.name,
+        userId: appState.currentUser.id,
+        createdAt: Date.now(),
+        body
+      });
+      form.body.value = '';
+      saveForum();
+      renderApp();
     }
 
     const badgeDefinitions = {
@@ -3161,6 +3268,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                   <a href="#" onclick="navigateTo('docs')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
                   <a href="#" onclick="navigateTo('videos')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
                   <a href="#" onclick="navigateTo('algo-builder')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'algo-builder' ? 'text-blue-400' : ''}">Algoritma</a>
+                  <a href="#" onclick="navigateTo('forum')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'forum' ? 'text-blue-400' : ''}">Forum</a>
                   <a href="#" onclick="navigateTo('path')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
                   <a href="#" onclick="navigateTo('arduino')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'arduino' ? 'text-blue-400' : ''}">Arduino</a>
                   <a href="#" onclick="navigateTo('quiz')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
@@ -4400,6 +4508,138 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       `;
     }
 
+    function renderForum() {
+      const categories = ['Tümü', 'Genel', 'Elektronik', 'Sensörler', 'Robotik', 'Kodlama'];
+      const filtered = appState.forumCategoryFilter === 'Tümü' 
+        ? appState.forumThreads 
+        : appState.forumThreads.filter(t => t.category === appState.forumCategoryFilter);
+      
+      if (appState.forumActiveThreadId) {
+        const t = appState.forumThreads.find(x => x.id === appState.forumActiveThreadId);
+        if (!t) {
+          appState.forumActiveThreadId = null;
+          return renderForum();
+        }
+        return `
+          ${renderNavbar()}
+          <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <button onclick="appState.forumActiveThreadId = null; renderApp();" class="flex items-center space-x-2 text-slate-400 hover:text-white mb-6 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              <span>Foruma Dön</span>
+            </button>
+            <div class="bg-slate-800 rounded-2xl p-6">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h1 class="text-2xl font-bold mb-1">${escapeHTML(t.title)}</h1>
+                  <div class="text-slate-400 text-sm">${escapeHTML(t.author)} • ${new Date(t.createdAt).toLocaleString('tr-TR')} • ${escapeHTML(t.category)}</div>
+                </div>
+                <button onclick="likeThread(${t.id})" class="px-3 py-1 rounded-lg bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 transition-all">
+                  👍 ${t.likes || 0}
+                </button>
+              </div>
+              <div class="mt-6 text-slate-200 leading-relaxed whitespace-pre-wrap">${escapeHTML(t.body)}</div>
+            </div>
+            
+            <div class="mt-8 bg-slate-800 rounded-2xl p-6">
+              <h2 class="text-lg font-bold mb-4">Yanıtlar</h2>
+              <div class="space-y-4">
+                ${t.replies.map(r => `
+                  <div class="bg-slate-700/50 rounded-xl p-4">
+                    <div class="text-slate-400 text-xs mb-2">${escapeHTML(r.author)} • ${new Date(r.createdAt).toLocaleString('tr-TR')}</div>
+                    <div class="text-slate-200 whitespace-pre-wrap">${escapeHTML(r.body)}</div>
+                  </div>
+                `).join('')}
+                ${t.replies.length === 0 ? '<div class="text-slate-500 text-sm italic">Henüz yanıt yok.</div>' : ''}
+              </div>
+              
+              <div class="mt-6">
+                ${appState.currentUser ? `
+                  <form onsubmit="event.preventDefault(); addReply(this, ${t.id});" class="space-y-3">
+                    <textarea name="body" rows="3" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Yanıtını yaz..."></textarea>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Gönder</button>
+                  </form>
+                ` : `
+                  <div class="text-slate-400 text-sm">Yanıt yazmak için giriş yap.</div>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      return `
+        ${renderNavbar()}
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-3xl font-bold">Forum</h1>
+              <p class="text-slate-400">Soru sor, yardım et, fikir paylaş</p>
+            </div>
+            ${appState.currentUser ? `
+            <div>
+              <button onclick="document.getElementById('newThread').classList.toggle('hidden')" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Yeni Konu</button>
+            </div>
+            ` : ''}
+          </div>
+          
+          <div id="newThread" class="hidden bg-slate-800 rounded-2xl p-6 mb-8">
+            <form onsubmit="event.preventDefault(); createThread(this);" class="space-y-3">
+              <input name="title" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Konu başlığı" />
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <select name="category" class="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  ${['Genel','Elektronik','Sensörler','Robotik','Kodlama'].map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+                <div class="md:col-span-2">
+                  <textarea name="body" rows="3" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Detaylar"></textarea>
+                </div>
+              </div>
+              <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Yayınla</button>
+            </form>
+          </div>
+          
+          <div class="flex gap-6">
+            <div class="w-64 flex-shrink-0">
+              <div class="bg-slate-800 rounded-2xl p-4 sticky top-24">
+                <h3 class="text-sm font-bold text-slate-400 uppercase mb-3">Kategoriler</h3>
+                <div class="space-y-2">
+                  ${categories.map(cat => `
+                    <button onclick="appState.forumCategoryFilter='${cat}'; renderApp();" class="w-full text-left px-4 py-3 rounded-xl transition-all ${appState.forumCategoryFilter === cat ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}">
+                      ${cat}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex-1">
+              <div class="space-y-3">
+                ${filtered.map(t => `
+                  <div class="bg-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <button onclick="openThread(${t.id})" class="text-left">
+                          <h3 class="text-lg font-bold mb-1">${escapeHTML(t.title)}</h3>
+                          <div class="text-slate-400 text-sm">${escapeHTML(t.author)} • ${new Date(t.createdAt).toLocaleString('tr-TR')} • ${escapeHTML(t.category)}</div>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <button onclick="likeThread(${t.id})" class="px-3 py-1 rounded-lg bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 transition-all">👍 ${t.likes || 0}</button>
+                        <div class="text-slate-400 text-sm">${t.replies.length} Yanıt</div>
+                      </div>
+                    </div>
+                    <div class="text-slate-300 mt-4 line-clamp-2">${escapeHTML(t.body)}</div>
+                  </div>
+                `).join('')}
+                ${filtered.length === 0 ? '<div class="text-slate-500 text-sm italic">Bu kategoride konu yok.</div>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderAbout() {
       return `
         ${renderNavbar()}
@@ -4919,6 +5159,9 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             break;
           case 'algo-builder':
             content = renderAlgoBuilder();
+            break;
+          case 'forum':
+            content = renderForum();
             break;
           case 'quiz':
             content = renderQuiz();
