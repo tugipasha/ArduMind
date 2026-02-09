@@ -11,7 +11,19 @@
   <link rel="icon" href="images/logo.png">
 </head>
 <body>
-  <script>window.ARDUMIND_PAGE = 'components';</script>
-  <script src="app.js"></script>
+  <iframe id="appframe" src="index.html"></iframe>
+  <script>
+    const page = 'components';
+    const f = document.getElementById('appframe');
+    f.addEventListener('load', () => {
+      const w = f.contentWindow;
+      if (w && typeof w.navigateTo === 'function') {
+        w.navigateTo(page);
+      } else if (w && w.appState && typeof w.renderApp === 'function') {
+        w.appState.currentPage = page;
+        w.renderApp();
+      }
+    });
+  </script>
 </body>
 </html>

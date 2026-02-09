@@ -64,8 +64,6 @@
     const savedUsers = JSON.parse(localStorage.getItem('ardumind_users') || '[]');
     const savedCurrentUser = JSON.parse(localStorage.getItem('ardumind_current_user') || 'null');
     const savedCode = localStorage.getItem('ardumind_editor_code');
-    const savedForumThreads = JSON.parse(localStorage.getItem('ardumind_forum_threads') || 'null');
-    const savedClassrooms = JSON.parse(localStorage.getItem('ardumind_classrooms') || 'null');
 
     let appState = {
       currentUser: savedCurrentUser,
@@ -120,44 +118,7 @@ void loop() {
       flowchartNodes: [],
       flowchartConnections: [],
       algoDraggingNode: null,
-      algoConnectingFrom: null,
-      forumThreads: Array.isArray(savedForumThreads) ? savedForumThreads : [
-        {
-          id: 1,
-          title: 'HC-SR04 ile mesafe ölçümü neden kararsız?',
-          author: 'Zeynep B.',
-          userId: null,
-          category: 'Sensörler',
-          createdAt: Date.now() - 86400000,
-          likes: 3,
-          body: 'HC-SR04 ile 20-30 cm arası değerler çok oynuyor. Kodda ortalama almak yeterli mi?',
-          replies: [
-            { id: 101, author: 'Mehmet S.', userId: null, createdAt: Date.now() - 86300000, body: 'Ortalama almak yardımcı olur. Ayrıca foam veya koruma ile yankıları azalt.' },
-            { id: 102, author: 'Ayşe K.', userId: null, createdAt: Date.now() - 86200000, body: 'Sensörü sabit tut ve güç beslemesini stabil yap. 5 örnek alıp median hesapla.' }
-          ]
-        },
-        {
-          id: 2,
-          title: 'PWM ile LED parlaklığı lineer değil, normal mi?',
-          author: 'Ahmet Y.',
-          userId: null,
-          category: 'Elektronik',
-          createdAt: Date.now() - 43200000,
-          likes: 5,
-          body: 'analogWrite ile parlaklık artışı lineer değil gibi. Göz algısı nedeniyle mi?',
-          replies: [
-            { id: 201, author: 'Can D.', userId: null, createdAt: Date.now() - 43100000, body: 'Evet, insan gözü logaritmik algılar. Gamma düzeltmesi uygulayabilirsin.' }
-          ]
-        }
-      ],
-      forumActiveThreadId: null,
-      forumCategoryFilter: 'Tümü',
-      forumSearchQuery: '',
-      forumSelectedTags: [],
-      forumNewThreadTags: [],
-      forumTagSuggestions: ['Arduino','PWM','HC-SR04','LDR','Servo','Breadboard','Kütüphane','Hata','Proje'],
-      classrooms: Array.isArray(savedClassrooms) ? savedClassrooms : [],
-      currentClassId: null
+      algoConnectingFrom: null
     };
 
     function updateAnimations() {
@@ -1556,8 +1517,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           form.email.value, 
           form.password.value, 
           form.level.value, 
-          form.goal.value,
-          (form.role && form.role.value) || 'student'
+          form.goal.value
         );
       }
     }
@@ -1588,221 +1548,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         document.startViewTransition(change);
       } else {
         change();
-      }
-    }
-
-    function escapeHTML(s) {
-      return String(s).replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/"/g, '&quot;')
-                      .replace(/'/g, '&#39;');
-    }
-
-    function saveForum() {
-      localStorage.setItem('ardumind_forum_threads', JSON.stringify(appState.forumThreads));
-    }
-
-    function createThread(form) {
-      if (!appState.currentUser) {
-        appState.showAuthModal = true;
-        appState.authMode = 'login';
-        renderApp();
-        return;
-      }
-      const title = form.title.value.trim();
-      const category = form.category.value.trim() || 'Genel';
-      const body = form.body.value.trim();
-      if (!title || !body) return;
-      const id = Date.now();
-      appState.forumThreads.unshift({
-        id,
-        title,
-        author: appState.currentUser.name,
-        userId: appState.currentUser.id,
-        category,
-        createdAt: Date.now(),
-        likes: 0,
-        body,
-        replies: [],
-        tags: [...appState.forumNewThreadTags]
-      });
-      appState.forumNewThreadTags = [];
-      saveForum();
-      renderApp();
-    }
-
-    function likeThread(id) {
-      const t = appState.forumThreads.find(x => x.id === id);
-      if (!t) return;
-      t.likes = (t.likes || 0) + 1;
-      saveForum();
-      renderApp();
-    }
-
-    function openThread(id) {
-      appState.forumActiveThreadId = id;
-      renderApp();
-    }
-
-    function addReply(form, threadId) {
-      if (!appState.currentUser) {
-        appState.showAuthModal = true;
-        appState.authMode = 'login';
-        renderApp();
-        return;
-      }
-      const body = form.body.value.trim();
-      if (!body) return;
-      const t = appState.forumThreads.find(x => x.id === threadId);
-      if (!t) return;
-      t.replies.push({
-        id: Date.now(),
-        author: appState.currentUser.name,
-        userId: appState.currentUser.id,
-        createdAt: Date.now(),
-        body
-      });
-      form.body.value = '';
-      saveForum();
-      renderApp();
-    }
-
-    function setForumSearchQuery(v) {
-      appState.forumSearchQuery = v;
-      renderApp();
-    }
-
-    function toggleForumTag(tag) {
-      const i = appState.forumSelectedTags.indexOf(tag);
-      if (i >= 0) {
-        appState.forumSelectedTags.splice(i, 1);
-      } else {
-        appState.forumSelectedTags.push(tag);
-      }
-      renderApp();
-    }
-
-    function clearForumTagFilter() {
-      appState.forumSelectedTags = [];
-      renderApp();
-    }
-
-    function toggleNewThreadTag(tag) {
-      const i = appState.forumNewThreadTags.indexOf(tag);
-      if (i >= 0) {
-        appState.forumNewThreadTags.splice(i, 1);
-      } else {
-        if (appState.forumNewThreadTags.length < 5) {
-          appState.forumNewThreadTags.push(tag);
-        }
-      }
-      renderApp();
-    }
-
-    function addCustomThreadTag(input) {
-      const val = input.value.trim();
-      if (!val) return;
-      if (!appState.forumNewThreadTags.includes(val) && appState.forumNewThreadTags.length < 5) {
-        appState.forumNewThreadTags.push(val);
-      }
-      input.value = '';
-      renderApp();
-    }
-
-    function saveClassrooms() {
-      localStorage.setItem('ardumind_classrooms', JSON.stringify(appState.classrooms));
-    }
-
-    function createClass(name) {
-      if (!appState.currentUser || appState.currentUser.role !== 'teacher') return;
-      const code = Math.random().toString(36).slice(2, 7).toUpperCase();
-      const id = Date.now();
-      appState.classrooms.unshift({
-        id,
-        name,
-        code,
-        teacherId: appState.currentUser.id,
-        students: [],
-        announcements: [],
-        assignments: []
-      });
-      appState.currentClassId = id;
-      saveClassrooms();
-      renderApp();
-    }
-
-    function joinClass(code) {
-      if (!appState.currentUser) return;
-      const cls = appState.classrooms.find(c => c.code === code);
-      if (!cls) {
-        showToast('Sınıf bulunamadı', 'error');
-        return;
-      }
-      if (!cls.students.find(s => s.userId === appState.currentUser.id)) {
-        cls.students.push({
-          userId: appState.currentUser.id,
-          name: appState.currentUser.name,
-          email: appState.currentUser.email,
-          present: false
-        });
-        saveClassrooms();
-      }
-      appState.currentClassId = cls.id;
-      renderApp();
-    }
-
-    function selectClass(id) {
-      appState.currentClassId = id;
-      renderApp();
-    }
-
-    function togglePresence(studentId) {
-      const cls = appState.classrooms.find(c => c.id === appState.currentClassId);
-      if (!cls) return;
-      const s = cls.students.find(st => st.userId === studentId);
-      if (!s) return;
-      s.present = !s.present;
-      saveClassrooms();
-      renderApp();
-    }
-
-    function postAnnouncement(text) {
-      const cls = appState.classrooms.find(c => c.id === appState.currentClassId);
-      if (!cls || !text.trim()) return;
-      cls.announcements.unshift({
-        id: Date.now(),
-        text: text.trim(),
-        createdAt: Date.now(),
-        authorId: appState.currentUser.id
-      });
-      saveClassrooms();
-      renderApp();
-    }
-
-    function createAssignment(title, dueDate) {
-      const cls = appState.classrooms.find(c => c.id === appState.currentClassId);
-      if (!cls || !title.trim()) return;
-      cls.assignments.unshift({
-        id: Date.now(),
-        title: title.trim(),
-        dueDate: dueDate || '',
-        submissions: []
-      });
-      saveClassrooms();
-      renderApp();
-    }
-
-    function submitAssignment(assignmentId) {
-      const cls = appState.classrooms.find(c => c.id === appState.currentClassId);
-      if (!cls) return;
-      const a = cls.assignments.find(x => x.id === assignmentId);
-      if (!a) return;
-      if (!a.submissions.includes(appState.currentUser.id)) {
-        a.submissions.push(appState.currentUser.id);
-        saveClassrooms();
-        showToast('Ödev gönderildi', 'success');
-        renderApp();
       }
     }
 
@@ -1910,7 +1655,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const user = appState.users.find(u => u.email === email && u.password === password);
       
       if (user) {
-        if (!user.role) user.role = 'student';
         appState.currentUser = user;
         appState.showAuthModal = false;
         appState.currentPage = 'dashboard';
@@ -1922,7 +1666,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       }
     }
 
-    function handleRegister(name, email, password, level, goal, role) {
+    function handleRegister(name, email, password, level, goal) {
       if (appState.users.find(u => u.email === email)) {
         showToast('Bu e-posta adresi zaten kayıtlı!', 'error');
         return;
@@ -1935,7 +1679,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         password,
         level,
         goal,
-        role: role || 'student',
         xp: 0,
         completedModules: [],
         activities: [],
@@ -3418,11 +3161,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                   <a href="#" onclick="navigateTo('docs')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
                   <a href="#" onclick="navigateTo('videos')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
                   <a href="#" onclick="navigateTo('algo-builder')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'algo-builder' ? 'text-blue-400' : ''}">Algoritma</a>
-                  <a href="#" onclick="navigateTo('forum')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'forum' ? 'text-blue-400' : ''}">Forum</a>
-                  <a href="#" onclick="navigateTo('classroom')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'classroom' ? 'text-blue-400' : ''}">Derslik</a>
                   <a href="#" onclick="navigateTo('path')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
                   <a href="#" onclick="navigateTo('arduino')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'arduino' ? 'text-blue-400' : ''}">Arduino</a>
                   <a href="#" onclick="navigateTo('quiz')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
+                  <a href="#" onclick="navigateTo('edu-kit')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'edu-kit' ? 'text-blue-400' : ''}">Eğitim Seti</a>
                   <a href="#" onclick="navigateTo('about')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'about' ? 'text-blue-400' : ''}">Hakkında</a>
                   ${appState.currentUser ? `
                     <a href="#" onclick="navigateTo('dashboard')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'dashboard' ? 'text-blue-400' : ''}">Eğitimim</a>
@@ -4108,14 +3850,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                     <option value="project">Proje yapmak</option>
                   </select>
                 </div>
-
-                <div>
-                  <label class="block text-sm font-medium mb-2">Rolüm</label>
-                  <select name="role" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="student">Öğrenci</option>
-                    <option value="teacher">Öğretmen</option>
-                  </select>
-                </div>
               ` : ''}
 
               <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-bold transition-all">
@@ -4667,331 +4401,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       `;
     }
 
-    function renderForum() {
-      const categories = ['Tümü', 'Genel', 'Elektronik', 'Sensörler', 'Robotik', 'Kodlama'];
-      const q = (appState.forumSearchQuery || '').trim().toLowerCase();
-      let filtered = appState.forumCategoryFilter === 'Tümü' 
-        ? appState.forumThreads 
-        : appState.forumThreads.filter(t => t.category === appState.forumCategoryFilter);
-      if (appState.forumSelectedTags.length > 0) {
-        filtered = filtered.filter(t => {
-          const tags = t.tags || [];
-          return appState.forumSelectedTags.every(tag => tags.includes(tag));
-        });
-      }
-      if (q) {
-        filtered = filtered.filter(t => {
-          const tagsText = (t.tags || []).join(' ').toLowerCase();
-          return t.title.toLowerCase().includes(q) || t.body.toLowerCase().includes(q) || tagsText.includes(q);
-        });
-      }
-      
-      if (appState.forumActiveThreadId) {
-        const t = appState.forumThreads.find(x => x.id === appState.forumActiveThreadId);
-        if (!t) {
-          appState.forumActiveThreadId = null;
-          return renderForum();
-        }
-        return `
-          ${renderNavbar()}
-          <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <button onclick="appState.forumActiveThreadId = null; renderApp();" class="flex items-center space-x-2 text-slate-400 hover:text-white mb-6 transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-              </svg>
-              <span>Foruma Dön</span>
-            </button>
-            <div class="bg-slate-800 rounded-2xl p-6">
-              <div class="flex items-start justify-between">
-                <div>
-                  <h1 class="text-2xl font-bold mb-1">${escapeHTML(t.title)}</h1>
-                  <div class="text-slate-400 text-sm">${escapeHTML(t.author)} • ${new Date(t.createdAt).toLocaleString('tr-TR')} • ${escapeHTML(t.category)}</div>
-                </div>
-                <button onclick="likeThread(${t.id})" class="px-3 py-1 rounded-lg bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 transition-all">
-                  👍 ${t.likes || 0}
-                </button>
-              </div>
-              <div class="mt-6 text-slate-200 leading-relaxed whitespace-pre-wrap">${escapeHTML(t.body)}</div>
-            </div>
-            
-            <div class="mt-8 bg-slate-800 rounded-2xl p-6">
-              <h2 class="text-lg font-bold mb-4">Yanıtlar</h2>
-              <div class="space-y-4">
-                ${t.replies.map(r => `
-                  <div class="bg-slate-700/50 rounded-xl p-4">
-                    <div class="text-slate-400 text-xs mb-2">${escapeHTML(r.author)} • ${new Date(r.createdAt).toLocaleString('tr-TR')}</div>
-                    <div class="text-slate-200 whitespace-pre-wrap">${escapeHTML(r.body)}</div>
-                  </div>
-                `).join('')}
-                ${t.replies.length === 0 ? '<div class="text-slate-500 text-sm italic">Henüz yanıt yok.</div>' : ''}
-              </div>
-              
-              <div class="mt-6">
-                ${appState.currentUser ? `
-                  <form onsubmit="event.preventDefault(); addReply(this, ${t.id});" class="space-y-3">
-                    <textarea name="body" rows="3" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Yanıtını yaz..."></textarea>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Gönder</button>
-                  </form>
-                ` : `
-                  <div class="text-slate-400 text-sm">Yanıt yazmak için giriş yap.</div>
-                `}
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      
-      return `
-        ${renderNavbar()}
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h1 class="text-3xl font-bold">Forum</h1>
-              <p class="text-slate-400">Soru sor, yardım et, fikir paylaş</p>
-            </div>
-            ${appState.currentUser ? `
-            <div>
-              <button onclick="document.getElementById('newThread').classList.toggle('hidden')" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Yeni Konu</button>
-            </div>
-            ` : ''}
-          </div>
-          <div class="bg-slate-800 rounded-2xl p-4 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <input value="${escapeHTML(appState.forumSearchQuery)}" oninput="setForumSearchQuery(this.value)" placeholder="Başlık, içerik veya etikette ara..." class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <div class="md:col-span-2 flex flex-wrap gap-2 items-center">
-                ${appState.forumTagSuggestions.map(tag => `
-                  <button onclick="toggleForumTag('${tag}')" class="px-3 py-1 rounded-full text-xs border ${appState.forumSelectedTags.includes(tag) ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-700 text-slate-300 border-slate-600'}">
-                    ${tag}
-                  </button>
-                `).join('')}
-                ${appState.forumSelectedTags.length > 0 ? `
-                  <button onclick="clearForumTagFilter()" class="ml-auto px-3 py-1 rounded-lg bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600 text-xs">Temizle</button>
-                ` : ''}
-              </div>
-            </div>
-          </div>
-          
-          <div id="newThread" class="hidden bg-slate-800 rounded-2xl p-6 mb-8">
-            <form onsubmit="event.preventDefault(); createThread(this);" class="space-y-3">
-              <div class="flex items-center gap-3">
-                <input name="title" maxlength="120" class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Konu başlığı" />
-                <span class="text-xs text-slate-500">Maks. 120</span>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <select name="category" class="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  ${['Genel','Elektronik','Sensörler','Robotik','Kodlama'].map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select>
-                <div class="md:col-span-2">
-                  <textarea name="body" rows="4" maxlength="1000" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Detaylar (maks. 1000)"></textarea>
-                </div>
-              </div>
-              <div class="space-y-2">
-                <div class="flex flex-wrap gap-2">
-                  ${appState.forumTagSuggestions.map(tag => `
-                    <button type="button" onclick="toggleNewThreadTag('${tag}')" class="px-3 py-1 rounded-full text-xs border ${appState.forumNewThreadTags.includes(tag) ? 'bg-purple-600 text-white border-purple-500' : 'bg-slate-700 text-slate-300 border-slate-600'}">
-                      ${tag}
-                    </button>
-                  `).join('')}
-                </div>
-                <div class="flex items-center gap-2">
-                  <input id="newTagInput" placeholder="Etiket ekle..." class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                  <button type="button" onclick="addCustomThreadTag(document.getElementById('newTagInput'))" class="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm">Ekle</button>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  ${appState.forumNewThreadTags.map(tag => `
-                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs bg-purple-600 text-white">
-                      ${tag}
-                      <button type="button" onclick="toggleNewThreadTag('${tag}')" class="text-white/80">✕</button>
-                    </span>
-                  `).join('')}
-                </div>
-              </div>
-              <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Yayınla</button>
-            </form>
-          </div>
-          
-          <div class="flex gap-6">
-            <div class="w-64 flex-shrink-0">
-              <div class="bg-slate-800 rounded-2xl p-4 sticky top-24">
-                <h3 class="text-sm font-bold text-slate-400 uppercase mb-3">Kategoriler</h3>
-                <div class="space-y-2">
-                  ${categories.map(cat => `
-                    <button onclick="appState.forumCategoryFilter='${cat}'; renderApp();" class="w-full text-left px-4 py-3 rounded-xl transition-all ${appState.forumCategoryFilter === cat ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}">
-                      ${cat}
-                    </button>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-            
-            <div class="flex-1">
-              <div class="space-y-3">
-                ${filtered.map(t => `
-                  <div class="bg-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all">
-                    <div class="flex items-start justify-between">
-                      <div>
-                        <button onclick="openThread(${t.id})" class="text-left">
-                          <h3 class="text-lg font-bold mb-1">${escapeHTML(t.title)}</h3>
-                          <div class="text-slate-400 text-sm">${escapeHTML(t.author)} • ${new Date(t.createdAt).toLocaleString('tr-TR')} • ${escapeHTML(t.category)}</div>
-                        </button>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <button onclick="likeThread(${t.id})" class="px-3 py-1 rounded-lg bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 transition-all">👍 ${t.likes || 0}</button>
-                        <div class="text-slate-400 text-sm">${t.replies.length} Yanıt</div>
-                      </div>
-                    </div>
-                    <div class="text-slate-300 mt-4 line-clamp-2">${escapeHTML(t.body)}</div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                      ${(t.tags || []).map(tag => `
-                        <button onclick="toggleForumTag('${tag}')" class="px-3 py-1 rounded-full text-xs border bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600">
-                          ${tag}
-                        </button>
-                      `).join('')}
-                    </div>
-                  </div>
-                `).join('')}
-                ${filtered.length === 0 ? '<div class="text-slate-500 text-sm italic">Sonuç bulunamadı.</div>' : ''}
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderClassroom() {
-      const isTeacher = !!(appState.currentUser && appState.currentUser.role === 'teacher');
-      const myClasses = isTeacher 
-        ? appState.classrooms.filter(c => c.teacherId === appState.currentUser?.id)
-        : appState.classrooms.filter(c => c.students.some(s => s.userId === appState.currentUser?.id));
-      const current = appState.classrooms.find(c => c.id === appState.currentClassId) || myClasses[0] || null;
-      if (current && appState.currentClassId !== current.id) appState.currentClassId = current.id;
-      
-      return `
-        ${renderNavbar()}
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h1 class="text-3xl font-bold">Derslik</h1>
-              <p class="text-slate-400">${isTeacher ? 'Sınıflarını yönet' : 'Sınıflarına katıl ve takip et'}</p>
-            </div>
-            <div class="flex items-center gap-3">
-              ${isTeacher ? `
-                <input id="newClassName" placeholder="Sınıf adı" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200">
-                <button onclick="createClass(document.getElementById('newClassName').value)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Sınıf Oluştur</button>
-              ` : `
-                <input id="joinCode" placeholder="Kod ile katıl" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200">
-                <button onclick="joinClass(document.getElementById('joinCode').value)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all">Katıl</button>
-              `}
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="md:col-span-1">
-              <div class="bg-slate-800 rounded-2xl p-4 sticky top-24">
-                <h3 class="text-sm font-bold text-slate-400 uppercase mb-3">Sınıflarım</h3>
-                <div class="space-y-2">
-                  ${myClasses.map(cls => `
-                    <button onclick="selectClass(${cls.id})" class="w-full text-left px-4 py-3 rounded-xl transition-all ${current && current.id === cls.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}">
-                      ${cls.name}
-                      ${isTeacher ? `<span class="ml-2 text-xs opacity-80">Kod: ${cls.code}</span>` : ''}
-                    </button>
-                  `).join('')}
-                  ${myClasses.length === 0 ? '<div class="text-slate-500 text-sm italic">Henüz sınıf yok.</div>' : ''}
-                </div>
-              </div>
-            </div>
-
-            <div class="md:col-span-2">
-              ${!current ? `
-                <div class="bg-slate-800 rounded-2xl p-8 text-center text-slate-400">Bir sınıf seç veya oluştur.</div>
-              ` : `
-                <div class="space-y-6">
-                  <div class="bg-slate-800 rounded-2xl p-6">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <h2 class="text-xl font-bold">${current.name}</h2>
-                        <div class="text-slate-400 text-sm">${isTeacher ? `Kod: ${current.code}` : ''}</div>
-                      </div>
-                      <div class="text-slate-400 text-sm">Öğrenci: ${current.students.length}</div>
-                    </div>
-                    <div class="mt-4">
-                      <h3 class="text-sm font-bold text-slate-400 uppercase mb-2">Yoklama</h3>
-                      <div class="space-y-2">
-                        ${current.students.map(s => `
-                          <div class="flex items-center justify-between bg-slate-700/50 rounded-xl p-3">
-                            <div>
-                              <div class="font-semibold">${s.name}</div>
-                              <div class="text-xs text-slate-400">${s.email}</div>
-                            </div>
-                            ${isTeacher ? `
-                              <button onclick="togglePresence('${s.userId}')" class="px-3 py-1 rounded-lg text-xs ${s.present ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-200 border border-slate-600'}">
-                                ${s.present ? 'Hazır' : 'Yok'}
-                              </button>
-                            ` : `
-                              <span class="px-3 py-1 rounded-lg text-xs ${s.present ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-200 border border-slate-600'}">${s.present ? 'Hazır' : 'Yok'}</span>
-                            `}
-                          </div>
-                        `).join('')}
-                        ${current.students.length === 0 ? '<div class="text-slate-500 text-sm italic">Öğrenci yok.</div>' : ''}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="bg-slate-800 rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-3">
-                      <h3 class="text-sm font-bold text-slate-400 uppercase">Duyurular</h3>
-                      ${isTeacher ? `
-                        <div class="flex items-center gap-2">
-                          <input id="announcementInput" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200" placeholder="Duyuru yaz">
-                          <button onclick="postAnnouncement(document.getElementById('announcementInput').value)" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Gönder</button>
-                        </div>
-                      ` : ''}
-                    </div>
-                    <div class="space-y-3">
-                      ${current.announcements.map(a => `
-                        <div class="bg-slate-700/50 rounded-xl p-4">
-                          <div class="text-slate-400 text-xs mb-1">${new Date(a.createdAt).toLocaleString('tr-TR')}</div>
-                          <div class="text-slate-200">${escapeHTML(a.text)}</div>
-                        </div>
-                      `).join('')}
-                      ${current.announcements.length === 0 ? '<div class="text-slate-500 text-sm italic">Henüz duyuru yok.</div>' : ''}
-                    </div>
-                  </div>
-
-                  <div class="bg-slate-800 rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-3">
-                      <h3 class="text-sm font-bold text-slate-400 uppercase">Ödevler</h3>
-                      ${isTeacher ? `
-                        <div class="flex items-center gap-2">
-                          <input id="assignmentTitle" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200" placeholder="Ödev başlığı">
-                          <input id="assignmentDue" type="date" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200">
-                          <button onclick="createAssignment(document.getElementById('assignmentTitle').value, document.getElementById('assignmentDue').value)" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Oluştur</button>
-                        </div>
-                      ` : ''}
-                    </div>
-                    <div class="space-y-3">
-                      ${current.assignments.map(a => `
-                        <div class="bg-slate-700/50 rounded-xl p-4 flex items-center justify-between">
-                          <div>
-                            <div class="font-semibold">${escapeHTML(a.title)}</div>
-                            <div class="text-xs text-slate-400">Son tarih: ${a.dueDate || '-'}</div>
-                            <div class="text-xs text-slate-400">Teslim: ${a.submissions.length}/${current.students.length}</div>
-                          </div>
-                          ${!isTeacher ? `
-                            <button onclick="submitAssignment(${a.id})" class="px-3 py-1 rounded-lg bg-green-600 text-white text-xs">Teslim Et</button>
-                          ` : ''}
-                        </div>
-                      `).join('')}
-                      ${current.assignments.length === 0 ? '<div class="text-slate-500 text-sm italic">Ödev yok.</div>' : ''}
-                    </div>
-                  </div>
-                </div>
-              `}
-            </div>
-          </div>
-        </div>
-      `;
-    }
     function renderAbout() {
       return `
         ${renderNavbar()}
@@ -5057,12 +4466,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                 <div class="text-4xl mb-6">🔌</div>
                 <h3 class="font-bold text-xl mb-3 text-white">Gerçek Zamanlı Simülasyon</h3>
                 <p class="text-slate-400">Donanım gerektirmeden kodunuzun çıktısını anında görün, bileşenlerin tepkisini izleyin.</p>
-              </div>
-
-              <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors">
-                <div class="text-4xl mb-6">🧑‍🏫</div>
-                <h3 class="font-bold text-xl mb-3 text-white">Elektronik Derslik ve Akıllı Yönetici Paneli</h3>
-                <p class="text-slate-400">Elektronik derslik ortamı ile öğretmenlerin öğrencileri dijital olarak takip edebilmesi, yönlendirme yapabilmesi ve öğrenme sürecine aktif şekilde müdahil olabilmesi sağlanır. Bu sistem, özellikle lise düzeyinde elektronik ve bilişim derslerinde etkin şekilde kullanılabilir.</p>
               </div>
             </div>
           </div>
@@ -5486,6 +4889,186 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       `;
     }
 
+    function renderEduKit() {
+      const projects = [
+        {
+          id: 'distance-alarm',
+          title: 'Mesafe Alarmı',
+          icon: '📏',
+          description: 'HC-SR04 ultrasonik mesafe sensörü ile 20cm altındaki cisimleri algılayıp buzzer ile sesli uyarı verir.',
+          code: `// Pin tanımlamaları
+const int trigPin = 9;
+const int echoPin = 10;
+const int buzzerPin = 8;
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  long duration, distance;
+  
+  // Mesafe ölçümü
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration/2) / 29.1;
+  
+  // 20cm kontrolü
+  if (distance < 20) {
+    digitalWrite(buzzerPin, HIGH);
+    delay(100);
+    digitalWrite(buzzerPin, LOW);
+  }
+  
+  delay(100);
+}`,
+          difficulty: 'Başlangıç',
+          color: 'from-blue-500 to-cyan-500'
+        },
+        {
+          id: 'smart-lamp',
+          title: 'Akıllı Gece Lambası',
+          icon: '💡',
+          description: 'LDR ışık sensörü kullanarak ortam karanlık olduğunda LED\'leri otomatik olarak yakar.',
+          code: `const int ldrPin = A0;
+const int ledPin = 13;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  int isik = analogRead(ldrPin);
+  
+  if (isik < 300) { // Karanlık eşiği
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+}`,
+          difficulty: 'Başlangıç',
+          color: 'from-amber-500 to-orange-500'
+        },
+        {
+          id: 'temperature-monitor',
+          title: 'Sıcaklık Takibi',
+          icon: '🌡️',
+          description: 'DHT11 sensörü ile ortam sıcaklığını ölçer ve LCD ekranda görüntüler.',
+          code: `#include <DHT.h>
+#include <LiquidCrystal_I2C.h>
+
+DHT dht(2, DHT11);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  dht.begin();
+  lcd.init();
+  lcd.backlight();
+}
+
+void loop() {
+  float t = dht.readTemperature();
+  lcd.setCursor(0, 0);
+  lcd.print("Sicaklik: ");
+  lcd.print(t);
+  lcd.print("C");
+  delay(2000);
+}`,
+          difficulty: 'Orta',
+          color: 'from-emerald-500 to-teal-500'
+        }
+      ];
+
+      return `
+        ${renderNavbar()}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <!-- Header -->
+          <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              ArduMind Eğitim Seti
+            </h1>
+            <p class="text-xl text-slate-400 max-w-3xl mx-auto">
+              Kablo karmaşasına son! Tüm temel sensör ve bileşenlerin tek bir kartta toplandığı, öğrenme odaklı geliştirme platformu.
+            </p>
+          </div>
+
+          <!-- Kit Görseli ve Özellikler -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-center">
+            <div class="relative group">
+              <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+              <div class="relative bg-slate-900 rounded-2xl p-4 border border-slate-800">
+                <img src="images/edukit_placeholder.png" alt="Eğitim Seti" class="w-full rounded-xl shadow-2xl" onerror="this.src='https://raw.githubusercontent.com/ArduMind/ArduMind/main/images/edu_kit_mockup.png'; this.onerror=null;">
+                <div class="absolute bottom-8 right-8 bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-xl animate-bounce">
+                  Hepsi Bir Arada
+                </div>
+              </div>
+            </div>
+            
+            <div class="space-y-6">
+              <h2 class="text-3xl font-bold">Neden ArduMind Eğitim Seti?</h2>
+              <div class="space-y-4">
+                <div class="flex items-start space-x-4">
+                  <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">✓</div>
+                  <div>
+                    <h4 class="font-bold text-lg">Sıfır Kablo Karmaşası</h4>
+                    <p class="text-slate-400">Jumper kablo hatalarını en aza indirerek doğrudan kodlamaya odaklanın.</p>
+                  </div>
+                </div>
+                <div class="flex items-start space-x-4">
+                  <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0">✓</div>
+                  <div>
+                    <h4 class="font-bold text-lg">Zengin Bileşen Seti</h4>
+                    <p class="text-slate-400">Mesafe sensörü, LCD, Buzzer, LED'ler, Potansiyometre, LDR ve daha fazlası.</p>
+                  </div>
+                </div>
+                <div class="flex items-start space-x-4">
+                  <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">✓</div>
+                  <div>
+                    <h4 class="font-bold text-lg">Dayanıklı Tasarım</h4>
+                    <p class="text-slate-400">Okul ve atölye kullanımı için optimize edilmiş, korumalı devre yapısı.</p>
+                  </div>
+                </div>
+              </div>
+              <button onclick="navigateTo('editor')" class="mt-4 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/20">
+                Hemen Kodlamaya Başla
+              </button>
+            </div>
+          </div>
+
+          <!-- Uygulamalar -->
+          <div class="mb-12">
+            <h2 class="text-3xl font-bold mb-8">Örnek Eğitim Uygulamaları</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              ${projects.map(p => `
+                <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:bg-slate-800 transition-all group">
+                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                    ${p.icon}
+                  </div>
+                  <h3 class="text-xl font-bold mb-2">${p.title}</h3>
+                  <p class="text-slate-400 text-sm mb-4 leading-relaxed">${p.description}</p>
+                  <div class="flex items-center justify-between mt-auto">
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">${p.difficulty}</span>
+                    <button onclick="copyToClipboard(\`${p.code.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="text-blue-400 hover:text-blue-300 text-sm font-semibold flex items-center space-x-1">
+                      <span>Kodu Kopyala</span>
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     // ==================== MAIN RENDER ====================
     function renderApp() {
       let content = '';
@@ -5518,12 +5101,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           case 'algo-builder':
             content = renderAlgoBuilder();
             break;
-          case 'forum':
-            content = renderForum();
-            break;
-          case 'classroom':
-            content = appState.currentUser ? renderClassroom() : renderHomePage();
-            break;
           case 'quiz':
             content = renderQuiz();
             break;
@@ -5535,6 +5112,9 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             break;
           case 'arduino':
             content = renderArduinoPage();
+            break;
+          case 'edu-kit':
+            content = renderEduKit();
             break;
           default:
             content = renderHomePage();
