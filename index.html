@@ -310,6 +310,65 @@ void loop() {
     }
     updateAnimations();
 
+    // ==================== FEEDBACK & LOGIC SYSTEM ====================
+    function checkThinking() {
+      const code = appState.editorCode;
+      const results = [];
+      const addTip = (text, type = 'info') => results.push({ text, type });
+
+      // 1. delay() vs millis() - Mantık Hatası Kontrolü
+      if (code.includes('delay(') && (code.includes('digitalRead') || code.includes('analogRead'))) {
+        addTip('💡 delay() kullanıyorsun. Bu fonksiyon Arduino\'yu tamamen durdurur. Eğer sensörleri anlık okumak istiyorsan "millis()" kullanmayı düşünmelisiniz.', 'warning');
+      }
+
+      // 2. Serial.begin() unutma - Mantık Hatası Kontrolü
+      if (code.includes('Serial.print') && !code.includes('Serial.begin')) {
+        addTip('⚠️ Serial.print kullanıyorsun ama setup() içinde Serial.begin(9600) başlatmamışsın. Ekranda hiçbir şey göremezsin!', 'error');
+      }
+
+      // 3. PinMode OUTPUT/INPUT kontrolü
+      if (code.includes('digitalWrite') && !code.includes('pinMode')) {
+        addTip('📝 digitalWrite kullanmadan önce o pini pinMode() ile OUTPUT olarak ayarlaman gerektiğini unutma.', 'info');
+      }
+
+      // 4. Sonsuz Döngüde Değişmeyen Koşul
+      const whileMatch = code.match(/while\s*\(([^)]+)\)/);
+      if (whileMatch) {
+        const condition = whileMatch[1];
+        if (condition === 'true' || condition === '1') {
+          addTip('🔄 loop() zaten sürekli döner, içeride tekrar "while(true)" kullanmak Arduino\'yu kilitleyebilir.', 'warning');
+        }
+      }
+
+      // 5. Analog Pin Yazımı
+      if (code.includes('analogRead(')) {
+        if (!code.match(/analogRead\s*\(\s*A[0-5]\s*\)/)) {
+          addTip('🔌 analogRead kullanırken A0, A1 gibi pin isimleri kullanmak daha güvenlidir.', 'info');
+        }
+      }
+
+      if (results.length === 0) {
+        showToast('Harika! Mantıksal bir hata görünmüyor.', 'success');
+        addTip('✅ Harika! Mantıksal bir hata görünmüyor. Kodun akışı doğru görünüyor.', 'success');
+      } else {
+        showToast('Bazı mantıksal ipuçları var.', 'info');
+      }
+
+      // Sonuçları seri monitöre yazdır
+      appState.serialOutput = [
+        { text: '--- MANTIK KONTROLÜ BAŞLATILDI ---', type: 'info' },
+        ...results,
+        { text: '----------------------------------', type: 'info' }
+      ];
+      renderApp();
+      
+      // Seri monitörü en alta kaydır
+      setTimeout(() => {
+        const serialMonitor = document.getElementById('serialMonitor');
+        if (serialMonitor) serialMonitor.scrollTop = serialMonitor.scrollHeight;
+      }, 100);
+    }
+
     function handleSearch(query) {
       appState.searchQuery = query;
       if (!query || query.length < 2) {
@@ -2241,38 +2300,120 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const hasServo = Object.keys(appState.servoStates).length > 0;
       const hasMotor = Object.keys(appState.motorStates).length > 0;
       
+      // Pin durumlarını kontrol et
+      const getPinState = (pin) => {
+        const state = appState.ledStates[pin];
+        if (state === 'HIGH' || (typeof state === 'number' && state > 0)) return true;
+        return false;
+      };
+
+      const getPinIntensity = (pin) => {
+        const state = appState.ledStates[pin];
+        if (typeof state === 'number') return Math.min(Math.max(state / 255, 0), 1);
+        if (state === 'HIGH') return 1;
+        return 0;
+      };
+
       return `
-        <div class="grid grid-cols-4 sm:grid-cols-7 gap-3 mb-8">
-          ${[13, 11, 10, 9, 6, 5, 3].map(pin => {
-            const state = appState.ledStates[pin];
-            const isOn = state === 'HIGH' || (typeof state === 'number' && state > 0);
-            let intensity = 0;
-            if (typeof state === 'number') {
-              intensity = Math.min(Math.max(state / 255, 0), 1);
-            } else if (state === 'HIGH') {
-              intensity = 1;
-            }
+        <!-- Gelişmiş Arduino Uno Görseli -->
+        <div class="relative w-full max-w-[500px] mx-auto mb-10 group">
+          <svg viewBox="0 0 400 300" class="w-full h-auto drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:rotate-1">
+            <!-- PCB Base -->
+            <rect x="10" y="10" width="380" height="280" rx="15" fill="#1e40af" stroke="#1d4ed8" stroke-width="2" />
+            <rect x="15" y="15" width="370" height="270" rx="12" fill="none" stroke="#ffffff" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.3" />
             
-            // Parlaklık etkisini daha belirgin hale getirelim
-            const glowSize = 5 + (intensity * 35);
-            const glowOpacity = 0.2 + (intensity * 0.8);
-            const ledOpacity = 0.3 + (intensity * 0.7);
+            <!-- Montaj Delikleri -->
+            <circle cx="35" cy="35" r="8" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+            <circle cx="35" cy="265" r="8" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+            <circle cx="365" cy="100" r="8" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+            <circle cx="365" cy="265" r="8" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+
+            <!-- USB Port -->
+            <rect x="0" y="35" width="60" height="50" rx="4" fill="#94a3b8" />
+            <rect x="0" y="40" width="55" height="40" rx="2" fill="#cbd5e1" />
+            <rect x="10" y="45" width="40" height="30" fill="#1e293b" rx="1" />
             
-            return `
-              <div class="text-center group">
-                <div 
-                  class="w-10 h-10 rounded-full mx-auto mb-2 transition-all duration-150 relative border-2 ${isOn ? 'bg-yellow-400 border-yellow-300' : 'bg-slate-700 border-slate-600'}"
-                  style="${isOn ? `box-shadow: 0 0 ${glowSize}px rgba(250,204,21,${glowOpacity}); opacity: ${ledOpacity}; transform: scale(${0.9 + intensity * 0.2});` : 'opacity: 0.4;'}"
-                >
-                  ${isOn ? `<div class="absolute inset-0 rounded-full animate-pulse bg-yellow-200 opacity-20"></div>` : ''}
-                </div>
-                <span class="text-[10px] font-bold ${isOn ? 'text-yellow-400' : 'text-slate-500'}">D${pin}${ [11, 10, 9, 6, 5, 3].includes(pin) ? '~' : '' }</span>
-              </div>
-            `;
-          }).join('')}
+            <!-- Power Jack -->
+            <rect x="0" y="210" width="70" height="60" rx="4" fill="#0f172a" />
+            <circle cx="35" cy="240" r="15" fill="#1e293b" stroke="#334155" stroke-width="2" />
+            <circle cx="35" cy="240" r="5" fill="#000" />
+
+            <!-- ATmega328P Chip -->
+            <rect x="220" y="120" width="120" height="60" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1" />
+            <text x="235" y="155" fill="#64748b" font-family="monospace" font-size="10" font-weight="bold">ATMEGA328P-AU</text>
+            <!-- Chip Pins -->
+            ${Array.from({length: 8}).map((_, i) => `
+              <rect x="${230 + i*14}" y="115" width="4" height="5" fill="#94a3b8" />
+              <rect x="${230 + i*14}" y="180" width="4" height="5" fill="#94a3b8" />
+            `).join('')}
+
+            <!-- Pin Headers (Top - Digital) -->
+            <rect x="100" y="10" width="280" height="25" rx="2" fill="#0f172a" />
+            ${Array.from({length: 14}).map((_, i) => {
+              const pin = 13 - i;
+              const intensity = getPinIntensity(pin);
+              const isActive = intensity > 0;
+              return `
+                <rect x="${355 - i*18}" y="15" width="12" height="15" rx="1" fill="${isActive ? '#3b82f6' : '#334155'}" />
+                <circle cx="${361 - i*18}" cy="22.5" r="3" fill="${isActive ? '#60a5fa' : '#1e293b'}">
+                  ${isActive ? `<animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />` : ''}
+                </circle>
+                <text x="${355 - i*18}" y="45" fill="#94a3b8" font-size="7" font-weight="bold">${pin}</text>
+              `;
+            }).join('')}
+            <text x="110" y="45" fill="#fff" font-size="8" font-weight="bold" opacity="0.5">DIGITAL (PWM~)</text>
+
+            <!-- Pin Headers (Bottom - Analog & Power) -->
+            <rect x="120" y="265" width="240" height="25" rx="2" fill="#0f172a" />
+            ${Array.from({length: 6}).map((_, i) => `
+              <rect x="${340 - i*18}" y="270" width="12" height="15" rx="1" fill="#334155" />
+              <circle cx="${346 - i*18}" cy="277.5" r="3" fill="#1e293b" />
+              <text x="${340 - i*18}" y="260" fill="#94a3b8" font-size="7" font-weight="bold">A${5-i}</text>
+            `).join('')}
+            <text x="290" y="260" fill="#fff" font-size="8" font-weight="bold" opacity="0.5">ANALOG IN</text>
+
+            <!-- Crystal -->
+            <rect x="120" y="140" width="30" height="15" rx="7" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" />
+            <text x="124" y="151" fill="#64748b" font-size="6" font-weight="bold">16.000</text>
+
+            <!-- On-board LEDs -->
+            <!-- Power LED -->
+            <circle cx="360" cy="55" r="3" fill="#22c55e" shadow="0 0 5px #22c55e" />
+            <text x="345" y="58" fill="#94a3b8" font-size="6">ON</text>
+            
+            <!-- Pin 13 LED -->
+            <circle cx="360" cy="75" r="3" fill="${getPinState(13) ? '#eab308' : '#334155'}">
+              ${getPinState(13) ? `<animate attributeName="opacity" values="0.5;1;0.5" dur="0.5s" repeatCount="indefinite" />` : ''}
+            </circle>
+            <text x="345" y="78" fill="#94a3b8" font-size="6">L</text>
+
+            <!-- TX/RX LEDs -->
+            <circle cx="360" cy="130" r="2.5" fill="${appState.simulationRunning ? '#eab308' : '#334155'}" />
+            <text x="345" y="133" fill="#94a3b8" font-size="6">TX</text>
+            <circle cx="360" cy="145" r="2.5" fill="${appState.simulationRunning ? '#eab308' : '#334155'}" />
+            <text x="345" y="148" fill="#94a3b8" font-size="6">RX</text>
+
+            <!-- Reset Button -->
+            <rect x="25" y="100" width="30" height="30" rx="4" fill="#334155" />
+            <circle cx="40" cy="115" r="10" fill="#ef4444" stroke="#b91c1c" stroke-width="2" class="cursor-pointer hover:fill-red-400" onclick="resetSimulation()" />
+          </svg>
+
+          <!-- Pin Durumları (Pop-up Bilgi) -->
+          <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex space-x-2 bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded-full border border-slate-700 shadow-2xl scale-0 group-hover:scale-100 transition-transform duration-300">
+             ${[13, 11, 10, 9, 6, 5, 3].map(pin => {
+               const intensity = getPinIntensity(pin);
+               const isOn = intensity > 0;
+               return `
+                 <div class="flex flex-col items-center">
+                   <div class="w-2 h-2 rounded-full ${isOn ? 'bg-yellow-400 animate-pulse' : 'bg-slate-600'}"></div>
+                   <span class="text-[8px] font-bold text-slate-400 mt-1">D${pin}</span>
+                 </div>
+               `;
+             }).join('')}
+          </div>
         </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-6">
             <!-- Potansiyometre -->
             <div class="bg-gradient-to-br from-slate-800/40 to-slate-900/40 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm hover:border-blue-500/30 transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.3)]">
@@ -2728,11 +2869,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         updateSimulationDisplay();
         return;
       }
-      // Uyarıları seri monitöre yansıt
-      if (validation.issues && validation.issues.length) {
-        validation.issues.forEach(i => { if (i.level !== 'error') appState.serialOutput.push({ type: 'info', text: i.text }); });
-      }
-
+      
       appState.simulationRunning = true;
       appState.ledStates = {};
       appState.motorStates = {};
@@ -2747,6 +2884,14 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       appState.lastWriteValues = {};
       appState.lastWriteTimes = {};
       appState.logThrottleMs = 300;
+
+      // Mantık kontrolü yap ve seri monitöre ekle
+      checkThinking();
+      
+      // Uyarıları seri monitöre yansıt
+      if (validation.issues && validation.issues.length) {
+        validation.issues.forEach(i => { if (i.level !== 'error') appState.serialOutput.push({ type: 'info', text: i.text }); });
+      }
       
       try {
         const commands = parseArduinoCode(appState.editorCode);
@@ -3094,6 +3239,46 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       renderApp();
     }
 
+    function validateAlgoFlow() {
+      const nodes = appState.flowchartNodes;
+      const conns = appState.flowchartConnections;
+      const issues = [];
+
+      if (nodes.length === 0) return { valid: false, issues: ['Henüz hiç blok eklemediniz.'] };
+
+      const hasStart = nodes.some(n => n.type === 'start' && n.text.toLowerCase().includes('başla'));
+      const hasEnd = nodes.some(n => n.type === 'start' && (n.text.toLowerCase().includes('dur') || n.text.toLowerCase().includes('bitir') || n.text.toLowerCase().includes('son')));
+
+      if (!hasStart) issues.push('Algoritma "BAŞLA" bloğu ile başlamalıdır.');
+      if (!hasEnd) issues.push('Algoritma "DUR" veya "BİTİR" bloğu ile sonlanmalıdır.');
+
+      nodes.forEach(node => {
+        const outConns = conns.filter(c => c.from === node.id);
+        const inConns = conns.filter(c => c.to === node.id);
+
+        if (node.type !== 'start' && inConns.length === 0) {
+          issues.push(`"${node.text}" bloğuna gelen bir bağlantı yok.`);
+        }
+
+        if (node.type === 'decision') {
+          const hasYes = outConns.some(c => c.fromPoint === 'bottom');
+          const hasNo = outConns.some(c => c.fromPoint === 'right');
+          if (!hasYes || !hasNo) {
+            issues.push(`"${node.text}" karar bloğunun hem EVET hem de HAYIR çıkışı olmalıdır.`);
+          }
+        } else if (!node.text.toLowerCase().includes('dur') && !node.text.toLowerCase().includes('bitir') && !node.text.toLowerCase().includes('son')) {
+          if (outConns.length === 0) {
+            issues.push(`"${node.text}" bloğundan sonra bir adım gelmelidir.`);
+          }
+        }
+      });
+
+      return {
+        valid: issues.length === 0,
+        issues
+      };
+    }
+
     function updateAlgoNodeText(id, text) {
       const node = appState.flowchartNodes.find(n => n.id === id);
       if (node) node.text = text;
@@ -3180,6 +3365,14 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             </div>
 
             <div class="absolute top-6 right-6 z-10 flex space-x-3">
+              <button onclick="
+                const v = validateAlgoFlow(); 
+                if(v.valid) {
+                  showToast('Algoritma akışı doğru görünüyor!', 'success');
+                } else {
+                  showToast(v.issues[0], 'warning');
+                }
+              " class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all">Kontrol Et</button>
               <button onclick="appState.flowchartNodes = []; appState.flowchartConnections = []; renderApp();" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm border border-slate-700 hover:bg-slate-700 transition-all">Temizle</button>
               <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">Kaydet / Yazdır</button>
             </div>
@@ -3967,13 +4160,33 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-6">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-6 shadow-lg shadow-blue-500/20">
               <div class="text-3xl font-bold text-white">${appState.currentUser.xp || 0}</div>
               <div class="text-blue-100 text-xs mt-1">Toplam XP</div>
+              <div class="mt-4 w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                <div class="bg-white h-full" style="width: ${((appState.currentUser.xp || 0) % 1000) / 10}%"></div>
+              </div>
+              <div class="text-[9px] text-blue-200 mt-1">Sonraki Seviye: ${1000 - ((appState.currentUser.xp || 0) % 1000)} XP</div>
             </div>
-            <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6">
+            <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-lg shadow-purple-500/20">
               <div class="text-3xl font-bold text-white">${appState.currentUser.completedModules.length}</div>
               <div class="text-purple-100 text-xs mt-1">${modules.length} modülden</div>
+              <div class="mt-4 w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                <div class="bg-white h-full" style="width: ${(appState.currentUser.completedModules.length / modules.length) * 100}%"></div>
+              </div>
+              <div class="text-[9px] text-purple-200 mt-1">Tamamlanma: %${Math.round((appState.currentUser.completedModules.length / modules.length) * 100)}</div>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 shadow-lg shadow-emerald-500/20">
+              <div class="text-3xl font-bold text-white">${appState.currentUser.completedQuizzes?.length || 0}</div>
+              <div class="text-emerald-100 text-xs mt-1">Çözülen Quiz</div>
+              <div class="mt-4 flex -space-x-1">
+                ${[1,2,3,4,5].map(i => `<div class="w-3 h-3 rounded-full border border-white/30 ${i <= (appState.currentUser.completedQuizzes?.length || 0) ? 'bg-white' : 'bg-white/10'}"></div>`).join('')}
+              </div>
+            </div>
+            <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 shadow-lg shadow-orange-500/20">
+              <div class="text-3xl font-bold text-white">${Math.floor((appState.currentUser.xp || 0) / 1000) + 1}</div>
+              <div class="text-orange-100 text-xs mt-1">Mevcut Seviye</div>
+              <div class="text-[10px] font-bold text-white/80 mt-4 px-2 py-0.5 bg-white/20 rounded inline-block uppercase">Kaşif Unvanı</div>
             </div>
           </div>
 
