@@ -103,6 +103,13 @@
       border-radius: 50%;
       border: 2px solid #334155;
       overflow: hidden;
+      animation: blink 5s infinite;
+      transform-origin: center;
+    }
+
+    @keyframes blink {
+      0%, 96%, 100% { transform: scaleY(1); }
+      98% { transform: scaleY(0.05); }
     }
 
     .cat-eye.left { left: 20px; }
