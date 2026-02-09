@@ -77,6 +77,7 @@
       editorWrap: false,
       editorInstance: null,
       showIntro: true,
+      mobileMenuOpen: false,
       theme: localStorage.getItem('ardumind_theme') || 'dark',
       introAutoScheduled: false,
       currentModuleView: null,
@@ -3145,6 +3146,24 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
     }
 
     function renderNavbar() {
+      const navLinks = [
+        { label: 'Keşfet', page: 'home' },
+        { label: 'Elemanlar', page: 'components' },
+        { label: 'Dokümantasyon', page: 'docs' },
+        { label: 'Videolar', page: 'videos' },
+        { label: 'Algoritma', page: 'algo-builder' },
+        { label: 'Öğrenme Yolu', page: 'path' },
+        { label: 'Arduino', page: 'arduino' },
+        { label: 'Testler', page: 'quiz' },
+        { label: 'Eğitim Seti', page: 'edu-kit' },
+        { label: 'Hakkında', page: 'about' }
+      ];
+
+      if (appState.currentUser) {
+        navLinks.push({ label: 'Eğitimim', page: 'dashboard' });
+        navLinks.push({ label: 'Editör', page: 'editor' });
+      }
+
       return `
         <nav class="sticky top-0 z-50 backdrop-blur-sm bg-slate-800 bg-opacity-90 border-b border-slate-700">
           <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -3155,47 +3174,78 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                 <span class="text-xl font-bold tracking-tight">ArduMind</span>
               </div>
 
-              <!-- Orta: Navigasyon Sekmeleri -->
+              <!-- Orta: Navigasyon Sekmeleri (Masaüstü) -->
               <div class="hidden xl:flex flex-1 justify-center items-center px-4">
                 <div class="flex items-center space-x-5 text-sm font-medium">
-                  <a href="#" onclick="navigateTo('home')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'home' ? 'text-blue-400' : ''}">Keşfet</a>
-                  <a href="#" onclick="navigateTo('components')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'components' ? 'text-blue-400' : ''}">Elemanlar</a>
-                  <a href="#" onclick="navigateTo('docs')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'docs' ? 'text-blue-400' : ''}">Dokümantasyon</a>
-                  <a href="#" onclick="navigateTo('videos')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'videos' ? 'text-blue-400' : ''}">Videolar</a>
-                  <a href="#" onclick="navigateTo('algo-builder')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'algo-builder' ? 'text-blue-400' : ''}">Algoritma</a>
-                  <a href="#" onclick="navigateTo('path')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'path' ? 'text-blue-400' : ''}">Öğrenme Yolu</a>
-                  <a href="#" onclick="navigateTo('arduino')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'arduino' ? 'text-blue-400' : ''}">Arduino</a>
-                  <a href="#" onclick="navigateTo('quiz')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'quiz' ? 'text-blue-400' : ''}">Testler</a>
-                  <a href="#" onclick="navigateTo('edu-kit')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'edu-kit' ? 'text-blue-400' : ''}">Eğitim Seti</a>
-                  <a href="#" onclick="navigateTo('about')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'about' ? 'text-blue-400' : ''}">Hakkında</a>
-                  ${appState.currentUser ? `
-                    <a href="#" onclick="navigateTo('dashboard')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'dashboard' ? 'text-blue-400' : ''}">Eğitimim</a>
-                    <a href="#" onclick="navigateTo('editor')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === 'editor' ? 'text-blue-400' : ''}">Editör</a>
-                  ` : ''}
+                  ${navLinks.map(link => `
+                    <a href="#" onclick="navigateTo('${link.page}')" class="text-slate-300 hover:text-white transition-colors ${appState.currentPage === link.page ? 'text-blue-400 font-bold' : ''}">${link.label}</a>
+                  `).join('')}
                 </div>
               </div>
 
-              <!-- Sağ: Tema, Profil ve Çıkış -->
+              <!-- Sağ: Tema, Profil ve Mobil Menü Butonu -->
               <div class="flex items-center space-x-4 flex-shrink-0">
                 <!-- Tema Toggle -->
                 <button onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:text-yellow-400 transition-all">
                   ${appState.theme === 'dark' ? '🌙' : '☀️'}
                 </button>
 
+                <!-- Mobil Menü Butonu -->
+                <button onclick="appState.mobileMenuOpen = !appState.mobileMenuOpen; renderApp();" class="xl:hidden p-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-300">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${appState.mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'}" />
+                  </svg>
+                </button>
+
+                <div class="hidden sm:flex items-center space-x-4">
+                  ${appState.currentUser ? `
+                    <button onclick="navigateTo('profile')" class="flex items-center space-x-2 text-slate-200 hover:text-white transition-colors">
+                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg">
+                        ${appState.currentUser.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span class="text-sm font-semibold">${appState.currentUser.name.split(' ')[0]}</span>
+                    </button>
+                    <button onclick="logout()" class="px-4 py-1.5 rounded-lg font-bold bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all text-xs">
+                      Çıkış
+                    </button>
+                  ` : `
+                    <button onclick="appState.showAuthModal = true; appState.authMode = 'login'; renderApp();" class="px-5 py-2 rounded-full font-bold bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 hover:shadow-xl transition-all text-sm">
+                      Giriş Yap
+                    </button>
+                  `}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobil Menü (Drawer) -->
+          <div class="xl:hidden transition-all duration-300 ease-in-out overflow-hidden ${appState.mobileMenuOpen ? 'max-h-[800px] border-t border-slate-700 opacity-100' : 'max-h-0 opacity-0'}">
+            <div class="px-4 pt-2 pb-6 space-y-1 bg-slate-800">
+              ${navLinks.map(link => `
+                <a href="#" onclick="appState.mobileMenuOpen = false; navigateTo('${link.page}')" class="block px-4 py-3 rounded-xl text-base font-medium ${appState.currentPage === link.page ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}">
+                  ${link.label}
+                </a>
+              `).join('')}
+              
+              <div class="pt-4 mt-4 border-t border-slate-700 sm:hidden">
                 ${appState.currentUser ? `
-                  <button onclick="navigateTo('profile')" class="flex items-center space-x-2 text-slate-200 hover:text-white transition-colors">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg">
+                  <div class="flex items-center px-4 py-3 space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold shadow-lg">
                       ${appState.currentUser.name.charAt(0).toUpperCase()}
                     </div>
-                    <span class="text-sm font-semibold hidden sm:inline">${appState.currentUser.name.split(' ')[0]}</span>
-                  </button>
-                  <button onclick="logout()" class="px-4 py-1.5 rounded-lg font-bold bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all text-xs">
-                    Çıkış
-                  </button>
+                    <div>
+                      <div class="text-base font-medium text-white">${appState.currentUser.name}</div>
+                      <div class="text-sm font-medium text-slate-400">${appState.currentUser.email}</div>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 mt-3 px-2">
+                    <button onclick="appState.mobileMenuOpen = false; navigateTo('profile')" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-200 text-sm font-bold">Profil</button>
+                    <button onclick="appState.mobileMenuOpen = false; logout()" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 text-sm font-bold">Çıkış Yap</button>
+                  </div>
                 ` : `
-                  <button onclick="appState.showAuthModal = true; appState.authMode = 'login'; renderApp();" class="px-5 py-2 rounded-full font-bold bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 hover:shadow-xl transition-all text-sm">
-                    Giriş Yap
-                  </button>
+                  <div class="px-2">
+                    <button onclick="appState.mobileMenuOpen = false; appState.showAuthModal = true; appState.authMode = 'login'; renderApp();" class="w-full px-4 py-3 rounded-xl bg-blue-600 text-white font-bold text-center">Giriş Yap</button>
+                  </div>
                 `}
               </div>
             </div>
@@ -3628,8 +3678,8 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       return `
         ${renderNavbar()}
         
-        <section class="relative overflow-hidden py-20">
-          <div class="absolute inset-0 opacity-10">
+        <section class="relative overflow-hidden py-12 md:py-20 lg:py-32">
+          <div class="absolute inset-0 opacity-10 pointer-events-none">
             <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -3643,66 +3693,79 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           </div>
           
           <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="mb-8">
-              <svg class="w-20 h-20 mx-auto text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <div class="mb-8 animate-bounce">
+              <svg class="w-16 h-16 md:w-24 md:h-24 mx-auto text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
               </svg>
             </div>
             
-            <h1 class="text-5xl font-bold mb-6 leading-tight">Arduino'yu ezberleyerek değil, anlayarak öğren.</h1>
-            <p class="text-xl mb-8 max-w-3xl mx-auto text-slate-300">Yapay zeka destekli, kişiye özel öğrenme ve hata analizi sistemi</p>
+            <h1 class="text-3xl sm:text-5xl lg:text-7xl font-black mb-6 leading-[1.1] tracking-tight">
+              Arduino'yu <span class="text-blue-500">ezberleyerek</span> değil,<br class="hidden md:block"> <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-600">anlayarak</span> öğren.
+            </h1>
+            <p class="text-base sm:text-xl mb-10 max-w-2xl mx-auto text-slate-400 font-medium">
+              Yapay zeka destekli interaktif eğitim platformu ile hayallerindeki projeleri koda dök.
+            </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button onclick="handleStart()" class="px-8 py-4 rounded-full font-semibold bg-blue-500 text-white hover:bg-blue-600 hover:scale-105 hover:shadow-xl transition-all w-full sm:w-auto">
+              <button onclick="handleStart()" class="w-full sm:w-auto px-10 py-4 rounded-2xl font-bold bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30 transition-all">
                 ${appState.currentUser ? 'Öğrenmeye Devam Et' : 'Ücretsiz Başla'}
               </button>
-              <button onclick="navigateTo('docs')" class="px-8 py-4 rounded-full font-semibold bg-slate-800 text-slate-100 border-2 border-blue-500 hover:scale-105 transition-all w-full sm:w-auto">
+              <button onclick="navigateTo('docs')" class="w-full sm:w-auto px-10 py-4 rounded-2xl font-bold bg-slate-800 text-slate-100 border border-slate-700 hover:bg-slate-700 transition-all">
                 Dokümantasyon
               </button>
             </div>
           </div>
         </section>
 
-        <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-slate-800 rounded-3xl p-8 hover:scale-105 hover:shadow-2xl transition-all">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-900 flex items-center justify-center mb-6">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-              </div>
-              <h3 class="text-2xl font-bold mb-4">Kişiye Özel Öğrenme</h3>
-              <p class="text-slate-300 leading-relaxed">Yapay zeka senin öğrenme hızına göre yol haritası oluşturur</p>
+        <section class="py-16 md:py-24 bg-slate-900/30">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+              <h2 class="text-2xl sm:text-4xl font-bold mb-4">Neden ArduMind?</h2>
+              <div class="h-1.5 w-20 bg-blue-600 mx-auto rounded-full"></div>
             </div>
-            
-            <div class="bg-slate-800 rounded-3xl p-8 hover:scale-105 hover:shadow-2xl transition-all">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-900 flex items-center justify-center mb-6">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                </svg>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              <div class="group bg-slate-800 rounded-3xl p-8 border border-slate-700/50 hover:border-blue-500/50 transition-all duration-500">
+                <div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Kişiye Özel</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Senin seviyene ve öğrenme hızına göre uyarlanan dinamik içerikler.</p>
               </div>
-              <h3 class="text-2xl font-bold mb-4">Akıllı Hata Analizi</h3>
-              <p class="text-slate-300 leading-relaxed">Hatalarını analiz eder ve anlaşılır dille açıklar</p>
-            </div>
-            
-            <div class="bg-slate-800 rounded-3xl p-8 hover:scale-105 hover:shadow-2xl transition-all">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-900 flex items-center justify-center mb-6">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                </svg>
+              
+              <div class="group bg-slate-800 rounded-3xl p-8 border border-slate-700/50 hover:border-blue-500/50 transition-all duration-500">
+                <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Hata Analizi</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Kodundaki hataları anında tespit eder ve çözüm önerileri sunar.</p>
               </div>
-              <h3 class="text-2xl font-bold mb-4">Proje Tabanlı Eğitim</h3>
-              <p class="text-slate-300 leading-relaxed">Gerçek projeler yaparak Arduino'yu öğren</p>
+              
+              <div class="group bg-slate-800 rounded-3xl p-8 border border-slate-700/50 hover:border-blue-500/50 transition-all duration-500 sm:col-span-2 lg:col-span-1">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Proje Odaklı</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Teoriyi anında pratiğe dökebileceğin onlarca gerçek proje.</p>
+              </div>
             </div>
           </div>
         </section>
         
-        <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="bg-gradient-to-r from-blue-500 to-blue-900 rounded-3xl p-12 text-center">
-            <h2 class="text-4xl font-bold mb-4 text-white">Arduino serüvenine başlamaya hazır mısın?</h2>
-            <p class="text-xl mb-8 text-white opacity-90">Binlerce öğrenci gibi sen de bugün başla, yapay zeka rehberliğinde öğren.</p>
-            <button onclick="handleStart()" class="px-8 py-4 rounded-full font-semibold bg-white text-blue-600 hover:scale-105 hover:shadow-xl transition-all">
-              Hemen Ücretsiz Başla
-            </button>
+        <section class="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[2.5rem] p-8 md:p-16 text-center relative overflow-hidden shadow-2xl">
+            <div class="absolute inset-0 bg-grid-white/[0.05] pointer-events-none"></div>
+            <div class="relative z-10">
+              <h2 class="text-3xl md:text-5xl font-bold mb-6 text-white leading-tight">Geleceği kodlamaya bugün başla.</h2>
+              <p class="text-lg mb-10 text-white/80 max-w-2xl mx-auto">Ücretsiz hesabını oluştur ve ArduMind dünyasına adım at.</p>
+              <button onclick="handleStart()" class="px-10 py-4 rounded-2xl font-bold bg-white text-blue-600 hover:scale-105 transition-all shadow-xl">
+                Şimdi Başla
+              </button>
+            </div>
           </div>
         </section>
       `;
