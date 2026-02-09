@@ -48,6 +48,134 @@
     .text-slate-400 { color: var(--text-muted) !important; }
     .border-slate-700 { border-color: var(--border-color) !important; }
 
+    /* Tatlı Kedi Stilleri - Tam Vücut Sol Alt */
+    .cat-container {
+      position: fixed;
+      bottom: -10px;
+      left: 20px;
+      width: 120px;
+      height: 150px;
+      z-index: 9999;
+      pointer-events: none;
+      transition: transform 0.3s ease;
+    }
+
+    .cat-body {
+      position: absolute;
+      bottom: 0;
+      width: 80px;
+      height: 90px;
+      background: #f1f5f9;
+      border-radius: 40px 40px 10px 10px;
+      left: 20px;
+      box-shadow: inset -5px -5px 15px rgba(0,0,0,0.05);
+    }
+
+    .cat-head {
+      position: absolute;
+      bottom: 70px;
+      left: 10px;
+      width: 100px;
+      height: 80px;
+      background: #f1f5f9;
+      border-radius: 40px 40px 30px 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .cat-ear {
+      position: absolute;
+      top: -15px;
+      width: 30px;
+      height: 40px;
+      background: #f1f5f9;
+      border-radius: 50% 50% 10% 10%;
+    }
+
+    .cat-ear.left { left: 10px; transform: rotate(-15deg); }
+    .cat-ear.right { right: 10px; transform: rotate(15deg); }
+
+    .cat-eye {
+      position: absolute;
+      top: 25px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid #334155;
+      overflow: hidden;
+    }
+
+    .cat-eye.left { left: 20px; }
+    .cat-eye.right { right: 20px; }
+
+    .cat-pupil {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: #0f172a;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) translate(var(--eye-x, 0px), var(--eye-y, 0px));
+      transition: transform 0.1s ease-out;
+    }
+
+    .cat-nose {
+      position: absolute;
+      top: 45px;
+      left: 50%;
+      width: 10px;
+      height: 6px;
+      background: #fda4af;
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+
+    .cat-mouth {
+      position: absolute;
+      top: 52px;
+      left: 50%;
+      width: 16px;
+      height: 8px;
+      border-bottom: 2px solid #334155;
+      border-radius: 0 0 10px 10px;
+      transform: translateX(-50%);
+    }
+
+    .cat-paw-front {
+      position: absolute;
+      bottom: 0;
+      width: 20px;
+      height: 30px;
+      background: #f1f5f9;
+      border-radius: 10px 10px 5px 5px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .cat-paw-front.left { left: 30px; }
+    .cat-paw-front.right { left: 70px; }
+
+    .cat-tail {
+      position: absolute;
+      bottom: 10px;
+      right: -10px;
+      width: 50px;
+      height: 15px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      transform-origin: left center;
+      animation: tailWag 3s ease-in-out infinite;
+    }
+
+    .cat-container:hover {
+      transform: translateY(-5px);
+    }
+
+    @keyframes tailWag {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(25deg); }
+    }
+
     /* Algoritma Şekilleri */
     .shape-capsule { border-radius: 9999px; }
     .shape-parallelogram { transform: skewX(-15deg); }
@@ -60,6 +188,27 @@
   <!-- <script src="_sdk/element_sdk.js" type="text/javascript"></script> -->
  </head>
  <body class="h-full bg-slate-900 text-slate-100">
+  <!-- Tatlı Kedi -->
+  <div class="cat-container" id="cat">
+    <div class="cat-tail"></div>
+    <div class="cat-body">
+      <div class="cat-paw-front left"></div>
+      <div class="cat-paw-front right"></div>
+    </div>
+    <div class="cat-head">
+      <div class="cat-ear left"></div>
+      <div class="cat-ear right"></div>
+      <div class="cat-eye left">
+        <div class="cat-pupil" id="pupil-left"></div>
+      </div>
+      <div class="cat-eye right">
+        <div class="cat-pupil" id="pupil-right"></div>
+      </div>
+      <div class="cat-nose"></div>
+      <div class="cat-mouth"></div>
+    </div>
+  </div>
+  
   <div id="app" class="h-full w-full overflow-auto"></div>
   <script>
     // ==================== STATE MANAGEMENT ====================
@@ -82,13 +231,6 @@
       introAutoScheduled: false,
       currentModuleView: null,
       currentDocSection: 'basics',
-      leaderboard: [
-        { name: 'Ahmet Y.', xp: 2450, level: 'advanced', avatar: '👨‍💻' },
-        { name: 'Ayşe K.', xp: 2100, level: 'advanced', avatar: '👩‍🔬' },
-        { name: 'Mehmet S.', xp: 1850, level: 'intermediate', avatar: '🤖' },
-        { name: 'Zeynep B.', xp: 1600, level: 'intermediate', avatar: '🎨' },
-        { name: 'Can D.', xp: 1200, level: 'beginner', avatar: '🎮' }
-      ],
       collapsedTopics: {}, // Açılır-kapanır bloklar için
       editorCode: savedCode || `void setup() {
   pinMode(13, OUTPUT);
@@ -919,12 +1061,16 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
     ];
 
     const videoLessons = [
-      { id: 'getting-started', title: 'Arduino Başlangıç: Kurulum ve Blink', duration: '12 dk', url: 'https://www.youtube.com/results?search_query=arduino+blink+turkce', topic: 'Temeller' },
-      { id: 'digital-write', title: 'digitalWrite ile LED Kontrol', duration: '10 dk', url: 'https://www.youtube.com/results?search_query=digitalWrite+arduino+turkce', topic: 'Dijital' },
-      { id: 'button', title: 'Buton Okuma ve Pull-down', duration: '14 dk', url: 'https://www.youtube.com/results?search_query=arduino+buton+pull+down+turkce', topic: 'Dijital' },
-      { id: 'analog', title: 'AnalogRead ve Potansiyometre', duration: '15 dk', url: 'https://www.youtube.com/results?search_query=arduino+analogRead+potansiyometre+turkce', topic: 'Analog' },
-      { id: 'servo', title: 'Servo Motor Kontrolü', duration: '13 dk', url: 'https://www.youtube.com/results?search_query=arduino+servo+turkce', topic: 'Servo' },
-      { id: 'motor', title: 'PWM ve DC Motor', duration: '16 dk', url: 'https://www.youtube.com/results?search_query=arduino+pwm+dc+motor+turkce', topic: 'PWM' }
+      { id: 'getting-started', title: 'Arduino Başlangıç: Kurulum ve Blink', duration: '12 dk', url: 'https://www.youtube.com/results?search_query=arduino+blink+turkce', topic: 'Temeller', step: 1 },
+      { id: 'digital-write', title: 'digitalWrite ile LED Kontrol', duration: '10 dk', url: 'https://www.youtube.com/results?search_query=digitalWrite+arduino+turkce', topic: 'Dijital Çıkış', step: 2 },
+      { id: 'button', title: 'Buton Okuma ve Pull-down', duration: '14 dk', url: 'https://www.youtube.com/results?search_query=arduino+buton+pull+down+turkce', topic: 'Dijital Giriş', step: 3 },
+      { id: 'analog', title: 'AnalogRead ve Potansiyometre', duration: '15 dk', url: 'https://www.youtube.com/results?search_query=arduino+analogRead+potansiyometre+turkce', topic: 'Analog Giriş', step: 4 },
+      { id: 'servo', title: 'Servo Motor Kontrolü', duration: '13 dk', url: 'https://www.youtube.com/results?search_query=arduino+servo+turkce', topic: 'Hareket', step: 5 },
+      { id: 'motor', title: 'PWM ve DC Motor', duration: '16 dk', url: 'https://www.youtube.com/results?search_query=arduino+pwm+dc+motor+turkce', topic: 'PWM Kontrol', step: 6 },
+      { id: 'ultrasonic', title: 'HC-SR04 Mesafe Sensörü', duration: '18 dk', url: 'https://www.youtube.com/results?search_query=arduino+hc-sr04+mesafe+sensoru+turkce', topic: 'Sensörler', step: 7 },
+      { id: 'millis', title: 'delay() Yerine millis() Kullanımı', duration: '20 dk', url: 'https://www.youtube.com/results?search_query=arduino+millis+kullanimi+turkce', topic: 'Zamanlama', step: 8 },
+      { id: 'interrupts', title: 'Kesmeler (Interrupts) Temelleri', duration: '15 dk', url: 'https://www.youtube.com/results?search_query=arduino+kesmeler+interrupts+turkce', topic: 'İleri Seviye', step: 9 },
+      { id: 'lcd-i2c', title: 'I2C LCD Ekran Kullanımı', duration: '14 dk', url: 'https://www.youtube.com/results?search_query=arduino+i2c+lcd+ekran+turkce', topic: 'Görselleştirme', step: 10 }
     ];
 
     const learningPath = [
@@ -1083,7 +1229,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         title: 'Zamanlama: delay’siz millis()',
         description: 'Engelleyici gecikmeleri bırak; millis() ile akıcı zamanlama yap.',
         docKey: 'basics',
-        videoId: 'getting-started',
+        videoId: 'millis',
         quizId: 'basics',
         algorithm: 'BAŞLA -> SonZaman=millis -> DÖNGÜ: millis - SonZaman >= aralık ise eylem -> SonZamanı güncelle',
         circuit: 'LED ve buton ile non-blocking blink',
@@ -1096,7 +1242,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         title: 'Kesme (Interrupt) ile Hızlı Tepki',
         description: 'Harici olaylara anında tepki vermeyi öğren.',
         docKey: 'basics',
-        videoId: 'getting-started',
+        videoId: 'interrupts',
         quizId: 'digital',
         algorithm: 'BAŞLA -> attachInterrupt -> ISR içinde bayrak ayarla -> DÖNGÜ: bayrağa göre eylem',
         circuit: 'Pin 2/3 üzerine buton (debounce dikkat)',
@@ -1109,7 +1255,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         title: 'I2C OLED (SSD1306) ile Görselleştirme',
         description: 'Verileri küçük ekranda görselleştir.',
         docKey: 'basics',
-        videoId: 'getting-started',
+        videoId: 'lcd-i2c',
         algorithm: 'BAŞLA -> Wire başlat -> OLED init -> DÖNGÜ: metin/grafik çiz',
         circuit: 'VCC/GND, SCL(A5), SDA(A4) bağlantıları',
         objectives: ['I2C adres ve init', 'Metin yerleştirme'],
@@ -3459,39 +3605,62 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
 
     function renderVideos() {
       const topics = Array.from(new Set(videoLessons.map(v => v.topic)));
-      const list = appState.currentVideoFilter ? videoLessons.filter(v => v.topic === appState.currentVideoFilter) : videoLessons;
+      const list = [...videoLessons].sort((a, b) => a.step - b.step);
+      const filteredList = appState.currentVideoFilter ? list.filter(v => v.topic === appState.currentVideoFilter) : list;
+      
       return `
         ${renderNavbar()}
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="mb-8">
-            <h1 class="text-4xl font-bold mb-2">Videolu Eğitim</h1>
-            <p class="text-slate-400">Konulara göre seçilmiş video dersler</p>
+            <h1 class="text-4xl font-bold mb-2">Videolu Eğitim Yolculuğu</h1>
+            <p class="text-slate-400">Eğitim müfredatına göre sıralanmış adım adım video dersler</p>
           </div>
           
-          <div class="flex flex-wrap gap-2 mb-6">
-            <button onclick="appState.currentVideoFilter=''; renderApp();" class="px-4 py-2 rounded-full text-sm ${appState.currentVideoFilter === '' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}">Tümü</button>
+          <div class="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2">
+            <button onclick="appState.currentVideoFilter=''; renderApp();" class="px-4 py-2 rounded-full text-sm whitespace-nowrap ${appState.currentVideoFilter === '' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors'}">Tümü</button>
             ${topics.map(t => `
-              <button onclick="appState.currentVideoFilter='${t}'; renderApp();" class="px-4 py-2 rounded-full text-sm ${appState.currentVideoFilter === t ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}">${t}</button>
+              <button onclick="appState.currentVideoFilter='${t}'; renderApp();" class="px-4 py-2 rounded-full text-sm whitespace-nowrap ${appState.currentVideoFilter === t ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors'}">${t}</button>
             `).join('')}
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            ${list.map(v => `
-              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-105 transition-all">
-                <div class="bg-gradient-to-r from-blue-600 to-purple-600 h-32 flex items-center justify-center">
-                  <svg class="w-12 h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            ${filteredList.map(v => `
+              <div class="bg-slate-800 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all border border-slate-700/50 hover:border-blue-500/50 group">
+                <div class="relative bg-gradient-to-r from-blue-600 to-purple-600 h-40 flex items-center justify-center overflow-hidden">
+                  <!-- Step Badge -->
+                  <div class="absolute top-4 left-4 bg-black/40 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full border border-white/20 z-10">
+                    ADIM ${v.step}
+                  </div>
+                  
+                  <svg class="w-16 h-16 text-white/90 group-hover:scale-110 transition-transform duration-500 z-10" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
+                  
+                  <!-- Abstract Background Pattern -->
+                  <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 20px 20px;"></div>
                 </div>
+                
                 <div class="p-6">
-                  <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-bold">${v.title}</h3>
-                    <span class="text-xs bg-slate-700 px-2 py-1 rounded">${v.duration}</span>
+                  <div class="flex items-start justify-between mb-4">
+                    <div>
+                      <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1 block">${v.topic}</span>
+                      <h3 class="font-bold text-lg text-slate-100 leading-tight">${v.title}</h3>
+                    </div>
+                    <span class="text-[10px] bg-slate-700 text-slate-300 px-2 py-1 rounded-md font-medium">${v.duration}</span>
                   </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-slate-400 text-sm">${v.topic}</span>
-                    <a href="${v.url}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">İzle</a>
+                  
+                  <div class="flex items-center justify-between mt-6">
+                    <div class="flex -space-x-2">
+                      <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-[10px]">🎓</div>
+                      <div class="w-6 h-6 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-[10px]">🤖</div>
+                    </div>
+                    <a href="${v.url}" target="_blank" rel="noopener" class="flex items-center space-x-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-900/20">
+                      <span>Dersi İzle</span>
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -3861,30 +4030,6 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                   </div>
                   <h3 class="font-bold text-lg">${appState.currentUser.name}</h3>
                   <div class="text-xs text-blue-400 uppercase font-semibold mt-1">Level ${Math.floor((appState.currentUser.xp || 0) / 1000) + 1} Kaşif</div>
-                </div>
-              </div>
-
-              <!-- Liderlik Tablosu -->
-              <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700/50">
-                <div class="flex items-center justify-between mb-4">
-                  <h2 class="text-xl font-bold">Liderlik Tablosu</h2>
-                  <span class="text-xs text-blue-400 cursor-pointer hover:underline">Tümü</span>
-                </div>
-                <div class="space-y-3">
-                  ${appState.leaderboard.map((user, index) => `
-                    <div class="flex items-center justify-between p-2 rounded-lg bg-slate-700/20 border border-transparent hover:border-slate-600/50 transition-all">
-                      <div class="flex items-center space-x-3">
-                        <div class="w-6 h-6 flex items-center justify-center font-bold text-xs ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-slate-300' : index === 2 ? 'text-orange-400' : 'text-slate-500'}">
-                          ${index + 1}
-                        </div>
-                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-base">
-                          ${user.avatar}
-                        </div>
-                        <div class="text-sm font-medium text-slate-200">${user.name.split(' ')[0]}</div>
-                      </div>
-                      <div class="text-xs font-bold text-blue-400">${user.xp} XP</div>
-                    </div>
-                  `).join('')}
                 </div>
               </div>
 
@@ -5399,6 +5544,29 @@ void loop() {
         }, 100);
       }
     }
+
+    // ==================== KEDİ GÖZ TAKİBİ ====================
+    document.addEventListener('mousemove', (e) => {
+      const cat = document.getElementById('cat');
+      if (!cat) return;
+
+      const pupils = document.querySelectorAll('.cat-pupil');
+      pupils.forEach(pupil => {
+        const eye = pupil.parentElement;
+        const rect = eye.getBoundingClientRect();
+        const eyeX = rect.left + rect.width / 2;
+        const eyeY = rect.top + rect.height / 2;
+        
+        const angle = Math.atan2(e.clientY - eyeY, e.clientX - eyeX);
+         const distance = Math.min(6, Math.hypot(e.clientX - eyeX, e.clientY - eyeY) / 10);
+         
+         const x = Math.cos(angle) * distance;
+         const y = Math.sin(angle) * distance;
+         
+         pupil.style.setProperty('--eye-x', `${x}px`);
+         pupil.style.setProperty('--eye-y', `${y}px`);
+      });
+    });
 
     renderApp();
   </script>
