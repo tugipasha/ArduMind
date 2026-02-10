@@ -1,16 +1,26 @@
-// Bu dosya, Gemini API'sine güvenli bir şekilde istek atmak için kullanılacak
-// sunucusuz fonksiyonu içerecektir.
+// Vercel'in standart formatına uygun sunucusuz fonksiyon
+export default async function handler(request, response) {
+    // Sadece POST isteklerine izin ver
+    if (request.method !== 'POST') {
+        response.setHeader('Allow', ['POST']);
+        return response.status(405).end('Method Not Allowed');
+    }
 
-exports.handler = async function(event, context) {
-    // API anahtarını ortam değişkenlerinden (environment variable) güvenli bir şekilde al
+    // API anahtarını ortam değişkenlerinden güvenli bir şekilde al
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-    // İstemciden gelen isteğin gövdesini al
-    const requestBody = JSON.parse(event.body);
+    // Eğer API anahtarı Vercel'de tanımlanmamışsa, özel bir hata döndür
+    if (!GEMINI_API_KEY) {
+        console.error('Sunucu Hatası: GEMINI_API_KEY ortam değişkeni bulunamadı.');
+        return response.status(500).json({ error: 'Sunucu yapılandırma hatası: API anahtarı eksik.' });
+    }
 
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        // İstemciden gelen isteğin gövdesini al
+        const requestBody = request.body;
+
+        const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -18,28 +28,19 @@ exports.handler = async function(event, context) {
             body: JSON.stringify(requestBody),
         });
 
-        if (!response.ok) {
-            // Gemini API'sinden gelen hatayı yakala ve istemciye gönder
-            const errorData = await response.json();
-            return {
-                statusCode: response.status,
-                body: JSON.stringify({ error: errorData.error.message }),
-            };
+        const data = await geminiResponse.json();
+
+        // Gemini API'sinden gelen hatayı yakala ve istemciye gönder
+        if (!geminiResponse.ok) {
+            console.error('Gemini API Hatası:', data);
+            return response.status(geminiResponse.status).json({ error: data.error.message || 'Gemini API tarafında bir hata oluştu.' });
         }
 
-        const data = await response.json();
-
         // Başarılı yanıtı istemciye geri gönder
-        return {
-            statusCode: 200,
-            body: JSON.stringify(data),
-        };
+        return response.status(200).json(data);
 
     } catch (error) {
-        // Genel bir sunucu hatası durumunda
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error: ' + error.message }),
-        };
+        console.error('Beklenmedik Sunucu Hatası:', error);
+        return response.status(500).json({ error: 'Sunucuda beklenmedik bir hata oluştu: ' + error.message });
     }
-};
+}
