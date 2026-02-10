@@ -2040,26 +2040,24 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       renderApp();
     }
 
-    // ==================== GEMINI AI INTEGRATION ====================
-    const GEMINI_API_KEY = 'AIzaSyCssRqEab9geLoxnS7zPZ9sktQ3SrIOicY';
-    // Modeli daha kararlı olan gemini-1.5-flash sürümüne çekiyoruz (Rate limitleri bazen daha esnek olabiliyor)
-    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    // ==================== GEMINI AI INTEGRATION (via Serverless Function) ====================
+    const GEMINI_PROXY_URL = '/api/gemini'; // Sunucusuz fonksiyonun adresi
 
     let isAILoading = false;
-    async function callGeminiAI(prompt, systemInstruction = "Sen deneyimli bir Arduino eğitmenisin. Öğrencilere nazik, yol gösterici ve teknik açıdan doğru geri bildirimler verirsin. Yanıtlarını kısa ve öz tut.", retryCount = 0) {
-      if (isAILoading && retryCount === 0) {
+    async function callGeminiAI(prompt, systemInstruction = "Sen deneyimli bir Arduino eğitmenisin. Öğrencilere nazik, yol gösterici ve teknik açıdan doğru geri bildirimler verirsin. Yanıtlarını kısa ve öz tut.") {
+      if (isAILoading) {
         showToast('AI şu an meşgul, lütfen bekleyin...', 'info');
         return "Lütfen bekleyin, önceki istek tamamlanıyor.";
       }
       
-      if (retryCount === 0) isAILoading = true;
-      
+      isAILoading = true;
       try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(GEMINI_PROXY_URL, { // URL'i proxy adresiyle değiştir
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          // Gövde aynı kalıyor, proxy bunu doğrudan Gemini'ye iletecek
           body: JSON.stringify({
             contents: [{
               parts: [{
@@ -2070,45 +2068,25 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
               temperature: 0.7,
               topK: 40,
               topP: 0.95,
-              maxOutputTokens: 800, // Token sayısını biraz düşürerek cevabı hızlandırıyoruz
+              maxOutputTokens: 1024,
             }
           })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-          // 429 Hatası (Too Many Requests) durumunda otomatik retry
-          if (response.status === 429 && retryCount < 2) {
-            const waitTime = (retryCount + 1) * 3000; // 3sn, 6sn bekleyerek tekrar dene
-            console.log(`Rate limit aşıldı, ${waitTime}ms sonra tekrar deneniyor...`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            return callGeminiAI(prompt, systemInstruction, retryCount + 1);
-          }
-          
-          if (response.status === 429) {
-            return "AI şu an çok yoğun. Ücretsiz kota sınırına ulaşıldı. Lütfen 1-2 dakika sonra tekrar deneyin.";
-          }
-          throw new Error('AI API hatası: ' + response.statusText);
+          // Proxy'den gelen hata mesajını göster
+          throw new Error(data.error || 'AI API hatası: ' + response.statusText);
         }
 
-        const data = await response.json();
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-          throw new Error('AI geçerli bir yanıt oluşturamadı.');
-        }
+        // Proxy'den gelen başarılı yanıtı işle
         return data.candidates[0].content.parts[0].text;
       } catch (error) {
         console.error('Gemini AI Error:', error);
-        if (retryCount < 2) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          return callGeminiAI(prompt, systemInstruction, retryCount + 1);
-        }
-        return "Üzgünüm, şu an AI yanıtı oluşturulamadı. Lütfen internet bağlantını kontrol et veya biraz sonra tekrar dene.";
+        return `Üzgünüm, şu an AI yanıtı oluşturulamadı. Hata: ${error.message}`;
       } finally {
-        if (retryCount === 0) {
-          // İstek bittikten sonra kısa bir soğuma süresi
-          setTimeout(() => {
-            isAILoading = false;
-          }, 1000);
-        }
+        isAILoading = false;
       }
     }
 
