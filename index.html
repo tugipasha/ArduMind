@@ -267,6 +267,22 @@ void loop() {
       quizAnswers: {},
       quizCompleted: false,
       quizScore: 0,
+      miniQuizAnswers: {},
+      learningMetrics: {
+        concepts: {
+          'algoritma': { score: 0, attempts: 0 },
+          'degiskenler': { score: 0, attempts: 0 },
+          'donguler': { score: 0, attempts: 0 },
+          'kosullar': { score: 0, attempts: 0 },
+          'fonksiyonlar': { score: 0, attempts: 0 },
+          'dijital_pinler': { score: 0, attempts: 0 },
+          'analog_pinler': { score: 0, attempts: 0 },
+          'temel_arduino': { score: 0, attempts: 0 }
+        },
+        totalStudyTime: 0,
+        totalErrors: 0,
+        lastActive: Date.now()
+      },
       flowchartNodes: [],
       flowchartConnections: [],
       algoDraggingNode: null,
@@ -304,6 +320,17 @@ void loop() {
 
       if (changed && appState.simulationRunning) {
         updateSimulationDisplay();
+      }
+
+      // Çalışma süresini takip et (aktiflik durumuna göre)
+      if (appState.currentUser && !appState.lastMinuteTracked) {
+        appState.lastMinuteTracked = now;
+      }
+      
+      if (appState.currentUser && now - (appState.lastMinuteTracked || 0) > 60000) { // Her 1 dakika
+        appState.learningMetrics.totalStudyTime += 60;
+        appState.lastMinuteTracked = now;
+        saveAppState();
       }
 
       requestAnimationFrame(updateAnimations);
@@ -791,7 +818,14 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <p class="mb-3">Dışarıdan gelen voltajı okumak için kullanılır (Buton okumak, sensör verisi almak vb.).</p>
 
               <h4 class="font-bold text-lg mb-2 text-yellow-400">INPUT_PULLUP Modu</h4>
-              <p class="mb-3">Dahili direnci aktif ederek butonu harici dirençsiz kullanmanızı sağlar. Buton basıldığında 0 (LOW) döner.</p>`
+              <p class="mb-3">Dahili direnci aktif ederek butonu harici dirençsiz kullanmanızı sağlar. Buton basıldığında 0 (LOW) döner.</p>`,
+            miniQuiz: {
+              question: "Bir LED'i kontrol etmek için ilgili pini hangi modda ayarlamalıyız?",
+              options: ["INPUT", "OUTPUT", "INPUT_PULLUP", "ANALOG"],
+              correct: 1,
+              explanation: "LED'e akım göndererek onu yakmak istediğimiz için pini OUTPUT (Çıkış) moduna ayarlamalıyız.",
+              concept: "dijital_pinler"
+            }
           },
           {
             title: 'digitalWrite() ve digitalRead()',
@@ -803,7 +837,19 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
 
               <h4 class="font-bold text-lg mb-2 text-yellow-400">digitalRead(pin)</h4>
               <p class="mb-3">Bir pindeki voltajın HIGH (5V) mı yoksa LOW (0V) mu olduğunu okur.</p>
-              <div class="doc-code-block mb-4">int durum = digitalRead(2); <span class="comment">// Pin 2'yi oku</span></div>`
+              <div class="doc-code-block mb-4">int durum = digitalRead(2); <span class="comment">// Pin 2'yi oku</span></div>`,
+            miniQuiz: {
+              question: "digitalRead(2) fonksiyonu ne zaman HIGH (1) değerini döndürür?",
+              options: [
+                "Pin 2'de 0V (GND) olduğunda",
+                "Pin 2'ye hiç bağlantı olmadığında",
+                "Pin 2'de 5V voltaj olduğunda",
+                "Pin 2 bir LED'e bağlı olduğunda"
+              ],
+              correct: 2,
+              explanation: "digitalRead() fonksiyonu, pinde 5V (veya ona yakın bir voltaj) algıladığında HIGH döndürür.",
+              concept: "dijital_pinler"
+            }
           }
         ]
       },
@@ -819,7 +865,14 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
               <p class="mb-4">Arduino Uno'da bulunan Analog-Dijital Dönüştürücü (ADC), 0V ile 5V arasındaki voltajı <b>0 ile 1023</b> arasında bir sayıya dönüştürür.</p>
               <div class="doc-code-block mb-4">
 <span class="keyword">int</span> sensorDegeri = <span class="function">analogRead</span>(A0);</div>
-              <p class="mt-4 text-slate-300">Örneğin: 2.5V okunursa, fonksiyon yaklaşık 512 değerini döndürür.</p>`
+              <p class="mt-4 text-slate-300">Örneğin: 2.5V okunursa, fonksiyon yaklaşık 512 değerini döndürür.</p>`,
+            miniQuiz: {
+              question: "Arduino Uno'da analogRead() fonksiyonu maksimum hangi değeri döndürebilir?",
+              options: ["255", "512", "1023", "2048"],
+              correct: 2,
+              explanation: "Arduino Uno 10-bit ADC kullandığı için 0 ile 1023 (2^10 - 1) arasında değer döndürür.",
+              concept: "analog_pinler"
+            }
           },
           {
             title: 'PWM (analogWrite) ve Dimming',
@@ -832,7 +885,14 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
                 <li><b>255:</b> Her zaman AÇIK (5V)</li>
               </ul>
               <div class="doc-code-block mb-4">
-<span class="function">analogWrite</span>(<span class="number">9</span>, <span class="number">128</span>); <span class="comment">// LED'i %50 parlaklıkta yak</span></div>`
+<span class="function">analogWrite</span>(<span class="number">9</span>, <span class="number">128</span>); <span class="comment">// LED'i %50 parlaklıkta yak</span></div>`,
+            miniQuiz: {
+              question: "Bir LED'i tam parlaklıkta yakmak için analogWrite(pin, deger) fonksiyonunda 'deger' ne olmalıdır?",
+              options: ["100", "127", "255", "1023"],
+              correct: 2,
+              explanation: "analogWrite() 8-bit çözünürlük kullanır, bu yüzden 0-255 arası değer alır. 255 tam parlaklığı temsil eder.",
+              concept: "analog_pinler"
+            }
           },
           {
             title: 'map() Fonksiyonu',
@@ -855,7 +915,14 @@ notlar[<span class="number">2</span>] = <span class="number">100</span>; <span c
             content: `
               <p class="mb-4">Debug ve telemetri için seri haberleşme kullanılır. Arduino, USB kablosu üzerinden bilgisayarınıza metin gönderebilir.</p>
               <div class="doc-code-block mb-4">Serial.begin(9600);<br>Serial.println("Hata Ayıklama Başladı...");</div>
-              <p class="text-slate-300"><b>Önemli:</b> Baud hızını (9600) Seri Monitör ekranı ile aynı yapmalısınız.</p>`
+              <p class="text-slate-300"><b>Önemli:</b> Baud hızını (9600) Seri Monitör ekranı ile aynı yapmalısınız.</p>`,
+            miniQuiz: {
+              question: "Serial.begin(9600) fonksiyonundaki '9600' değeri neyi ifade eder?",
+              options: ["Pin numarası", "Veri hızı (Baud rate)", "Metin uzunluğu", "Gecikme süresi"],
+              correct: 1,
+              explanation: "9600, haberleşme hızını (saniyedeki bit sayısı) belirten baud hızıdır.",
+              concept: "temel_arduino"
+            }
           },
           {
             title: 'Serial.available() ve Read()',
@@ -1152,7 +1219,21 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         circuit: 'Sadece kağıt, kalem ve zihniniz yeterli!',
         objectives: ['Problem parçalamayı öğren', 'Akış diyagramı çiz', 'Koşul ve döngü ilişkisini kavra'],
         tasks: ['Basit bir günlük rutinin akışını çiz', 'İki koşullu (if/else) örnek oluştur'],
-        pitfalls: ['Çok fazla detaya boğulmak', 'Koşulsuz döngü planlamak']
+        pitfalls: ['Çok fazla detaya boğulmak', 'Koşulsuz döngü planlamak'],
+        challenge: {
+          type: 'find-bug',
+          question: 'Aşağıdaki algoritmada mantık hatası nerede?',
+          code: '1. BAŞLA\n2. Lambayı Aç\n3. Hava Aydınlık mı?\n4. EVET ise 2. Adıma Git\n5. HAYIR ise 6. Adıma Git\n6. BİTİR',
+          options: [
+            'Adım 4 sonsuz döngüye girer',
+            'Adım 3 gereksizdir',
+            'HAYIR ise lamba kapatılmalıydı',
+            'Sözde kod yanlış yazılmış'
+          ],
+          correct: 0,
+          explanation: 'Eğer hava aydınlıkken lambayı tekrar açmaya giderseniz (Adım 4 -> 2), program orada takılı kalır ve asla bitmez.',
+          concept: 'algoritma'
+        }
       },
       { 
         id: 'step-0', 
@@ -1165,7 +1246,15 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         circuit: 'Bilgisayar ve internet bağlantısı yeterlidir.',
         objectives: ['Temel kontrol yapıları', 'Fonksiyon yapısı ve çağrım', 'Değişken kapsamı'],
         tasks: ['İki sayı toplayan fonksiyon yaz', 'Koşulla min/max bul'],
-        pitfalls: ['Sonsuz döngü', 'Yanlış tür dönüşümü']
+        pitfalls: ['Sonsuz döngü', 'Yanlış tür dönüşümü'],
+        challenge: {
+          type: 'code-completion',
+          question: 'Tam sayı saklamak için hangi değişken tipini kullanmalıyız?',
+          code: '______ sayi = 10;',
+          answer: 'int',
+          hint: 'Integer kelimesinin kısaltması.',
+          concept: 'degiskenler'
+        }
       },
       { 
         id: 'step-1', 
@@ -1179,7 +1268,21 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         sampleCodeKey: 'blink',
         objectives: ['Geliştirme ortamını kur', 'pinMode/digitalWrite kullan'],
         tasks: ['Blink süresini değiştir', 'LED’i 3 kez hızlı yak-söndür'],
-        pitfalls: ['Yanlış pin seçimi', 'Bekleme süresini çok uzun tutma']
+        pitfalls: ['Yanlış pin seçimi', 'Bekleme süresini çok uzun tutma'],
+        challenge: {
+          type: 'find-bug',
+          question: 'Bu kod neden LED\'i yakmaz?',
+          code: 'void setup() {\n  pinMode(13, INPUT);\n}\nvoid loop() {\n  digitalWrite(13, HIGH);\n}',
+          options: [
+            'Pin 13 OUTPUT olarak ayarlanmalıydı',
+            'delay() fonksiyonu eksik',
+            'HIGH yerine 1 yazılmalıydı',
+            'loop fonksiyonu boş kalmalıydı'
+          ],
+          correct: 0,
+          explanation: 'Bir LED\'i kontrol etmek (akım göndermek) için pini OUTPUT moduna almalısınız. INPUT modunda pin sadece voltaj okur.',
+          concept: 'dijital_pinler'
+        }
       },
       { 
         id: 'step-2', 
@@ -1417,6 +1520,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
               'Bir programlama dilidir'
             ],
             correct: 0,
+            concept: 'algoritma',
             explanation: 'Algoritma, belirli bir işi yapmak veya bir problemi çözmek için tasarlanan mantıksal adımlar bütünüdür.'
           },
           {
@@ -1424,6 +1528,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Akış diyagramında "Eşkenar Dörtgen" neyi ifade eder?',
             options: ['Başlangıç', 'İşlem', 'Karar/Koşul', 'Bitiş'],
             correct: 2,
+            concept: 'algoritma',
             explanation: 'Akış diyagramlarında eşkenar dörtgen (baklava dilimi), bir koşulun kontrol edildiği karar mekanizmalarını temsil eder.'
           },
           {
@@ -1436,6 +1541,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
               'Bellek tasarrufu sağlamak'
             ],
             correct: 1,
+            concept: 'algoritma',
             explanation: 'Sözde kod, programlama diline geçmeden önce algoritmanın mantığını netleştirmek için kullanılan bir ara adımdır.'
           }
         ]
@@ -1454,6 +1560,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Bir tam sayıyı saklamak için hangi veri tipi kullanılır?',
             options: ['float', 'int', 'bool', 'char'],
             correct: 1,
+            concept: 'degiskenler',
             explanation: 'int (integer - tam sayı) veri tipi -32,768 ile 32,767 arasında tam sayılar saklamak için kullanılır.'
           },
           {
@@ -1461,6 +1568,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'if-else yapısı ne için kullanılır?',
             options: ['Tekrar eden işlemler', 'Karar verme', 'Veriler saklama', 'Fonksiyon tanımlama'],
             correct: 1,
+            concept: 'kosullar',
             explanation: 'if-else yapıları, programın farklı koşullara göre farklı davranmasını sağlar.'
           },
           {
@@ -1468,6 +1576,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Belirli sayıda tekrar yapmak için en uygun döngü tipi hangisidir?',
             options: ['while', 'do-while', 'for', 'loop'],
             correct: 2,
+            concept: 'donguler',
             explanation: 'for döngüsü, başlangıç, bitiş ve artış değerleri belirli olduğu durumlarda en uygun olanıdır.'
           },
           {
@@ -1475,6 +1584,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Fonksiyonlar neden kullanılır?',
             options: ['Kodun tekrar kullanılabilirliğini artırır', 'Sadece karmaşık işlemler için', 'Bellek kullanımını artırır', 'Programı yavaşlatır'],
             correct: 0,
+            concept: 'fonksiyonlar',
             explanation: 'Fonksiyonlar, aynı kod bloğunu birden fazla kez kullanmamızı sağlar ve kodu daha organize hale getirir.'
           },
           {
@@ -1482,6 +1592,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: '&& operatörü ne anlama gelir?',
             options: ['OR (veya)', 'AND (ve)', 'NOT (değil)', 'Bölme'],
             correct: 1,
+            concept: 'kosullar',
             explanation: '&& (AND) operatörü, iki koşul da doğru olduğu durumda sonucu true yapar.'
           }
         ]
@@ -1500,6 +1611,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Arduino programında setup() fonksiyonu kaç kez çalışır?',
             options: ['Her loop döngüsünde', 'Sadece bir kez', 'İki kez', 'Hiç çalışmaz'],
             correct: 1,
+            concept: 'temel_arduino',
             explanation: 'setup() fonksiyonu program başladığında sadece bir kez çalışır ve başlangıç ayarlarını yapar.'
           },
           {
@@ -1507,6 +1619,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'loop() fonksiyonu ne zaman çalışır?',
             options: ['Sadece başlangıçta', 'Setup\'tan sonra sürekli tekrar eder', 'Manuel olarak çağırılınca', 'Hiç çalışmaz'],
             correct: 1,
+            concept: 'temel_arduino',
             explanation: 'loop() fonksiyonu setup() bittikten sonra sürekli olarak tekrar eder. Bu Arduino\'nun ana çalışma prensibidir.'
           },
           {
@@ -1514,6 +1627,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'pinMode(13, OUTPUT) komutu ne işe yarar?',
             options: ['13 numaralı pini okur', '13 numaralı pini çıkış olarak ayarlar', '13 numaralı pini siler', 'LED yakar'],
             correct: 1,
+            concept: 'dijital_pinler',
             explanation: 'pinMode() fonksiyonu bir pini INPUT (giriş) veya OUTPUT (çıkış) olarak yapılandırır.'
           }
         ]
@@ -1532,6 +1646,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'digitalWrite(13, HIGH) komutu ne yapar?',
             options: ['13 numaralı pini kapatır', '13 numaralı pini açar (5V)', 'Pin 13\'ü okur', 'Hiçbir şey yapmaz'],
             correct: 1,
+            concept: 'dijital_pinler',
             explanation: 'digitalWrite(pin, HIGH) komutu belirtilen pine 5V voltaj uygular, LED gibi cihazları açmak için kullanılır.'
           },
           {
@@ -1539,6 +1654,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'LED yakmak için hangi komut kullanılır?',
             options: ['analogWrite()', 'digitalRead()', 'digitalWrite()', 'pinMode()'],
             correct: 2,
+            concept: 'dijital_pinler',
             explanation: 'digitalWrite() komutu dijital pinleri HIGH veya LOW yapmak için kullanılır. LED yakmak için HIGH değeri kullanılır.'
           },
           {
@@ -1546,6 +1662,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'delay(1000) komutu ne işe yarar?',
             options: ['1 saniye bekler', '1 milisaniye bekler', '1000 saniye bekler', 'Programı durdurur'],
             correct: 0,
+            concept: 'temel_arduino',
             explanation: 'delay() fonksiyonu milisaniye cinsinden bekleme yapar. delay(1000) = 1 saniye bekler.'
           },
           {
@@ -1553,6 +1670,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Buton durumunu okumak için hangi komut kullanılır?',
             options: ['digitalWrite()', 'pinMode()', 'digitalRead()', 'analogRead()'],
             correct: 2,
+            concept: 'dijital_pinler',
             explanation: 'digitalRead() fonksiyonu dijital pinlerin durumunu (HIGH veya LOW) okumak için kullanılır.'
           }
         ]
@@ -1571,6 +1689,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'analogRead() fonksiyonu hangi değer aralığında sonuç döndürür?',
             options: ['0 - 1', '0 - 255', '0 - 1023', '0 - 5000'],
             correct: 2,
+            concept: 'analog_pinler',
             explanation: 'Arduino\'nun 10-bit ADC\'si sayesinde analogRead() 0 ile 1023 arasında bir değer döndürür.'
           },
           {
@@ -1578,6 +1697,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'PWM sinyali oluşturmak için hangi fonksiyon kullanılır?',
             options: ['analogRead()', 'digitalWrite()', 'analogWrite()', 'pwmWrite()'],
             correct: 2,
+            concept: 'analog_pinler',
             explanation: 'analogWrite() fonksiyonu PWM destekleyen pinlerde analog benzeri bir çıkış (0-255) oluşturmak için kullanılır.'
           },
           {
@@ -1585,6 +1705,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
             question: 'Potansiyometre Arduino\'nun hangi pinlerine bağlanmalıdır?',
             options: ['Dijital Pinler', 'Analog Pinler (A0-A5)', 'Sadece GND ve 5V', 'Seri Port Pinleri'],
             correct: 1,
+            concept: 'analog_pinler',
             explanation: 'Potansiyometre gibi değişken voltaj üreten elemanlar analog giriş (A0-A5) pinlerine bağlanır.'
           }
         ]
@@ -1919,6 +2040,90 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       renderApp();
     }
 
+    // ==================== GEMINI AI INTEGRATION ====================
+    const GEMINI_API_KEY = 'AIzaSyCssRqEab9geLoxnS7zPZ9sktQ3SrIOicY';
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+    let isAILoading = false;
+    async function callGeminiAI(prompt, systemInstruction = "Sen deneyimli bir Arduino eğitmenisin. Öğrencilere nazik, yol gösterici ve teknik açıdan doğru geri bildirimler verirsin. Yanıtlarını kısa ve öz tut.") {
+      if (isAILoading) {
+        showToast('AI şu an meşgul, lütfen bekleyin...', 'info');
+        return "Lütfen bekleyin, önceki istek tamamlanıyor.";
+      }
+      
+      isAILoading = true;
+      try {
+        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `${systemInstruction}\n\nSoru/Durum: ${prompt}`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('AI API hatası: ' + response.statusText);
+        }
+
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
+      } catch (error) {
+        console.error('Gemini AI Error:', error);
+        return "Üzgünüm, şu an AI yanıtı oluşturulamadı. Lütfen daha sonra tekrar dene.";
+      } finally {
+        isAILoading = false;
+      }
+    }
+
+    function submitChallenge(stepId, answer) {
+      const step = learningPath.find(s => s.id === stepId);
+      if (!step || !step.challenge) return;
+      
+      const challengeKey = `challenge-${stepId}`;
+      if (appState.miniQuizAnswers[challengeKey] !== undefined) return;
+      
+      let isCorrect = false;
+      if (step.challenge.type === 'code-completion') {
+        isCorrect = answer.trim().toLowerCase() === step.challenge.answer.toLowerCase();
+      } else {
+        isCorrect = parseInt(answer) === step.challenge.correct;
+      }
+      
+      appState.miniQuizAnswers[challengeKey] = isCorrect ? 'correct' : 'wrong';
+      
+      if (appState.learningMetrics) {
+        const concept = step.challenge.concept;
+        if (concept && appState.learningMetrics.concepts[concept]) {
+          const current = appState.learningMetrics.concepts[concept];
+          current.attempts += 1;
+          if (isCorrect) {
+            current.score = Math.min(100, Math.round((current.score * (current.attempts - 1) + 100) / current.attempts));
+            addXP(20, `Mücadele tamamlandı: ${step.title}`);
+            showToast('Tebrikler! Mücadeleyi tamamladın.', 'success');
+          } else {
+            current.score = Math.max(0, Math.round((current.score * (current.attempts - 1) + 0) / current.attempts));
+            appState.learningMetrics.totalErrors += 1;
+            showToast('Maalesef yanlış. Tekrar dene!', 'error');
+          }
+        }
+      }
+      
+      saveAppState();
+      renderApp();
+    }
+
     // ==================== QUIZ FUNCTIONS ====================
     function startQuiz(quizId) {
       appState.currentQuiz = quizId;
@@ -1947,6 +2152,28 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       appState.quizScore = correctCount;
       appState.quizCompleted = true;
       
+      // Öğrenme metriklerini güncelle
+      if (appState.learningMetrics) {
+        quiz.questions.forEach(question => {
+          const concept = question.concept;
+          const isCorrect = appState.quizAnswers[question.id] === question.correct;
+          
+          if (concept && appState.learningMetrics.concepts[concept]) {
+            const current = appState.learningMetrics.concepts[concept];
+            current.attempts += 1;
+            
+            // Hareketli ortalama veya basit başarı oranı
+            if (isCorrect) {
+              current.score = Math.min(100, Math.round((current.score * (current.attempts - 1) + 100) / current.attempts));
+            } else {
+              current.score = Math.max(0, Math.round((current.score * (current.attempts - 1) + 0) / current.attempts));
+              appState.learningMetrics.totalErrors += 1;
+            }
+          }
+        });
+        appState.learningMetrics.lastActive = Date.now();
+      }
+
       if (appState.currentUser) {
         const percentage = (correctCount / quiz.questions.length) * 100;
         if (percentage >= 70) {
@@ -1970,6 +2197,23 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       renderApp();
     }
 
+    async function getAIQuizExplanation(questionId, userAnswerIndex) {
+      const quiz = quizzes.find(q => q.id === appState.currentQuiz);
+      if (!quiz) return;
+      const question = quiz.questions.find(q => q.id === questionId);
+      if (!question) return;
+
+      const prompt = `Arduino quiz sorusuna yanlış cevap verdim.\n\nSoru: ${question.question}\nBenim cevabım: ${question.options[userAnswerIndex]}\nDoğru cevap: ${question.options[question.correct]}\n\nLütfen neden yanlış yaptığımı ve doğru cevabın mantığını daha detaylı bir şekilde açıklar mısın?`;
+      
+      const elementId = `ai-explanation-${questionId}`;
+      const el = document.getElementById(elementId);
+      if (el) el.innerHTML = '<div class="animate-pulse text-blue-400">🤖 AI Düşünüyor...</div>';
+      
+      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino eğitmenisin. Öğrencilerin yanlış cevaplarını analiz eder ve onlara konuyu daha iyi kavramaları için derinlemesine ama anlaşılır açıklamalar yaparsın.");
+      
+      if (el) el.innerHTML = `<div class="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-200 text-xs"><b>🤖 AI Açıklaması:</b><br>${aiResponse.replace(/\n/g, '<br>')}</div>`;
+    }
+
     function resetQuiz() {
       appState.currentQuiz = null;
       appState.quizAnswers = {};
@@ -1978,7 +2222,67 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       renderApp();
     }
 
+    function submitMiniQuiz(sectionKey, topicIndex, selectedOption) {
+      const section = documentation[sectionKey];
+      const topic = section.topics[topicIndex];
+      const quizKey = `mini-${sectionKey}-${topicIndex}`;
+      
+      if (appState.miniQuizAnswers[quizKey] !== undefined) return;
+      
+      appState.miniQuizAnswers[quizKey] = selectedOption;
+      const isCorrect = selectedOption === topic.miniQuiz.correct;
+      
+      // Öğrenme metriklerini güncelle
+      if (appState.learningMetrics) {
+        const concept = topic.miniQuiz.concept;
+        if (concept && appState.learningMetrics.concepts[concept]) {
+          const current = appState.learningMetrics.concepts[concept];
+          current.attempts += 1;
+          
+          if (isCorrect) {
+            current.score = Math.min(100, Math.round((current.score * (current.attempts - 1) + 100) / current.attempts));
+            addXP(10, `Mini test tamamlandı: ${topic.title}`);
+          } else {
+            current.score = Math.max(0, Math.round((current.score * (current.attempts - 1) + 0) / current.attempts));
+            appState.learningMetrics.totalErrors += 1;
+          }
+        }
+      }
+      
+      saveAppState();
+      renderApp();
+    }
+
     // ==================== MODULE FUNCTIONS ====================
+    async function getAILearningSummary() {
+      if (!appState.learningMetrics) return;
+      
+      const metrics = appState.learningMetrics;
+      const conceptStats = Object.entries(metrics.concepts)
+        .map(([key, data]) => `${key}: %${data.score} başarı (${data.attempts} deneme)`)
+        .join(', ');
+      
+      const prompt = `Öğrencinin Arduino öğrenme verileri şunlar:\n${conceptStats}\nToplam çalışma süresi: ${Math.round(metrics.totalStudyTime / 60)} dakika\nToplam hata sayısı: ${metrics.totalErrors}\n\nLütfen öğrencinin gelişimini değerlendir, en güçlü olduğu ve en çok zorlandığı alanları belirt ve bir sonraki adımı için kısa bir tavsiye ver. Yanıtın profesyonel, teşvik edici ve jüriye sunulabilir kalitede olsun.`;
+      
+      const el = document.getElementById('ai-learning-summary-result');
+      if (el) {
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 AI Verileri Analiz Ediyor...</div>';
+        el.classList.remove('hidden');
+      }
+      
+      const aiResponse = await callGeminiAI(prompt, "Sen bir eğitim analistisin. Öğrenci verilerini analiz ederek kişiselleştirilmiş öğrenme tavsiyeleri ve gelişim özetleri sunarsın.");
+      
+      if (el) {
+        el.innerHTML = `<div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-blue-100 text-sm leading-relaxed relative">
+          <button onclick="this.parentElement.classList.add('hidden')" class="absolute top-2 right-2 text-slate-500 hover:text-white text-xs">✕</button>
+          <div class="flex items-center space-x-2 mb-2 text-blue-400 font-bold">
+            <span>✨ AI Gelişim Analizi</span>
+          </div>
+          ${aiResponse.replace(/\n/g, '<br>')}
+        </div>`;
+      }
+    }
+
     function completeModule(moduleId) {
       if (!appState.currentUser) return;
       
@@ -2286,7 +2590,9 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           : displayLogs.map(output => `
               <div class="mb-1 flex space-x-2">
                 <span class="text-slate-600 text-[10px] mt-1">${output.timestamp || ''}</span>
-                <span class="${output.type === 'error' ? 'text-red-400' : output.type === 'info' ? 'text-blue-400' : 'text-green-400'}">${output.text}</span>
+                <div class="${output.type === 'error' ? 'text-red-400' : output.type === 'info' ? 'text-blue-400' : 'text-green-400'} text-sm">
+                  ${output.text}
+                </div>
               </div>
             `).join('');
         
@@ -2856,6 +3162,19 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       return { valid: true, issues };
     }
 
+    async function getAIFeedback(code, error) {
+      const prompt = `Arduino kodumda hata var.\n\nKod:\n${code}\n\nHata:\n${error}\n\nLütfen hatanın nedenini açıkla ve nasıl düzeltebileceğimi kısa ve anlaşılır bir şekilde söyle.`;
+      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino hata ayıklama asistanısın. Kullanıcının kodundaki hataları analiz eder ve öğretici, çözüm odaklı geri bildirimler verirsin.");
+      
+      appState.serialOutput.push({ 
+        type: 'info', 
+        text: `🤖 <b>Yapay Zeka Analizi:</b><br>${aiResponse.replace(/\n/g, '<br>')}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        isHtml: true
+      });
+      renderApp();
+    }
+
     function runSimulation() {
       if (appState.simulationRunning) {
         stopSimulation();
@@ -2865,7 +3184,19 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const validation = validateCode(appState.editorCode);
       if (!validation.valid) {
         showToast(validation.message, 'error');
-        appState.serialOutput = (validation.issues || []).map(i => ({ type: i.level === 'error' ? 'error' : 'info', text: i.text }));
+        appState.serialOutput = (validation.issues || []).map(i => ({ 
+          type: i.level === 'error' ? 'error' : 'info', 
+          text: i.text,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        }));
+        
+        // AI yardımı butonu ekle
+        appState.serialOutput.push({
+          type: 'info',
+          text: '<button onclick="getAIFeedback(appState.editorCode, \'' + validation.message.replace(/'/g, "\\'") + '\')" class="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] rounded transition-colors flex items-center space-x-1"><span>✨ AI Yardımı Al</span></button>',
+          isHtml: true
+        });
+
         updateSimulationDisplay();
         return;
       }
@@ -3982,6 +4313,75 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                             </ul>
                           </div>
                           ` : ''}
+
+                          ${step.challenge ? `
+                          <div class="mt-4 pt-4 border-t border-slate-700">
+                            <div class="bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-2xl p-6 border border-blue-500/30">
+                              <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-2 text-blue-400">
+                                  <span class="text-xl">⚡</span>
+                                  <h4 class="font-bold">Mikro-Mücadele</h4>
+                                </div>
+                                <div class="px-2 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-bold rounded border border-blue-500/20 uppercase">
+                                  +20 XP
+                                </div>
+                              </div>
+                              
+                              <p class="text-white text-sm mb-4">${step.challenge.question}</p>
+                              
+                              ${step.challenge.type === 'code-completion' ? `
+                                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-4 font-mono text-sm overflow-x-auto">
+                                  <div class="flex items-center space-x-2 whitespace-nowrap">
+                                    <span class="text-slate-400">${step.challenge.code.split('______')[0]}</span>
+                                    <input 
+                                      id="challenge-input-${step.id}"
+                                      type="text" 
+                                      placeholder="..."
+                                      ${appState.miniQuizAnswers[`challenge-${step.id}`] ? 'disabled' : ''}
+                                      class="bg-slate-800 border-b-2 border-blue-500 text-blue-400 px-2 w-24 focus:outline-none focus:border-blue-400 transition-colors"
+                                      onkeyup="if(event.key === 'Enter') submitChallenge('${step.id}', this.value)"
+                                    />
+                                    <span class="text-slate-400">${step.challenge.code.split('______')[1]}</span>
+                                  </div>
+                                </div>
+                                ${!appState.miniQuizAnswers[`challenge-${step.id}`] ? `
+                                  <button 
+                                    onclick="submitChallenge('${step.id}', document.getElementById('challenge-input-${step.id}').value)"
+                                    class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold transition-all"
+                                  >
+                                    Kontrol Et
+                                  </button>
+                                ` : ''}
+                              ` : `
+                                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-4 font-mono text-xs overflow-x-auto text-slate-300">
+                                  <pre>${step.challenge.code}</pre>
+                                </div>
+                                <div class="grid grid-cols-1 gap-2">
+                                  ${step.challenge.options.map((opt, optIdx) => `
+                                    <button 
+                                      onclick="submitChallenge('${step.id}', ${optIdx})"
+                                      ${appState.miniQuizAnswers[`challenge-${step.id}`] ? 'disabled' : ''}
+                                      class="text-left px-4 py-2 rounded-lg text-sm border transition-all ${
+                                        appState.miniQuizAnswers[`challenge-${step.id}`] 
+                                          ? (optIdx === step.challenge.correct ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500')
+                                          : 'bg-slate-800 border-slate-700 hover:border-blue-500/50 text-slate-300'
+                                      }"
+                                    >
+                                      ${opt}
+                                    </button>
+                                  `).join('')}
+                                </div>
+                              `}
+                              
+                              ${appState.miniQuizAnswers[`challenge-${step.id}`] ? `
+                                <div class="mt-4 p-4 rounded-xl text-xs ${appState.miniQuizAnswers[`challenge-${step.id}`] === 'correct' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}">
+                                  <strong>${appState.miniQuizAnswers[`challenge-${step.id}`] === 'correct' ? 'Doğru!' : 'Yanlış!'}</strong> 
+                                  ${step.challenge.explanation || step.challenge.hint || ''}
+                                </div>
+                              ` : ''}
+                            </div>
+                          </div>
+                          ` : ''}
                         </div>
                         
                         <div class="flex flex-wrap gap-3">
@@ -4192,6 +4592,72 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-6">
+              <!-- Gelişim Paneli (Jüri Değer Çıktısı) -->
+              <div class="bg-slate-800 rounded-2xl p-6 border border-blue-500/30 shadow-lg shadow-blue-500/5">
+                <div class="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 class="text-2xl font-bold">Gelişim Paneli</h2>
+                    <p class="text-sm text-slate-400">Kavram bazlı öğrenme metriklerin</p>
+                  </div>
+                  <div class="flex items-center space-x-2 text-xs">
+                    <span class="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">Jüri Modu</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  ${Object.entries(appState.learningMetrics.concepts).map(([key, data]) => {
+                    const conceptNames = {
+                      'algoritma': 'Algoritma Mantığı',
+                      'degiskenler': 'Değişkenler',
+                      'donguler': 'Döngüler',
+                      'kosullar': 'Koşul Yapıları',
+                      'fonksiyonlar': 'Fonksiyonlar',
+                      'dijital_pinler': 'Dijital Pinler',
+                      'analog_pinler': 'Analog Pinler',
+                      'temel_arduino': 'Arduino Temelleri'
+                    };
+                    return `
+                      <div class="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+                        <div class="flex justify-between items-center mb-2">
+                          <span class="text-sm font-medium text-slate-300">${conceptNames[key]}</span>
+                          <span class="text-xs font-bold ${data.score >= 70 ? 'text-green-400' : data.score >= 40 ? 'text-yellow-400' : 'text-slate-500'}">%${data.score}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                          <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000" style="width: ${data.score}%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-[10px] text-slate-500">
+                          <span>${data.attempts} deneme</span>
+                          <span>${data.score >= 80 ? 'Usta' : data.score >= 50 ? 'Öğreniyor' : 'Başlangıç'}</span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 p-4 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-blue-400">${Math.round(appState.learningMetrics.totalStudyTime / 60)} dk</div>
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Çalışma Süresi</div>
+                  </div>
+                  <div class="text-center border-x border-slate-700">
+                    <div class="text-xl font-bold text-red-400">${appState.learningMetrics.totalErrors}</div>
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Hata Sayısı</div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-green-400">${Object.values(appState.learningMetrics.concepts).filter(c => c.score >= 70).length}</div>
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Kazanılan Yetkinlik</div>
+                  </div>
+                </div>
+
+                <div id="ai-learning-summary" class="mt-6">
+                  <button onclick="getAILearningSummary()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+                    <span>🤖 AI Gelişim Analizi Oluştur</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  </button>
+                  <div id="ai-learning-summary-result" class="hidden mt-4"></div>
+                </div>
+              </div>
+
               <div class="bg-slate-800 rounded-2xl p-6">
                 <h2 class="text-2xl font-bold mb-4">Öğrenmeye Devam Et</h2>
                 <div class="space-y-4">
@@ -4364,6 +4830,40 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       `;
     }
 
+    async function analyzeAlgorithm() {
+      const code = appState.editorCode;
+      if (!code || code.trim() === '') {
+        showToast('Analiz edilecek kod bulunamadı!', 'error');
+        return;
+      }
+
+      const prompt = `Aşağıdaki Arduino kodunun algoritmasını ve mantığını adım adım açıkla. \n\nKod:\n${code}\n\nLütfen:\n1. Kodun genel amacını söyle.\n2. setup() ve loop() içindeki mantığı adım adım açıkla.\n3. Eğer varsa if/else veya döngü yapılarını özellikle vurgula.\n4. Bu kodun çalışmasını bir akış diyagramı gibi (metinsel olarak) tarif et.`;
+      
+      const el = document.getElementById('ai-logic-result');
+      if (el) {
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 Algoritma Analiz Ediliyor...</div>';
+        el.classList.remove('hidden');
+      }
+      
+      const aiResponse = await callGeminiAI(prompt, "Sen bir bilgisayar bilimleri öğretmenisin. Karmaşık kodları basit algoritmik adımlara böler ve öğrencilerin düşünme sürecini geliştirmek için açıklarsın.");
+      
+      if (el) {
+        el.innerHTML = `
+          <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4 animate-fadeIn">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2 text-blue-400 font-bold">
+                <span>🧠 Algoritma Analizi</span>
+              </div>
+              <button onclick="document.getElementById('ai-logic-result').classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+            <div class="text-slate-200 text-sm leading-relaxed space-y-2">
+              ${aiResponse.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
     function renderEditor() {
       return `
         ${renderNavbar()}
@@ -4380,14 +4880,22 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                 <button onclick="runSimulation()" class="px-4 py-1 rounded-lg font-medium ${appState.simulationRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-all text-sm">
                   ${appState.simulationRunning ? 'Durdur' : 'Çalıştır'}
                 </button>
+                <button onclick="analyzeAlgorithm()" class="px-3 py-1 rounded-lg font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-all text-sm flex items-center space-x-1">
+                  <span>🧠 Algoritma</span>
+                </button>
+                <button onclick="generateAIBugChallenge()" class="px-3 py-1 rounded-lg font-medium bg-orange-600 hover:bg-orange-500 text-white transition-all text-sm flex items-center space-x-1">
+                  <span>⚡ Hata Bulma</span>
+                </button>
                 <button onclick="saveEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Kaydet</button>
                 <button onclick="loadSavedEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Yükle</button>
                 <button onclick="copyEditorCode()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">Kopyala</button>
                 <button onclick="toggleEditorWrap()" class="px-3 py-1 rounded-lg font-medium bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 transition-all text-sm">${appState.editorWrap ? 'Satır Kırmayı Kapat' : 'Satır Kırmayı Aç'}</button>
               </div>
             </div>
-            <div class="flex-1 overflow-hidden bg-slate-900">
+            <div class="flex-1 overflow-hidden bg-slate-900 relative">
               <div id="editorContainer" class="w-full h-full"></div>
+              <!-- AI Analiz Sonuç Paneli -->
+              <div id="ai-logic-result" class="absolute bottom-4 left-4 right-4 z-10 hidden max-h-[60%] overflow-y-auto"></div>
             </div>
           </div>
 
@@ -4421,6 +4929,66 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           </div>
         </div>
       `;
+    }
+
+    async function getAIDocHelper(topicTitle, topicContent) {
+      const prompt = `"${topicTitle}" konulu şu içeriği okudum ama tam olarak anlayamadım. Lütfen bu konuyu bana daha basit bir dille, günlük hayattan örnekler vererek tekrar açıklar mısın?\n\nİçerik:\n${topicContent.replace(/<[^>]*>/g, '')}`;
+      
+      const elementId = `ai-doc-helper-${topicTitle.replace(/\s+/g, '-')}`;
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 AI Basitleştiriyor...</div>';
+        el.classList.remove('hidden');
+      }
+      
+      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino mentorusun. Karmaşık teknik kavramları küçük çocuklara anlatır gibi basit, eğlenceli ve günlük hayattan örneklerle açıklarsın.");
+      
+      if (el) {
+        el.innerHTML = `
+          <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4 mt-4 animate-fadeIn">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2 text-indigo-400 font-bold">
+                <span>✨ Basitleştirilmiş Anlatım</span>
+              </div>
+              <button onclick="this.closest('.animate-fadeIn').parentElement.classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+            <div class="text-slate-200 text-sm leading-relaxed">
+              ${aiResponse.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    async function generateAIBugChallenge() {
+      const prompt = `Lütfen başlangıç seviyesindeki bir Arduino öğrencisi için "Hata Bulma" görevi oluştur. \n\nİstediğim format (JSON olarak verme, düz metin ver):\n1. Görevin Adı\n2. Görevin Amacı (Kısa)\n3. Hatalı Kod (İçinde 1 veya 2 mantıksal veya yazım hatası olsun)\n4. İpucu\n5. Çözüm (Neyin yanlış olduğu ve doğrusu)`;
+      
+      const el = document.getElementById('ai-logic-result');
+      if (el) {
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 AI Yeni Görev Hazırlıyor...</div>';
+        el.classList.remove('hidden');
+      }
+      
+      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino ders içerik üreticisisin. Öğrencilerin dikkatini ölçecek, eğlenceli ve öğretici 'bug' bulma senaryoları yazarsın.");
+      
+      if (el) {
+        el.innerHTML = `
+          <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mt-4 animate-fadeIn">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2 text-orange-400 font-bold">
+                <span>⚡ AI Mikro-Mücadele</span>
+              </div>
+              <button onclick="document.getElementById('ai-logic-result').classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+            <div class="text-slate-200 text-sm leading-relaxed space-y-4">
+              ${aiResponse.replace(/\n/g, '<br>')}
+            </div>
+            <div class="mt-4 pt-4 border-t border-orange-500/20">
+              <p class="text-[10px] text-orange-400/60 uppercase">Bu koddaki hataları editöre kopyalayıp düzelterek simülasyonu çalıştırmayı dene!</p>
+            </div>
+          </div>
+        `;
+      }
     }
 
     function renderAuthModal() {
@@ -4556,8 +5124,63 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                         </div>
                       </button>
                       
-                      <div class="ml-14 p-6 text-slate-300 leading-relaxed overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'}">
+                      <div class="ml-14 p-6 text-slate-300 leading-relaxed overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[2000px] opacity-100'}">
                         ${topic.content || ''}
+                        
+                        <div class="mt-4">
+                          <button onclick="getAIDocHelper('${topic.title.replace(/'/g, "\\'")}', \`${(topic.content || '').replace(/`/g, '\\`')}\`)" class="flex items-center space-x-2 text-xs text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/5 hover:bg-indigo-500/10 px-3 py-2 rounded-lg border border-indigo-500/20">
+                            <span>✨ Bu konuyu daha basit anlat</span>
+                          </button>
+                          <div id="ai-doc-helper-${topic.title.replace(/\s+/g, '-')}" class="hidden"></div>
+                        </div>
+                        
+                        ${topic.miniQuiz ? `
+                          <div class="mt-8 pt-8 border-t border-slate-700">
+                            <div class="bg-slate-900/50 rounded-xl p-6 border border-blue-500/20">
+                              <div class="flex items-center space-x-2 mb-4 text-blue-400">
+                                <span class="text-xl">🎯</span>
+                                <h4 class="font-bold">Kavram Kontrolü</h4>
+                              </div>
+                              <p class="text-white font-medium mb-4">${topic.miniQuiz.question}</p>
+                              <div class="grid grid-cols-1 gap-3">
+                                ${topic.miniQuiz.options.map((option, optIndex) => {
+                                  const quizKey = `mini-${topicKey}`;
+                                  const userAns = appState.miniQuizAnswers?.[quizKey];
+                                  const isCorrect = userAns === topic.miniQuiz.correct;
+                                  const isSelected = userAns === optIndex;
+                                  
+                                  let btnClass = 'bg-slate-800 hover:bg-slate-700 border-slate-700';
+                                  if (userAns !== undefined) {
+                                    if (optIndex === topic.miniQuiz.correct) {
+                                      btnClass = 'bg-green-500/20 border-green-500/50 text-green-400';
+                                    } else if (isSelected) {
+                                      btnClass = 'bg-red-500/20 border-red-500/50 text-red-400';
+                                    }
+                                  }
+
+                                  return `
+                                    <button 
+                                      onclick="submitMiniQuiz('${appState.currentDocSection}', ${index}, ${optIndex})"
+                                      ${userAns !== undefined ? 'disabled' : ''}
+                                      class="w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center justify-between ${btnClass}"
+                                    >
+                                      <span>${option}</span>
+                                      ${userAns !== undefined && optIndex === topic.miniQuiz.correct ? '<span>✓</span>' : ''}
+                                      ${userAns !== undefined && isSelected && optIndex !== topic.miniQuiz.correct ? '<span>✗</span>' : ''}
+                                    </button>
+                                  `;
+                                }).join('')}
+                              </div>
+                              ${appState.miniQuizAnswers?.[`mini-${topicKey}`] !== undefined ? `
+                                <div class="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-300">
+                                  <strong>Geri Bildirim:</strong> ${appState.miniQuizAnswers[`mini-${topicKey}`] === topic.miniQuiz.correct 
+                                    ? 'Harika! Konuyu tam olarak kavramışsın.' 
+                                    : `Maalesef yanlış. ${topic.miniQuiz.explanation}`}
+                                </div>
+                              ` : ''}
+                            </div>
+                          </div>
+                        ` : ''}
                       </div>
                     </div>
                   `;
@@ -4874,7 +5497,14 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
                           </div>
                         </div>
                         <div class="bg-slate-600/50 border border-slate-500/20 rounded-lg p-3 text-sm text-slate-200">
-                          <span class="font-bold text-blue-400">Bilgi:</span> ${question.explanation}
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-blue-400">Bilgi:</span>
+                            <button onclick="getAIQuizExplanation('${question.id}', ${userAnswer})" class="text-[10px] bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-2 py-0.5 rounded transition-colors">
+                              ✨ AI Açıklaması İste
+                            </button>
+                          </div>
+                          ${question.explanation}
+                          <div id="ai-explanation-${question.id}"></div>
                         </div>
                       </div>
                     `;
@@ -5687,7 +6317,7 @@ void loop() {
     }
 
     // ==================== MAIN RENDER ====================
-    function renderApp() {
+function renderApp() {
       let content = '';
       
       if (appState.currentModuleView && appState.currentUser) {
