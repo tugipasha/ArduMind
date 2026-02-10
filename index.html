@@ -2069,7 +2069,18 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         }
 
         if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
-          return data.choices[0].message.content;
+          let content = data.choices[0].message.content;
+          
+          // Emoji ve gereksiz karakterleri temizle
+          content = content.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+          
+          // ** kalın yazıları düzgün HTML'e çevir
+          content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          
+          // Tek * kullanımını kaldır
+          content = content.replace(/(?<!\*)\*(?!\*)/g, '');
+          
+          return content.trim();
         }
 
         return "AI'dan geçerli bir yanıt alınamadı.";
@@ -3162,7 +3173,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       
       appState.serialOutput.push({ 
         type: 'info', 
-        text: `🤖 <b>Yapay Zeka Analizi:</b><br>${aiResponse.replace(/\n/g, '<br>')}`,
+        text: `<b>Yapay Zeka Analizi:</b><br>${aiResponse.replace(/\n/g, '<br>')}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         isHtml: true
       });
@@ -4841,7 +4852,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       
       const el = document.getElementById('ai-logic-result');
       if (el) {
-        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 Algoritma Analiz Ediliyor...</div>';
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">Algoritma Analiz Ediliyor...</div>';
         el.classList.remove('hidden');
       }
       
@@ -4852,7 +4863,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4 animate-fadeIn">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-2 text-blue-400 font-bold">
-                <span>🧠 Algoritma Analizi</span>
+                <span>Algoritma Analizi</span>
               </div>
               <button onclick="document.getElementById('ai-logic-result').classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
             </div>
@@ -4937,18 +4948,18 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const elementId = `ai-doc-helper-${topicTitle.replace(/\s+/g, '-')}`;
       const el = document.getElementById(elementId);
       if (el) {
-        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 AI Basitleştiriyor...</div>';
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">Basitleştiriyor...</div>';
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino mentorusun. Karmaşık teknik kavramları küçük çocuklara anlatır gibi basit, eğlenceli ve günlük hayattan örneklerle açıklarsın.");
+      const aiResponse = await callOpenRouterAI(prompt);
       
       if (el) {
         el.innerHTML = `
           <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4 mt-4 animate-fadeIn">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-2 text-indigo-400 font-bold">
-                <span>✨ Basitleştirilmiş Anlatım</span>
+                <span>Basitleştirilmiş Anlatım</span>
               </div>
               <button onclick="this.closest('.animate-fadeIn').parentElement.classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
             </div>
@@ -4965,7 +4976,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       
       const el = document.getElementById('ai-logic-result');
       if (el) {
-        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">🤖 AI Yeni Görev Hazırlıyor...</div>';
+        el.innerHTML = '<div class="animate-pulse text-blue-400 py-4">Yeni Görev Hazırlıyor...</div>';
         el.classList.remove('hidden');
       }
       
@@ -4976,7 +4987,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mt-4 animate-fadeIn">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-2 text-orange-400 font-bold">
-                <span>⚡ AI Mikro-Mücadele</span>
+                <span>Mikro-Mücadele</span>
               </div>
               <button onclick="document.getElementById('ai-logic-result').classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
             </div>
