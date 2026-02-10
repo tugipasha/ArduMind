@@ -3158,7 +3158,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
 
     async function getAIFeedback(code, error) {
       const prompt = `Arduino kodumda hata var.\n\nKod:\n${code}\n\nHata:\n${error}\n\nLütfen hatanın nedenini açıkla ve nasıl düzeltebileceğimi kısa ve anlaşılır bir şekilde söyle.`;
-      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino hata ayıklama asistanısın. Kullanıcının kodundaki hataları analiz eder ve öğretici, çözüm odaklı geri bildirimler verirsin.");
+      const aiResponse = await callOpenRouterAI(prompt);
       
       appState.serialOutput.push({ 
         type: 'info', 
@@ -4845,7 +4845,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callClaudeAI(prompt, "Sen bir bilgisayar bilimleri öğretmenisin. Karmaşık kodları basit algoritmik adımlara böler ve öğrencilerin düşünme sürecini geliştirmek için açıklarsın.");
+      const aiResponse = await callOpenRouterAI(prompt);
       
       if (el) {
         el.innerHTML = `
@@ -4969,7 +4969,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino ders içerik üreticisisin. Öğrencilerin dikkatini ölçecek, eğlenceli ve öğretici 'bug' bulma senaryoları yazarsın.");
+      const aiResponse = await callOpenRouterAI(prompt);
       
       if (el) {
         el.innerHTML = `
