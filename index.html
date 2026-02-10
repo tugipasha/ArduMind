@@ -2040,11 +2040,11 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       renderApp();
     }
 
-    // ==================== CLAUDE AI INTEGRATION (via Serverless Function) ====================
-    const CLAUDE_PROXY_URL = '/api/claude'; // Claude sunucusuz fonksiyonunun adresi
+    // ==================== OPENROUTER AI INTEGRATION (via Serverless Function) ====================
+    const OPENROUTER_PROXY_URL = '/api/openrouter'; // OpenRouter sunucusuz fonksiyonunun adresi
 
     let isAILoading = false;
-    async function callClaudeAI(prompt, systemInstruction = "Sen deneyimli bir Arduino eğitmenisin. Öğrencilere nazik, yol gösterici ve teknik açıdan doğru geri bildirimler verirsin. Yanıtlarını kısa ve öz tut.") {
+    async function callOpenRouterAI(prompt) {
       if (isAILoading) {
         showToast('AI şu an meşgul, lütfen bekleyin...', 'info');
         return "Lütfen bekleyin, önceki istek tamamlanıyor.";
@@ -2052,13 +2052,12 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       
       isAILoading = true;
       try {
-        const response = await fetch(CLAUDE_PROXY_URL, {
+        const response = await fetch(OPENROUTER_PROXY_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            system: systemInstruction,
             prompt: prompt 
           })
         });
@@ -2069,14 +2068,13 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
           throw new Error(data.error || 'AI API hatası: ' + response.statusText);
         }
 
-        // Claude'un yanıt yapısından metni al
-        if (data.content && data.content.length > 0 && data.content[0].text) {
-          return data.content[0].text;
+        if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
+          return data.choices[0].message.content;
         }
 
         return "AI'dan geçerli bir yanıt alınamadı.";
       } catch (error) {
-        console.error('Claude AI Error:', error);
+        console.error('OpenRouter AI Error:', error);
         return `Üzgünüm, şu an AI yanıtı oluşturulamadı. Hata: ${error.message}`;
       } finally {
         isAILoading = false;
@@ -2205,7 +2203,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const el = document.getElementById(elementId);
       if (el) el.innerHTML = '<div class="animate-pulse text-blue-400">🤖 AI Düşünüyor...</div>';
       
-      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino eğitmenisin. Öğrencilerin yanlış cevaplarını analiz eder ve onlara konuyu daha iyi kavramaları için derinlemesine ama anlaşılır açıklamalar yaparsın.");
+      const aiResponse = await callOpenRouterAI(prompt);
       
       if (el) el.innerHTML = `<div class="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-200 text-xs"><b>🤖 AI Açıklaması:</b><br>${aiResponse.replace(/\n/g, '<br>')}</div>`;
     }
@@ -2266,7 +2264,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callClaudeAI(prompt, "Sen bir eğitim analistisin. Öğrenci verilerini analiz ederek kişiselleştirilmiş öğrenme tavsiyeleri ve gelişim özetleri sunarsın.");
+      const aiResponse = await callOpenRouterAI(prompt);
       
       if (el) {
         el.innerHTML = `<div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-blue-100 text-sm leading-relaxed relative">
