@@ -2266,7 +2266,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callGeminiAI(prompt, "Sen bir eğitim analistisin. Öğrenci verilerini analiz ederek kişiselleştirilmiş öğrenme tavsiyeleri ve gelişim özetleri sunarsın.");
+      const aiResponse = await callClaudeAI(prompt, "Sen bir eğitim analistisin. Öğrenci verilerini analiz ederek kişiselleştirilmiş öğrenme tavsiyeleri ve gelişim özetleri sunarsın.");
       
       if (el) {
         el.innerHTML = `<div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-blue-100 text-sm leading-relaxed relative">
@@ -3160,7 +3160,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
 
     async function getAIFeedback(code, error) {
       const prompt = `Arduino kodumda hata var.\n\nKod:\n${code}\n\nHata:\n${error}\n\nLütfen hatanın nedenini açıkla ve nasıl düzeltebileceğimi kısa ve anlaşılır bir şekilde söyle.`;
-      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino hata ayıklama asistanısın. Kullanıcının kodundaki hataları analiz eder ve öğretici, çözüm odaklı geri bildirimler verirsin.");
+      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino hata ayıklama asistanısın. Kullanıcının kodundaki hataları analiz eder ve öğretici, çözüm odaklı geri bildirimler verirsin.");
       
       appState.serialOutput.push({ 
         type: 'info', 
@@ -3956,6 +3956,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
     function init3DIntro() {
       const container = document.getElementById('three-canvas-container');
       if (!container) return;
+      const introContainer = document.getElementById('intro-container');
 
       // Matrix Effect
       const matrixCanvas = document.getElementById('matrix-canvas');
@@ -4078,15 +4079,20 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
       const tl = gsap.timeline({
         onComplete: () => {
           setTimeout(() => {
-            gsap.to('#intro-container', {
-              opacity: 0,
-              duration: 1,
-              ease: 'power2.inOut',
-              onComplete: () => {
-                appState.showIntro = false;
-                renderApp();
-              }
-            });
+            if (introContainer) {
+              gsap.to(introContainer, {
+                opacity: 0,
+                duration: 1,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                  appState.showIntro = false;
+                  renderApp();
+                }
+              });
+            } else {
+              appState.showIntro = false;
+              renderApp();
+            }
           }, 2000);
         }
       });
@@ -4841,7 +4847,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callGeminiAI(prompt, "Sen bir bilgisayar bilimleri öğretmenisin. Karmaşık kodları basit algoritmik adımlara böler ve öğrencilerin düşünme sürecini geliştirmek için açıklarsın.");
+      const aiResponse = await callClaudeAI(prompt, "Sen bir bilgisayar bilimleri öğretmenisin. Karmaşık kodları basit algoritmik adımlara böler ve öğrencilerin düşünme sürecini geliştirmek için açıklarsın.");
       
       if (el) {
         el.innerHTML = `
@@ -4937,7 +4943,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino mentorusun. Karmaşık teknik kavramları küçük çocuklara anlatır gibi basit, eğlenceli ve günlük hayattan örneklerle açıklarsın.");
+      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino mentorusun. Karmaşık teknik kavramları küçük çocuklara anlatır gibi basit, eğlenceli ve günlük hayattan örneklerle açıklarsın.");
       
       if (el) {
         el.innerHTML = `
@@ -4965,7 +4971,7 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         el.classList.remove('hidden');
       }
       
-      const aiResponse = await callGeminiAI(prompt, "Sen bir Arduino ders içerik üreticisisin. Öğrencilerin dikkatini ölçecek, eğlenceli ve öğretici 'bug' bulma senaryoları yazarsın.");
+      const aiResponse = await callClaudeAI(prompt, "Sen bir Arduino ders içerik üreticisisin. Öğrencilerin dikkatini ölçecek, eğlenceli ve öğretici 'bug' bulma senaryoları yazarsın.");
       
       if (el) {
         el.innerHTML = `
