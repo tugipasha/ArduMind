@@ -2074,6 +2074,9 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         });
 
         if (!response.ok) {
+          if (response.status === 429) {
+            return "Çok fazla istek gönderildi. Lütfen bir dakika bekleyip tekrar deneyin. (Gemini API Rate Limit)";
+          }
           throw new Error('AI API hatası: ' + response.statusText);
         }
 
@@ -2083,7 +2086,10 @@ motor.<span class="function">write</span>(<span class="number">90</span>);</div>
         console.error('Gemini AI Error:', error);
         return "Üzgünüm, şu an AI yanıtı oluşturulamadı. Lütfen daha sonra tekrar dene.";
       } finally {
-        isAILoading = false;
+        // İstek bittikten sonra 2 saniye "meşgul" kalmaya devam et (Rate limit koruması)
+        setTimeout(() => {
+          isAILoading = false;
+        }, 2000);
       }
     }
 
